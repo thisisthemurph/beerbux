@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "protos/sessionpb;sessionpb";
+
+service Session {
+  rpc CreateSession(CreateSessionRequest) returns (SessionResponse);
+  rpc GetSession(GetSessionRequest) returns (SessionResponse);
+}
+
+message CreateSessionRequest {
+  string user_id = 1;
+  string name = 2;
+}
+
+message GetSessionRequest {
+  string session_id = 1;
+}
+
+message SessionResponse {
+  string session_id = 1;
+  string name = 2;
+  bool is_active = 3;
+}

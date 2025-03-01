@@ -1,0 +1,17 @@
+version: "2"
+
+sql:
+  - engine: "sqlite"
+    queries: "internal/db/queries/session-queries.sql"
+    schema: "internal/db/migrations"
+    gen:
+      go:
+        package: "session"
+        out: "internal/repository/session"
+  - engine: "sqlite"
+    queries: "internal/db/queries/user-queries.sql"
+    schema: "internal/db/migrations"
+    gen:
+      go:
+        package: "user"
+        out: "internal/repository/user"

@@ -5,13 +5,20 @@ import (
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
+	"github.com/thisisthemurph/beerbux/user-service/pkg/nullish"
 )
 
 const SubjectUserCreated = "user.created"
 
+type UserCreatedEventData struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Bio      string `json:"bio"`
+}
+
 type UserCreatedEvent struct {
-	Metadata EventMetadata `json:"metadata"`
-	Data     user.User     `json:"user"`
+	Metadata EventMetadata        `json:"metadata"`
+	Data     UserCreatedEventData `json:"user"`
 }
 
 type UserCreatedPublisher interface {
@@ -33,7 +40,11 @@ func NewUserCreatedNatsPublisher(nc *nats.Conn) UserCreatedPublisher {
 func (p *UserCreatedNatsPublisher) Publish(u user.User) error {
 	msg := UserCreatedEvent{
 		Metadata: NewEventMetadata(SubjectUserCreated, "1.0.0", u.ID),
-		Data:     u,
+		Data: UserCreatedEventData{
+			ID:       u.ID,
+			Username: u.Username,
+			Bio:      nullish.StringOrEmpty(u.Bio),
+		},
 	}
 
 	msgData, err := json.Marshal(msg)

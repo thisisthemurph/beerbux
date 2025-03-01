@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
+	"github.com/thisisthemurph/beerbux/user-service/pkg/nullish"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 )
 
@@ -58,7 +59,7 @@ func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest
 	u, err := s.userRepository.CreateUser(ctx, user.CreateUserParams{
 		ID:       uuid.New().String(),
 		Username: r.Username,
-		Bio:      createNullString(r.Bio),
+		Bio:      nullish.CreateNullString(r.Bio),
 	})
 
 	if err != nil {
@@ -73,7 +74,7 @@ func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest
 	return &userpb.UserResponse{
 		UserId:   u.ID,
 		Username: u.Username,
-		Bio:      parseNullString(u.Bio),
+		Bio:      nullish.ParseNullString(u.Bio),
 	}, nil
 }
 
@@ -90,7 +91,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 	u, err := s.userRepository.UpdateUser(ctx, user.UpdateUserParams{
 		ID:       r.UserId,
 		Username: r.Username,
-		Bio:      createNullString(r.Bio),
+		Bio:      nullish.CreateNullString(r.Bio),
 	})
 
 	if err != nil {
@@ -101,7 +102,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 	result := &userpb.UserResponse{
 		UserId:   u.ID,
 		Username: u.Username,
-		Bio:      parseNullString(u.Bio),
+		Bio:      nullish.ParseNullString(u.Bio),
 	}
 
 	if err := s.userUpdatedPublisher.Publish(originalUser, u); err != nil {

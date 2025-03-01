@@ -38,6 +38,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
 	nc, err := nats.Connect(nats.DefaultURL)
 	if err != nil {

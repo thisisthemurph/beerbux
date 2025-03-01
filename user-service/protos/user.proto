@@ -13,18 +13,21 @@ message GetUserRequest {
 }
 
 message CreateUserRequest {
-  string username = 1;
-  optional string bio = 2;
+  string name = 1;
+  string username = 2;
+  optional string bio = 3;
 }
 
 message UpdateUserRequest {
   string user_id = 1;
-  string username = 2;
-  optional string bio = 3;
+  string name = 2;
+  string username = 3;
+  optional string bio = 4;
 }
 
 message UserResponse {
   string user_id = 1;
-  string username = 2;
-  optional string bio = 3;
+  string name = 2;
+  string username = 3;
+  optional string bio = 4;
 }

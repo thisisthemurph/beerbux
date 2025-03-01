@@ -47,7 +47,9 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 
 	return &userpb.UserResponse{
 		UserId:   u.ID,
+		Name:     u.Name,
 		Username: u.Username,
+		Bio:      nullish.ParseNullString(u.Bio),
 	}, nil
 }
 
@@ -58,6 +60,7 @@ func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest
 
 	u, err := s.userRepository.CreateUser(ctx, user.CreateUserParams{
 		ID:       uuid.New().String(),
+		Name:     r.Name,
 		Username: r.Username,
 		Bio:      nullish.CreateNullString(r.Bio),
 	})
@@ -73,6 +76,7 @@ func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest
 
 	return &userpb.UserResponse{
 		UserId:   u.ID,
+		Name:     u.Name,
 		Username: u.Username,
 		Bio:      nullish.ParseNullString(u.Bio),
 	}, nil
@@ -90,6 +94,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 
 	u, err := s.userRepository.UpdateUser(ctx, user.UpdateUserParams{
 		ID:       r.UserId,
+		Name:     r.Name,
 		Username: r.Username,
 		Bio:      nullish.CreateNullString(r.Bio),
 	})
@@ -101,6 +106,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 
 	result := &userpb.UserResponse{
 		UserId:   u.ID,
+		Name:     u.Name,
 		Username: u.Username,
 		Bio:      nullish.ParseNullString(u.Bio),
 	}

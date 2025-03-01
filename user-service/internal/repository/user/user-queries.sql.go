@@ -11,21 +11,28 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-insert into users (id, username, bio) values (?, ?, ?)
-returning id, username, bio, balance, created_at, updated_at
+insert into users (id, name, username, bio) values (?, ?, ?, ?)
+returning id, name, username, bio, balance, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	ID       string
+	Name     string
 	Username string
 	Bio      sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.Username, arg.Bio)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.ID,
+		arg.Name,
+		arg.Username,
+		arg.Bio,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Username,
 		&i.Bio,
 		&i.Balance,
@@ -36,7 +43,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, bio, balance, created_at, updated_at from users where id = ? limit 1
+select id, name, username, bio, balance, created_at, updated_at from users where id = ? limit 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
@@ -44,6 +51,26 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Bio,
+		&i.Balance,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+select id, name, username, bio, balance, created_at, updated_at from users where username = ? limit 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
 		&i.Username,
 		&i.Bio,
 		&i.Balance,
@@ -55,21 +82,28 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 
 const updateUser = `-- name: UpdateUser :one
 update users
-set username = ?, bio = ? where id = ?
-returning id, username, bio, balance, created_at, updated_at
+set name = ?, username = ?, bio = ? where id = ?
+returning id, name, username, bio, balance, created_at, updated_at
 `
 
 type UpdateUserParams struct {
+	Name     string
 	Username string
 	Bio      sql.NullString
 	ID       string
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUser, arg.Username, arg.Bio, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateUser,
+		arg.Name,
+		arg.Username,
+		arg.Bio,
+		arg.ID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Username,
 		&i.Bio,
 		&i.Balance,

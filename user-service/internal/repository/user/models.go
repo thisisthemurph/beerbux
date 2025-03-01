@@ -11,6 +11,7 @@ import (
 
 type User struct {
 	ID        string
+	Name      string
 	Username  string
 	Bio       sql.NullString
 	Balance   float64

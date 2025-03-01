@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 create table if not exists users (
     id text primary key not null,
+    name text not null,
     username text not null unique,
     bio text,
     balance real not null default 0,

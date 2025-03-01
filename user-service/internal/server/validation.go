@@ -11,14 +11,33 @@ func validateGetUserRequest(r *userpb.GetUserRequest) error {
 }
 
 func validateCreateUserRequest(r *userpb.CreateUserRequest) error {
+	if err := validateUserName(r.Name); err != nil {
+		return err
+	}
 	return validateUsername(r.Username)
 }
 
 func validateUpdateUserRequest(r *userpb.UpdateUserRequest) error {
+	if err := validateUserName(r.Name); err != nil {
+		return err
+	}
 	if err := validateStringUUID(r.UserId); err != nil {
 		return err
 	}
 	return validateUsername(r.Username)
+}
+
+func validateUserName(name string) error {
+	if name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(name) < 2 {
+		return fmt.Errorf("name must be at least 3 characters")
+	}
+	if len(name) > 20 {
+		return fmt.Errorf("name must be at most 20 characters")
+	}
+	return nil
 }
 
 func validateUsername(username string) error {

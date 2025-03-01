@@ -1,20 +1,15 @@
 package server
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
-func parseNullString(v sql.NullString) *string {
-	if v.Valid {
-		return &v.String
-	}
-	return nil
-}
-
-func createNullString(s *string) sql.NullString {
-	if s == nil {
-		return sql.NullString{}
-	}
-	return sql.NullString{
-		String: *s,
-		Valid:  true,
-	}
+// TX is a transaction interface that can be used to begin a transaction.
+// This is used to limit the scope of the database/sql package to the server package.
+type TX interface {
+	// Begin starts a database transaction using context.Background.
+	Begin() (*sql.Tx, error)
+	// BeginTx starts a database transaction with the provided context and options.
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 }

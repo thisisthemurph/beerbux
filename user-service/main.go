@@ -7,7 +7,9 @@ import (
 	"net"
 	"os"
 
+	"github.com/nats-io/nats.go"
 	"github.com/thisisthemurph/beerbux/user-service/internal/config"
+	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 	"github.com/thisisthemurph/beerbux/user-service/internal/server"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
@@ -18,7 +20,7 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -37,8 +39,19 @@ func run() error {
 		return err
 	}
 
+	nc, err := nats.Connect(nats.DefaultURL)
+	if err != nil {
+		return err
+	}
+	defer nc.Close()
+
+	userCreatedPublisher := publisher.NewUserCreatedNatsPublisher(nc)
+	userUpdatedPublisher := publisher.NewUserUpdatedNatsPublisher(nc)
+
+	logger.Debug("connected to NATS", "url", nats.DefaultURL)
+
 	queries := user.New(db)
-	userServer := server.NewUserServer(queries)
+	userServer := server.NewUserServer(queries, userCreatedPublisher, userUpdatedPublisher, logger)
 
 	grpcServer := grpc.NewServer()
 	userpb.RegisterUserServer(grpcServer, userServer)

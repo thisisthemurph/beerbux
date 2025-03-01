@@ -3,20 +3,33 @@ package server
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 )
 
 type UserServer struct {
 	userpb.UnimplementedUserServer
-	userRepository *user.Queries
+	userRepository       *user.Queries
+	userCreatedPublisher publisher.UserCreatedPublisher
+	userUpdatedPublisher publisher.UserUpdatedPublisher
+	logger               *slog.Logger
 }
 
-func NewUserServer(userRepository *user.Queries) *UserServer {
+func NewUserServer(
+	userRepository *user.Queries,
+	userCreatedPublisher publisher.UserCreatedPublisher,
+	userUpdatedPublisher publisher.UserUpdatedPublisher,
+	logger *slog.Logger,
+) *UserServer {
 	return &UserServer{
-		userRepository: userRepository,
+		userRepository:       userRepository,
+		userCreatedPublisher: userCreatedPublisher,
+		userUpdatedPublisher: userUpdatedPublisher,
+		logger:               logger,
 	}
 }
 
@@ -27,6 +40,7 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 
 	u, err := s.userRepository.GetUser(ctx, r.UserId)
 	if err != nil {
+		s.logger.Error("failed to get user", "error", err)
 		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
 	}
 
@@ -51,6 +65,11 @@ func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest
 		return nil, fmt.Errorf("failed to create user %v: %w", r.Username, err)
 	}
 
+	if err := s.userCreatedPublisher.Publish(u); err != nil {
+		s.logger.Error("failed to publish user created event", "error", err)
+		return nil, err
+	}
+
 	return &userpb.UserResponse{
 		UserId:   u.ID,
 		Username: u.Username,
@@ -63,6 +82,11 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	originalUser, err := s.userRepository.GetUser(ctx, r.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
+	}
+
 	u, err := s.userRepository.UpdateUser(ctx, user.UpdateUserParams{
 		ID:       r.UserId,
 		Username: r.Username,
@@ -70,12 +94,20 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 	})
 
 	if err != nil {
+		s.logger.Error("failed to update user", "error", err)
 		return nil, fmt.Errorf("failed to update user %v: %w", r.UserId, err)
 	}
 
-	return &userpb.UserResponse{
+	result := &userpb.UserResponse{
 		UserId:   u.ID,
 		Username: u.Username,
 		Bio:      parseNullString(u.Bio),
-	}, nil
+	}
+
+	if err := s.userUpdatedPublisher.Publish(originalUser, u); err != nil {
+		s.logger.Error("failed to publish user updated event", "error", err)
+		return result, err
+	}
+
+	return result, nil
 }

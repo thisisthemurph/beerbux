@@ -12,6 +12,7 @@ const SubjectUserCreated = "user.created"
 
 type UserCreatedEventData struct {
 	ID       string `json:"id"`
+	Name     string `json:"name"`
 	Username string `json:"username"`
 	Bio      string `json:"bio"`
 }
@@ -42,6 +43,7 @@ func (p *UserCreatedNatsPublisher) Publish(u user.User) error {
 		Metadata: NewEventMetadata(SubjectUserCreated, "1.0.0", u.ID),
 		Data: UserCreatedEventData{
 			ID:       u.ID,
+			Name:     u.Name,
 			Username: u.Username,
 			Bio:      nullish.StringOrEmpty(u.Bio),
 		},

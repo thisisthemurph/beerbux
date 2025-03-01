@@ -59,6 +59,10 @@ func (p *UserUpdatedNatsPublisher) Publish(original user.User, new user.User) er
 func (p *UserUpdatedNatsPublisher) determineUpdatedFields(original, new user.User) map[string]interface{} {
 	updatedFields := make(map[string]interface{})
 
+	if original.Name != new.Name {
+		updatedFields["name"] = new.Name
+	}
+
 	if original.Username != new.Username {
 		updatedFields["username"] = new.Username
 	}

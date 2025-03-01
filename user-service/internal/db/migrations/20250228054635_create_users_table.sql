@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 create table if not exists users (
     id text primary key not null,
-    username text not null,
+    username text not null unique,
     bio text,
     balance real not null default 0,
     created_at timestamp not null default current_timestamp,

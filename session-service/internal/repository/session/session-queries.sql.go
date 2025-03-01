@@ -9,18 +9,18 @@ import (
 	"context"
 )
 
-const addMemberToSession = `-- name: AddMemberToSession :exec
+const addSessionMember = `-- name: AddSessionMember :exec
 insert into session_members (session_id, user_id)
 values (?, ?)
 `
 
-type AddMemberToSessionParams struct {
+type AddSessionMemberParams struct {
 	SessionID string
 	UserID    string
 }
 
-func (q *Queries) AddMemberToSession(ctx context.Context, arg AddMemberToSessionParams) error {
-	_, err := q.db.ExecContext(ctx, addMemberToSession, arg.SessionID, arg.UserID)
+func (q *Queries) AddSessionMember(ctx context.Context, arg AddSessionMemberParams) error {
+	_, err := q.db.ExecContext(ctx, addSessionMember, arg.SessionID, arg.UserID)
 	return err
 }
 

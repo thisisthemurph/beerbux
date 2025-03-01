@@ -41,7 +41,7 @@ func run() error {
 	}
 
 	sessionRepository := session.New(app.DB)
-	sessionServer := server.NewSessionServer(sessionRepository, logger)
+	sessionServer := server.NewSessionServer(app.DB, sessionRepository, logger)
 
 	grpcServer := grpc.NewServer()
 	sessionpb.RegisterSessionServer(grpcServer, sessionServer)

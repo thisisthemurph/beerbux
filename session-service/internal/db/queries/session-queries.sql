@@ -6,7 +6,7 @@ insert into sessions (id, name, owner_id)
 values (?, ?, ?)
 returning *;
 
--- name: AddMemberToSession :exec
+-- name: AddSessionMember :exec
 insert into session_members (session_id, user_id)
 values (?, ?);
 

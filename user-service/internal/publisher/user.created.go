@@ -3,12 +3,16 @@ package publisher
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/nats-io/nats.go"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 )
 
 const SubjectUserCreated = "user.created"
+
+type UserCreatedEvent struct {
+	Metadata EventMetadata `json:"metadata"`
+	Data     user.User     `json:"user"`
+}
 
 type UserCreatedPublisher interface {
 	Publish(u user.User) error
@@ -27,12 +31,17 @@ func NewUserCreatedNatsPublisher(nc *nats.Conn) UserCreatedPublisher {
 }
 
 func (p *UserCreatedNatsPublisher) Publish(u user.User) error {
-	msg, err := json.Marshal(u)
+	msg := UserCreatedEvent{
+		Metadata: NewEventMetadata(SubjectUserCreated, "1.0.0", u.ID),
+		Data:     u,
+	}
+
+	msgData, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal user %v: %w", u.ID, err)
 	}
 
-	if err := p.nc.Publish(p.subject, msg); err != nil {
+	if err := p.nc.Publish(p.subject, msgData); err != nil {
 		return fmt.Errorf("failed to publish %q message: %w", p.subject, err)
 	}
 

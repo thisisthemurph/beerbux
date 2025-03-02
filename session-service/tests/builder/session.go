@@ -2,9 +2,10 @@ package builder
 
 import (
 	"database/sql"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
-	"testing"
 )
 
 type SessionBuilder struct {
@@ -30,11 +31,6 @@ func (b *SessionBuilder) WithName(name string) *SessionBuilder {
 	return b
 }
 
-func (b *SessionBuilder) WithOwnerID(ownerID uuid.UUID) *SessionBuilder {
-	b.model.OwnerID = ownerID.String()
-	return b
-}
-
 func (b *SessionBuilder) WithIsActive(isActive bool) *SessionBuilder {
 	b.isActiveSetManually = true
 	b.model.IsActive = isActive
@@ -51,9 +47,9 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 	}
 
 	_, err := db.Exec(`
-		insert into sessions (id, name, owner_id, is_active) 
-		values (?, ?, ?, ?);`,
-		b.model.ID, b.model.Name, b.model.OwnerID, b.model.IsActive)
+		insert into sessions (id, name, is_active) 
+		values (?, ?, ?);`,
+		b.model.ID, b.model.Name, b.model.IsActive)
 
 	if err != nil {
 		b.t.Fatalf("failed to insert session: %v", err)

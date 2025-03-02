@@ -2,12 +2,15 @@ module github.com/thisisthemurph/beerbux/session-service
 
 go 1.24.0
 
+replace github.com/thisisthemurph/beerbux/user-service => ../user-service
+
 require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats.go v1.39.1
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/stretchr/testify v1.10.0
+	github.com/thisisthemurph/beerbux/user-service v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 	modernc.org/sqlite v1.36.0

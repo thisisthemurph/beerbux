@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
-	"log/slog"
+	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 )
 
 type SessionServer struct {
@@ -15,12 +17,14 @@ type SessionServer struct {
 	TX
 	sessionRepository *session.Queries
 	logger            *slog.Logger
+	userClient        userpb.UserClient
 }
 
-func NewSessionServer(db *sql.DB, sessionRepository *session.Queries, logger *slog.Logger) *SessionServer {
+func NewSessionServer(db *sql.DB, sessionRepository *session.Queries, userClient userpb.UserClient, logger *slog.Logger) *SessionServer {
 	return &SessionServer{
 		TX:                db,
 		sessionRepository: sessionRepository,
+		userClient:        userClient,
 		logger:            logger,
 	}
 }
@@ -50,6 +54,13 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	user, err := s.userClient.GetUser(ctx, &userpb.GetUserRequest{
+		UserId: r.UserId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -58,22 +69,33 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 
 	qtx := s.sessionRepository.WithTx(tx)
 
+	// Add the session to the sessions table
 	ssn, err := qtx.CreateSession(ctx, session.CreateSessionParams{
-		ID:      uuid.New().String(),
-		Name:    r.Name,
-		OwnerID: r.UserId,
+		ID:   uuid.New().String(),
+		Name: r.Name,
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	if err := qtx.AddSessionMember(ctx, session.AddSessionMemberParams{
-		SessionID: ssn.ID,
-		UserID:    r.UserId,
-	}); err != nil {
-		return nil, fmt.Errorf("failed to add session member: %w", err)
+	// Add the user to the members table.
+	err = qtx.UpsertMember(ctx, session.UpsertMemberParams{
+		ID:       user.UserId,
+		Name:     user.Name,
+		Username: user.Username,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to upsert member: %w", err)
 	}
+
+	// Join the member to the sessions in the session_members table.
+	err = qtx.AddSessionMember(ctx, session.AddSessionMemberParams{
+		SessionID: ssn.ID,
+		MemberID:  user.UserId,
+		IsOwner:   true,
+	})
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)

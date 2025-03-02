@@ -2,11 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
-	"github.com/thisisthemurph/beerbux/session-service/internal/server"
-	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"log/slog"
 	"net"
 	"os"
@@ -35,29 +30,15 @@ func run() error {
 	}
 	defer app.Close()
 
-	_, err = app.NatsConn.Subscribe("user.created", app.UserCreatedMsgHandler.Handle)
+	grpcServer := app.NewSessionGRPCServer()
+
+	listener, err := net.Listen("tcp", cfg.SessionServerAddress)
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to user.created: %w", err)
+		return fmt.Errorf("failed to listen: %w", err)
 	}
+	defer listener.Close()
 
-	sessionRepository := session.New(app.DB)
-	sessionServer := server.NewSessionServer(app.DB, sessionRepository, logger)
-
-	grpcServer := grpc.NewServer()
-	sessionpb.RegisterSessionServer(grpcServer, sessionServer)
-
-	if cfg.Environment.IsDevelopment() {
-		reflection.Register(grpcServer)
-	}
-
-	lis, err := net.Listen("tcp", cfg.SessionServerAddress)
-	if err != nil {
-		return fmt.Errorf("failed to listen at %v: %w", cfg.SessionServerAddress, err)
-	}
-	defer lis.Close()
-
-	logger.Debug("starting session server", "address", cfg.SessionServerAddress)
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := grpcServer.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}
 

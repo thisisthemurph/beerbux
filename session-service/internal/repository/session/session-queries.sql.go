@@ -10,39 +10,39 @@ import (
 )
 
 const addSessionMember = `-- name: AddSessionMember :exec
-insert into session_members (session_id, user_id)
-values (?, ?)
+insert into session_members (session_id, member_id, is_owner)
+values (?, ?, ?)
+on conflict do nothing
 `
 
 type AddSessionMemberParams struct {
 	SessionID string
-	UserID    string
+	MemberID  string
+	IsOwner   bool
 }
 
 func (q *Queries) AddSessionMember(ctx context.Context, arg AddSessionMemberParams) error {
-	_, err := q.db.ExecContext(ctx, addSessionMember, arg.SessionID, arg.UserID)
+	_, err := q.db.ExecContext(ctx, addSessionMember, arg.SessionID, arg.MemberID, arg.IsOwner)
 	return err
 }
 
 const createSession = `-- name: CreateSession :one
-insert into sessions (id, name, owner_id)
-values (?, ?, ?)
-returning id, name, owner_id, is_active, created_at, updated_at
+insert into sessions (id, name)
+values (?, ?)
+returning id, name, is_active, created_at, updated_at
 `
 
 type CreateSessionParams struct {
-	ID      string
-	Name    string
-	OwnerID string
+	ID   string
+	Name string
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, createSession, arg.ID, arg.Name, arg.OwnerID)
+	row := q.db.QueryRowContext(ctx, createSession, arg.ID, arg.Name)
 	var i Session
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.OwnerID,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -51,7 +51,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 }
 
 const getSession = `-- name: GetSession :one
-select id, name, owner_id, is_active, created_at, updated_at from sessions where id = ? limit 1
+select id, name, is_active, created_at, updated_at from sessions where id = ? limit 1
 `
 
 func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
@@ -60,7 +60,6 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.OwnerID,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -72,7 +71,7 @@ const updateSession = `-- name: UpdateSession :one
 update sessions
 set name = ?
 where id = ?
-returning id, name, owner_id, is_active, created_at, updated_at
+returning id, name, is_active, created_at, updated_at
 `
 
 type UpdateSessionParams struct {
@@ -86,10 +85,26 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (S
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.OwnerID,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const upsertMember = `-- name: UpsertMember :exec
+insert into members (id, name, username)
+values (?, ?, ?)
+on conflict do nothing
+`
+
+type UpsertMemberParams struct {
+	ID       string
+	Name     string
+	Username string
+}
+
+func (q *Queries) UpsertMember(ctx context.Context, arg UpsertMemberParams) error {
+	_, err := q.db.ExecContext(ctx, upsertMember, arg.ID, arg.Name, arg.Username)
+	return err
 }

@@ -16,6 +16,7 @@ func init() {
 
 type Config struct {
 	Environment          Environment
+	UserServerAddress    string
 	SessionServerAddress string
 	Database             DBConfig
 }
@@ -33,6 +34,7 @@ func Load() *Config {
 
 	return &Config{
 		Environment:          environment,
+		UserServerAddress:    mustGetenv("USER_SERVER_ADDRESS"),
 		SessionServerAddress: mustGetenv("SESSION_SERVER_ADDRESS"),
 		Database: DBConfig{
 			Driver: mustGetenv("DB_DRIVER"),

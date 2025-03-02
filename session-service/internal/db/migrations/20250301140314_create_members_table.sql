@@ -1,9 +1,9 @@
 -- +goose Up
 -- +goose StatementBegin
-create table if not exists sessions (
+create table if not exists members (
     id text primary key not null,
     name text not null,
-    is_active boolean not null default true,
+    username text not null,
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp
 );
@@ -12,5 +12,5 @@ create table if not exists sessions (
 
 -- +goose Down
 -- +goose StatementBegin
-drop table if exists sessions;
+drop table if exists members;
 -- +goose StatementEnd

@@ -8,10 +8,17 @@ import (
 	"time"
 )
 
+type Member struct {
+	ID        string
+	Name      string
+	Username  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type Session struct {
 	ID        string
 	Name      string
-	OwnerID   string
 	IsActive  bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -19,12 +26,8 @@ type Session struct {
 
 type SessionMember struct {
 	SessionID string
-	UserID    string
+	MemberID  string
+	IsOwner   bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type UserDetail struct {
-	ID       string
-	Username string
 }

@@ -19,10 +19,11 @@ import (
 
 func TestGetSession_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
-	defer db.Close()
-	queries := session.New(db)
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
 	fakeUserClient := fake.NewFakeUserClient()
-	sessionServer := server.NewSessionServer(db, queries, fakeUserClient, slog.Default())
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
 
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").

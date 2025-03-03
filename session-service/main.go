@@ -8,6 +8,7 @@ import (
 
 	"github.com/thisisthemurph/beerbux/session-service/internal/application"
 	"github.com/thisisthemurph/beerbux/session-service/internal/config"
+	"github.com/thisisthemurph/beerbux/session-service/internal/handler"
 )
 
 func main() {
@@ -29,6 +30,16 @@ func run() error {
 		return fmt.Errorf("failed to create application: %w", err)
 	}
 	defer app.Close()
+
+	// Listen for user.updated events
+
+	msgHandler := handler.NewUserUpdatedEventHandler(app.SessionRepository, app.Logger)
+	_, err = app.NatsConn.Subscribe("user.updated", msgHandler.Handle)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to user.updated event: %w", err)
+	}
+
+	// gRPC Server
 
 	grpcServer := app.NewSessionGRPCServer()
 

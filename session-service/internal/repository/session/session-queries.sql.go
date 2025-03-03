@@ -50,6 +50,23 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 	return i, err
 }
 
+const getMember = `-- name: GetMember :one
+select id, name, username, created_at, updated_at from members where id = ? limit 1
+`
+
+func (q *Queries) GetMember(ctx context.Context, id string) (Member, error) {
+	row := q.db.QueryRowContext(ctx, getMember, id)
+	var i Member
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSession = `-- name: GetSession :one
 select id, name, is_active, created_at, updated_at from sessions where id = ? limit 1
 `
@@ -67,9 +84,29 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 	return i, err
 }
 
+const updateMember = `-- name: UpdateMember :exec
+update members
+set name = ?,
+    username = ?,
+    updated_at = current_timestamp
+where id = ?
+`
+
+type UpdateMemberParams struct {
+	Name     string
+	Username string
+	ID       string
+}
+
+func (q *Queries) UpdateMember(ctx context.Context, arg UpdateMemberParams) error {
+	_, err := q.db.ExecContext(ctx, updateMember, arg.Name, arg.Username, arg.ID)
+	return err
+}
+
 const updateSession = `-- name: UpdateSession :one
 update sessions
-set name = ?
+set name = ?,
+    updated_at = current_timestamp
 where id = ?
 returning id, name, is_active, created_at, updated_at
 `
@@ -95,7 +132,10 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (S
 const upsertMember = `-- name: UpsertMember :exec
 insert into members (id, name, username)
 values (?, ?, ?)
-on conflict do nothing
+on conflict(id) do update
+set name = excluded.name,
+    username = excluded.username,
+    updated_at = current_timestamp
 `
 
 type UpsertMemberParams struct {

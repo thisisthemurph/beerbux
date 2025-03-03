@@ -6,10 +6,23 @@ insert into sessions (id, name)
 values (?, ?)
 returning *;
 
+-- name: GetMember :one
+select * from members where id = ? limit 1;
+
 -- name: UpsertMember :exec
 insert into members (id, name, username)
 values (?, ?, ?)
-on conflict do nothing;
+on conflict(id) do update
+set name = excluded.name,
+    username = excluded.username,
+    updated_at = current_timestamp;
+
+-- name: UpdateMember :exec
+update members
+set name = ?,
+    username = ?,
+    updated_at = current_timestamp
+where id = ?;
 
 -- name: AddSessionMember :exec
 insert into session_members (session_id, member_id, is_owner)
@@ -18,6 +31,7 @@ on conflict do nothing;
 
 -- name: UpdateSession :one
 update sessions
-set name = ?
+set name = ?,
+    updated_at = current_timestamp
 where id = ?
 returning *;

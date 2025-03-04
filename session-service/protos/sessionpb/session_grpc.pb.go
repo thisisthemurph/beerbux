@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Session_CreateSession_FullMethodName = "/Session/CreateSession"
-	Session_GetSession_FullMethodName    = "/Session/GetSession"
+	Session_CreateSession_FullMethodName      = "/Session/CreateSession"
+	Session_GetSession_FullMethodName         = "/Session/GetSession"
+	Session_AddMemberToSession_FullMethodName = "/Session/AddMemberToSession"
 )
 
 // SessionClient is the client API for Session service.
@@ -29,6 +30,7 @@ const (
 type SessionClient interface {
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
+	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type sessionClient struct {
@@ -59,12 +61,23 @@ func (c *sessionClient) GetSession(ctx context.Context, in *GetSessionRequest, o
 	return out, nil
 }
 
+func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, Session_AddMemberToSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionServer is the server API for Session service.
 // All implementations must embed UnimplementedSessionServer
 // for forward compatibility.
 type SessionServer interface {
 	CreateSession(context.Context, *CreateSessionRequest) (*SessionResponse, error)
 	GetSession(context.Context, *GetSessionRequest) (*SessionResponse, error)
+	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
 	mustEmbedUnimplementedSessionServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedSessionServer) CreateSession(context.Context, *CreateSessionR
 }
 func (UnimplementedSessionServer) GetSession(context.Context, *GetSessionRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
+}
+func (UnimplementedSessionServer) AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMemberToSession not implemented")
 }
 func (UnimplementedSessionServer) mustEmbedUnimplementedSessionServer() {}
 func (UnimplementedSessionServer) testEmbeddedByValue()                 {}
@@ -138,6 +154,24 @@ func _Session_GetSession_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Session_AddMemberToSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMemberToSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).AddMemberToSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Session_AddMemberToSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).AddMemberToSession(ctx, req.(*AddMemberToSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Session_ServiceDesc is the grpc.ServiceDesc for Session service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var Session_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSession",
 			Handler:    _Session_GetSession_Handler,
+		},
+		{
+			MethodName: "AddMemberToSession",
+			Handler:    _Session_AddMemberToSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

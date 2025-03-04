@@ -2,16 +2,16 @@ package builder
 
 import (
 	"database/sql"
-	"testing"
-
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
+	"testing"
 )
 
 type SessionBuilder struct {
 	t                   *testing.T
 	model               session.Session
 	isActiveSetManually bool
+	members             []SessionMemberParams
 }
 
 func NewSessionBuilder(t *testing.T) *SessionBuilder {
@@ -37,6 +37,18 @@ func (b *SessionBuilder) WithIsActive(isActive bool) *SessionBuilder {
 	return b
 }
 
+type SessionMemberParams struct {
+	ID       string
+	Name     string
+	Username string
+	IsOwner  bool
+}
+
+func (b *SessionBuilder) WithMember(m SessionMemberParams) *SessionBuilder {
+	b.members = append(b.members, m)
+	return b
+}
+
 func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 	if !b.isActiveSetManually {
 		b.model.IsActive = true
@@ -53,6 +65,26 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 
 	if err != nil {
 		b.t.Fatalf("failed to insert session: %v", err)
+	}
+
+	for _, m := range b.members {
+		_, err := db.Exec(`
+			insert into members (id, name, username) 
+			values (?, ?, ?);`,
+			m.ID, m.Name, m.Username)
+
+		if err != nil {
+			b.t.Fatalf("failed to insert member: %v", err)
+		}
+
+		_, err = db.Exec(`
+			insert into session_members (session_id, member_id, is_owner) 
+			values (?, ?, ?);`,
+			b.model.ID, m.ID, m.IsOwner)
+
+		if err != nil {
+			b.t.Fatalf("failed to insert session member: %v", err)
+		}
 	}
 
 	return b.model

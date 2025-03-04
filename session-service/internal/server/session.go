@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
@@ -106,4 +108,97 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 		Name:      ssn.Name,
 		IsActive:  true,
 	}, nil
+}
+
+// AddMemberToSession adds a user to a session.
+func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.AddMemberToSessionRequest) (*sessionpb.EmptyResponse, error) {
+	tx, err := s.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	qtx := s.sessionRepository.WithTx(tx)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	var sessionErr, memberErr error
+	var userInMembersTable bool
+
+	// Ensure the session exists.
+	go func() {
+		defer wg.Done()
+		_, localSessionErr := qtx.GetSession(ctx, r.SessionId)
+		if localSessionErr != nil {
+			s.logger.Error("error fetching session from database", "ID", r.SessionId, "error", sessionErr)
+			cancel()
+		}
+
+		sessionErr = localSessionErr
+	}()
+
+	// Check if the user is already in the members table.
+	go func() {
+		defer wg.Done()
+		_, localMemberErr := qtx.GetMember(ctx, r.UserId)
+		if localMemberErr != nil && !errors.Is(localMemberErr, sql.ErrNoRows) {
+			s.logger.Error("error fetching member from database", "ID", r.UserId, "error", memberErr)
+			cancel()
+		}
+
+		memberErr = localMemberErr
+		userInMembersTable = localMemberErr == nil
+	}()
+
+	wg.Wait()
+
+	if sessionErr != nil {
+		return nil, fmt.Errorf("failed fetching session %q from database: %w", r.SessionId, sessionErr)
+	}
+
+	if memberErr != nil && !errors.Is(memberErr, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error fetching member %q from database: %w", r.UserId, memberErr)
+	}
+
+	// If the user is not in the members table, fetch the user from the user service.
+	if !userInMembersTable {
+		u, err := s.userClient.GetUser(ctx, &userpb.GetUserRequest{
+			UserId: r.UserId,
+		})
+		if err != nil {
+			s.logger.Error("error fetching user from user service", "ID", r.UserId, "error", err)
+			return nil, fmt.Errorf("failed to fetch user: %w", err)
+		}
+
+		err = qtx.UpsertMember(ctx, session.UpsertMemberParams{
+			ID:       u.UserId,
+			Name:     u.Name,
+			Username: u.Username,
+		})
+		if err != nil {
+			s.logger.Error("error upserting member", "ID", u.UserId, "error", err)
+			return nil, err
+		}
+	}
+
+	// Associate the member with the session.
+	err = qtx.AddSessionMember(ctx, session.AddSessionMemberParams{
+		SessionID: r.SessionId,
+		MemberID:  r.UserId,
+		IsOwner:   false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return &sessionpb.EmptyResponse{}, nil
 }

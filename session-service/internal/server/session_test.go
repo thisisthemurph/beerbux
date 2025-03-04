@@ -2,6 +2,8 @@ package server_test
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log/slog"
 	"testing"
 
@@ -89,27 +91,12 @@ func TestCreateSession_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 
-	err = db.QueryRow("select count(*) from session_members where session_id = ?", resp.SessionId).Scan(&count)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, count)
-
 	var sessionName string
 	err = db.QueryRow("select name from sessions where id = ?", resp.SessionId).Scan(&sessionName)
 	assert.NoError(t, err)
 	assert.Equal(t, "New Session", sessionName)
 
-	var memberID string
-	var memberIsOwner bool
-	err = db.QueryRow("select member_id, is_owner from session_members where session_id = ?", resp.SessionId).Scan(&memberID, &memberIsOwner)
-	assert.NoError(t, err)
-	assert.Equal(t, fakeUserID, memberID)
-	assert.True(t, memberIsOwner)
-
-	var memberName, memberUsername string
-	err = db.QueryRow("select name, username from members where id = ?", memberID).Scan(&memberName, &memberUsername)
-	assert.NoError(t, err)
-	assert.Equal(t, "user", memberName)
-	assert.Equal(t, "username", memberUsername)
+	assertUserInsertedAsMember(t, db, resp.SessionId, fakeUserID, "user", "username", true)
 }
 
 func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
@@ -129,4 +116,110 @@ func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, resp)
 	assert.Contains(t, err.Error(), "failed to fetch user")
+}
+
+func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	existingMember := builder.NewMemberBuilder(t).
+		WithName("user").
+		WithUsername("username").
+		Build(db)
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		Build(db)
+
+	fakeUserClient := fake.NewFakeUserClient()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+
+	req := &sessionpb.AddMemberToSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    existingMember.ID,
+	}
+
+	_, err := sessionServer.AddMemberToSession(context.Background(), req)
+	assert.NoError(t, err)
+	assertUserInsertedAsMember(t, db, ssn.ID, existingMember.ID, "user", "username", false)
+}
+
+func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	testUserID := uuid.NewString()
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		Build(db)
+
+	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+
+	req := &sessionpb.AddMemberToSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    testUserID,
+	}
+
+	_, err := sessionServer.AddMemberToSession(context.Background(), req)
+	assert.NoError(t, err)
+	assertUserInsertedAsMember(t, db, ssn.ID, testUserID, "user", "username", false)
+}
+
+func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	testUserID := uuid.NewString()
+	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+
+	req := &sessionpb.AddMemberToSessionRequest{
+		SessionId: uuid.NewString(),
+		UserId:    testUserID,
+	}
+
+	_, err := sessionServer.AddMemberToSession(context.Background(), req)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), fmt.Sprintf("failed fetching session %q from database", req.SessionId))
+	assert.Contains(t, err.Error(), "sql: no rows in result set")
+}
+
+func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		Build(db)
+
+	testUserID := uuid.NewString()
+	fakeUserClient := fake.NewFakeUserClient() //.WithUser(testUserID, "user", "username")
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+
+	req := &sessionpb.AddMemberToSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    testUserID,
+	}
+
+	_, err := sessionServer.AddMemberToSession(context.Background(), req)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to fetch user: user not found")
+}
+
+func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, expectedName, expectedUsername string, expectedOwner bool) {
+	var memberName, memberUsername string
+	err := db.QueryRow("select name, username from members where id = ?", memberID).Scan(&memberName, &memberUsername)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedName, memberName)
+	assert.Equal(t, expectedUsername, memberUsername)
+
+	var isOwner bool
+	err = db.QueryRow("select is_owner from session_members where session_id = ? and member_id = ?", sessionID, memberID).Scan(&isOwner)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOwner, isOwner)
 }

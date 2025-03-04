@@ -5,6 +5,7 @@ option go_package = "protos/sessionpb;sessionpb";
 service Session {
   rpc CreateSession(CreateSessionRequest) returns (SessionResponse);
   rpc GetSession(GetSessionRequest) returns (SessionResponse);
+  rpc AddMemberToSession(AddMemberToSessionRequest) returns (EmptyResponse);
 }
 
 message CreateSessionRequest {
@@ -21,3 +22,10 @@ message SessionResponse {
   string name = 2;
   bool is_active = 3;
 }
+
+message AddMemberToSessionRequest {
+  string session_id = 1;
+  string user_id = 2;
+}
+
+message EmptyResponse {}

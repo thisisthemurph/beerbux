@@ -25,7 +25,8 @@ func TestGetSession_Success(t *testing.T) {
 
 	sessionRepo := session.New(db)
 	fakeUserClient := fake.NewFakeUserClient()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").
@@ -45,7 +46,8 @@ func TestGetSession_NotFound(t *testing.T) {
 
 	sessionRepo := session.New(db)
 	fakeUserClient := fake.NewFakeUserClient()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	sessionID := uuid.New().String()
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: sessionID})
@@ -60,7 +62,8 @@ func TestGetSession_InvalidRequest(t *testing.T) {
 
 	sessionRepo := session.New(db)
 	fakeUserClient := fake.NewFakeUserClient()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: ""})
 	assert.Error(t, err)
@@ -74,8 +77,9 @@ func TestCreateSession_Success(t *testing.T) {
 	sessionRepo := session.New(db)
 
 	fakeUserID := uuid.NewString()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(fakeUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.CreateSessionRequest{
 		UserId: fakeUserID,
@@ -104,8 +108,9 @@ func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 	sessionRepo := session.New(db)
 
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(uuid.NewString(), "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.CreateSessionRequest{
 		UserId: uuid.NewString(),
@@ -133,7 +138,8 @@ func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
 		Build(db)
 
 	fakeUserClient := fake.NewFakeUserClient()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,
@@ -155,8 +161,9 @@ func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
 		WithName("Test Session").
 		Build(db)
 
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,
@@ -174,8 +181,9 @@ func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {
 	sessionRepo := session.New(db)
 
 	testUserID := uuid.NewString()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: uuid.NewString(),
@@ -198,8 +206,9 @@ func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 		Build(db)
 
 	testUserID := uuid.NewString()
-	fakeUserClient := fake.NewFakeUserClient() //.WithUser(testUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, slog.Default())
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,

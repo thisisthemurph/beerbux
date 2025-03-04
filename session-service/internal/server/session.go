@@ -52,10 +52,26 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 		return nil, fmt.Errorf("failed to get session %v: %w", r.SessionId, err)
 	}
 
+	members, err := s.sessionRepository.ListMembers(ctx, r.SessionId)
+	if err != nil {
+		s.logger.Error("failed to list members", "error", err)
+		return nil, fmt.Errorf("failed to list members for session %v: %w", r.SessionId, err)
+	}
+
+	sessionMembers := make([]*sessionpb.SessionMember, 0, len(members))
+	for _, m := range members {
+		sessionMembers = append(sessionMembers, &sessionpb.SessionMember{
+			UserId:   m.ID,
+			Name:     m.Name,
+			Username: m.Username,
+		})
+	}
+
 	return &sessionpb.SessionResponse{
 		SessionId: ssn.ID,
 		Name:      ssn.Name,
 		IsActive:  ssn.IsActive,
+		Members:   sessionMembers,
 	}, nil
 }
 

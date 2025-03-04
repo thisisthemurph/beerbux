@@ -17,10 +17,17 @@ message GetSessionRequest {
   string session_id = 1;
 }
 
+message SessionMember {
+  string user_id = 1;
+  string name = 2;
+  string username = 3;
+}
+
 message SessionResponse {
   string session_id = 1;
   string name = 2;
   bool is_active = 3;
+  repeated SessionMember members = 4;
 }
 
 message AddMemberToSessionRequest {

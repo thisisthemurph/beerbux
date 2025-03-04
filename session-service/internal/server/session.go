@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"log/slog"
 	"sync"
 
@@ -17,17 +18,26 @@ import (
 type SessionServer struct {
 	sessionpb.UnimplementedSessionServer
 	TX
-	sessionRepository *session.Queries
-	logger            *slog.Logger
-	userClient        userpb.UserClient
+
+	sessionRepository           *session.Queries
+	logger                      *slog.Logger
+	userClient                  userpb.UserClient
+	sessionMemberAddedPublisher publisher.SessionMemberAddedPublisher
 }
 
-func NewSessionServer(db *sql.DB, sessionRepository *session.Queries, userClient userpb.UserClient, logger *slog.Logger) *SessionServer {
+func NewSessionServer(
+	db *sql.DB,
+	sessionRepository *session.Queries,
+	userClient userpb.UserClient,
+	sessionMemberAddedPublisher publisher.SessionMemberAddedPublisher,
+	logger *slog.Logger,
+) *SessionServer {
 	return &SessionServer{
-		TX:                db,
-		sessionRepository: sessionRepository,
-		userClient:        userClient,
-		logger:            logger,
+		TX:                          db,
+		sessionRepository:           sessionRepository,
+		userClient:                  userClient,
+		sessionMemberAddedPublisher: sessionMemberAddedPublisher,
+		logger:                      logger,
 	}
 }
 
@@ -198,6 +208,10 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	if err := s.sessionMemberAddedPublisher.Publish(r.SessionId, r.UserId); err != nil {
+		s.logger.Error("failed to publish session member added event", "error", err)
 	}
 
 	return &sessionpb.EmptyResponse{}, nil

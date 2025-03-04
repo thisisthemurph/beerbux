@@ -3,6 +3,7 @@ package application
 import (
 	"database/sql"
 	"fmt"
+	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
@@ -78,6 +79,7 @@ func (app *App) NewSessionGRPCServer() *grpc.Server {
 		app.DB,
 		app.SessionRepository,
 		app.UserClient,
+		publisher.NewSessionMemberAddedNatsPublisher(app.NatsConn),
 		app.Logger,
 	)
 

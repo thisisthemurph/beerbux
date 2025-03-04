@@ -84,6 +84,42 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 	return i, err
 }
 
+const listMembers = `-- name: ListMembers :many
+select m.id, m.name, m.username, m.created_at, m.updated_at
+from members m
+join session_members sm on m.id = sm.member_id
+where sm.session_id = ?
+`
+
+func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, error) {
+	rows, err := q.db.QueryContext(ctx, listMembers, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Member
+	for rows.Next() {
+		var i Member
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateMember = `-- name: UpdateMember :exec
 update members
 set name = ?,

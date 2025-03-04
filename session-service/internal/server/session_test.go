@@ -40,6 +40,59 @@ func TestGetSession_Success(t *testing.T) {
 	assert.True(t, resp.IsActive)
 }
 
+func TestGetSession_FetchesAllSessionMembers_Success(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		WithMember(builder.SessionMemberParams{
+			ID:       uuid.NewString(),
+			Name:     "member1",
+			Username: "username1",
+			IsOwner:  true,
+		}).
+		WithMember(builder.SessionMemberParams{
+			ID:       uuid.NewString(),
+			Name:     "member2",
+			Username: "username2",
+		}).
+		WithMember(builder.SessionMemberParams{
+			ID:       uuid.NewString(),
+			Name:     "member3",
+			Username: "username3",
+		}).
+		Build(db)
+
+	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: ssn.ID})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, ssn.ID, resp.SessionId)
+	assert.Equal(t, ssn.Name, resp.Name)
+	assert.True(t, resp.IsActive)
+
+	expectedMembers := map[string]string{
+		"member1": "username1",
+		"member2": "username2",
+		"member3": "username3",
+	}
+
+	for _, m := range resp.Members {
+		expectedUsername, exists := expectedMembers[m.Name]
+		assert.True(t, exists)
+		assert.Equal(t, expectedUsername, m.Username)
+		delete(expectedMembers, m.Name)
+	}
+
+	// Ensure all expected members have been found
+	assert.Len(t, expectedMembers, 0, "Not all members were checked")
+}
+
 func TestGetSession_NotFound(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })

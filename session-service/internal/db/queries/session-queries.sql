@@ -9,6 +9,12 @@ returning *;
 -- name: GetMember :one
 select * from members where id = ? limit 1;
 
+-- name: ListMembers :many
+select m.*
+from members m
+join session_members sm on m.id = sm.member_id
+where sm.session_id = ?;
+
 -- name: UpsertMember :exec
 insert into members (id, name, username)
 values (?, ?, ?)

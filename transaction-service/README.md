@@ -1,5 +1,8 @@
 # transaction-service
 
+The transaction-service receives gRPC requests to create a transaction, validates that transaction, and publishes an
+event detailing the transaction with the new transaction ID.
+
 **Create a transaction**
 
 ```shell

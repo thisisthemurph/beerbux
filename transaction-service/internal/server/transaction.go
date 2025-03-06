@@ -13,6 +13,18 @@ import (
 	"github.com/thisisthemurph/beerbux/transaction-service/protos/transactionpb"
 )
 
+var (
+	ErrInvalidUUID                = errors.New("invalid UUID")
+	ErrCreatorCannotBeMember      = errors.New("creator cannot be a member of the transaction")
+	ErrSessionIDRequired          = errors.New("session_id is required")
+	ErrInactiveSession            = errors.New("session is inactive")
+	ErrMemberNotPartOfSession     = errors.New("member is not part of the session")
+	ErrMemberAmountRequired       = errors.New("member amount is required")
+	ErrMemberAmountUserIDRequired = errors.New("member amount user ID is required")
+	ErrMemberAmountTooLow         = errors.New("member amount must be at least 0.5")
+	ErrMemberAmountTooHigh        = errors.New("member amount cannot be more than 2")
+)
+
 type TransactionServer struct {
 	transactionpb.UnimplementedTransactionServer
 	sessionClient               sessionpb.SessionClient
@@ -36,7 +48,7 @@ func (s *TransactionServer) CreateTransaction(ctx context.Context, r *transactio
 	})
 
 	if fn.Contains(memberIDLookup, r.CreatorId) {
-		return nil, errors.New("creator cannot be a member of the transaction")
+		return nil, ErrCreatorCannotBeMember
 	}
 
 	if err := s.validateSession(ctx, r.SessionId, memberIDLookup); err != nil {
@@ -77,7 +89,7 @@ func (s *TransactionServer) CreateTransaction(ctx context.Context, r *transactio
 //   - Validate that the given members are members of the session.
 func (s *TransactionServer) validateSession(ctx context.Context, sessionID string, memberIDLookup []string) error {
 	if sessionID == "" {
-		return errors.New("session_id is required")
+		return ErrSessionIDRequired
 	}
 
 	ssn, err := s.sessionClient.GetSession(ctx, &sessionpb.GetSessionRequest{
@@ -89,7 +101,7 @@ func (s *TransactionServer) validateSession(ctx context.Context, sessionID strin
 	}
 
 	if !ssn.IsActive {
-		return errors.New("cannot create a session for an inactive session")
+		return ErrInactiveSession
 	}
 
 	sessionMemberIDs := fn.Map(ssn.Members, func(m *sessionpb.SessionMember) string {
@@ -98,7 +110,7 @@ func (s *TransactionServer) validateSession(ctx context.Context, sessionID strin
 
 	for _, memberID := range memberIDLookup {
 		if !fn.Contains(sessionMemberIDs, memberID) {
-			return errors.New("member is not part of the session")
+			return ErrMemberNotPartOfSession
 		}
 	}
 
@@ -108,24 +120,32 @@ func (s *TransactionServer) validateSession(ctx context.Context, sessionID strin
 // validateCreateTransactionRequest validates the given request.
 func validateCreateTransactionRequest(r *transactionpb.CreateTransactionRequest) error {
 	if r.SessionId == "" {
-		return errors.New("session_id is required")
+		return ErrSessionIDRequired
+	}
+
+	if err := validateStringUUID(r.SessionId); err != nil {
+		return ErrInvalidUUID
 	}
 
 	if r.MemberAmounts == nil || len(r.MemberAmounts) == 0 {
-		return errors.New("member_amounts is required")
+		return ErrMemberAmountRequired
 	}
 
 	for _, memberAmount := range r.MemberAmounts {
 		if memberAmount.UserId == "" {
-			return errors.New("member_amounts.user_id is required")
+			return ErrMemberAmountUserIDRequired
+		}
+
+		if err := validateStringUUID(memberAmount.UserId); err != nil {
+			return ErrInvalidUUID
 		}
 
 		if memberAmount.Amount <= 0.5 {
-			return errors.New("member_amounts.amount must at least 0.5")
+			return ErrMemberAmountTooLow
 		}
 
 		if memberAmount.Amount > 2 {
-			return errors.New("member_amounts.amount cannot be more than 2")
+			return ErrMemberAmountTooHigh
 		}
 	}
 

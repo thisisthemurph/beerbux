@@ -1,16 +1,26 @@
-package handler
+package event
 
 import (
 	"github.com/google/uuid"
 	"time"
 )
 
-type EventMetadata struct {
+type Metadata struct {
 	Event         string    `json:"event"`
 	Version       string    `json:"version"`
 	Timestamp     time.Time `json:"timestamp"`
 	Source        string    `json:"source,omitempty"`
-	CorrelationID uuid.UUID `json:"correlation_id,omitempty"`
+	CorrelationID string    `json:"correlation_id,omitempty"`
+}
+
+func NewMetadata(event, version, correlationID string) Metadata {
+	return Metadata{
+		Event:         event,
+		Version:       version,
+		Timestamp:     time.Now(),
+		Source:        "ledger-service",
+		CorrelationID: correlationID,
+	}
 }
 
 type TransactionCreatedMemberAmount struct {
@@ -26,6 +36,6 @@ type TransactionCreatedEventData struct {
 }
 
 type TransactionCreatedEvent struct {
-	EventMetadata
+	Metadata
 	Data TransactionCreatedEventData `json:"data"`
 }

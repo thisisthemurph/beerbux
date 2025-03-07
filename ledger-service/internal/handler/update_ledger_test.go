@@ -1,13 +1,12 @@
 package handler_test
 
 import (
-	"encoding/json"
 	"log/slog"
 	"testing"
-	
+
 	"github.com/google/uuid"
-	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
+	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/repository"
 	"github.com/thisisthemurph/beerbux/ledger-service/tests/testinfra"
@@ -18,17 +17,17 @@ func TestHandle_Success(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 
 	repo := repository.NewLedgerQueries(db)
-	h := handler.NewTransactionCreatedMsgHandler(repo, slog.Default())
+	h := handler.NewUpdateLedgerHandler(repo, slog.Default())
 
-	ev := handler.TransactionCreatedEvent{
-		EventMetadata: handler.EventMetadata{
+	ev := event.TransactionCreatedEvent{
+		Metadata: event.Metadata{
 			Version: "1.0.0",
 		},
-		Data: handler.TransactionCreatedEventData{
+		Data: event.TransactionCreatedEventData{
 			TransactionID: uuid.New(),
 			CreatorID:     uuid.New(),
 			SessionID:     uuid.New(),
-			MemberAmounts: []handler.TransactionCreatedMemberAmount{
+			MemberAmounts: []event.TransactionCreatedMemberAmount{
 				{
 					UserID: uuid.New(),
 					Amount: 1,
@@ -41,11 +40,17 @@ func TestHandle_Success(t *testing.T) {
 		},
 	}
 
-	eventData, err := json.Marshal(ev)
+	res, err := h.Handle(ev)
 	assert.NoError(t, err)
-	msg := nats.Msg{Data: eventData}
+	assert.NotNil(t, res)
 
-	h.Handle(&msg)
+	for i, r := range res {
+		assert.NotEmpty(t, r.ID)
+		assert.Equal(t, ev.Data.TransactionID, r.TransactionID)
+		assert.Equal(t, ev.Data.SessionID.String(), r.SessionID.String())
+		assert.Equal(t, ev.Data.MemberAmounts[i].UserID.String(), r.UserID.String())
+		assert.Equal(t, ev.Data.MemberAmounts[i].Amount, r.Amount)
+	}
 
 	query := `select session_id, user_id, amount from ledger where transaction_id = ?;`
 	rows, err := db.Query(query, ev.Data.TransactionID)

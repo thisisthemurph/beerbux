@@ -15,7 +15,7 @@ func NewEventMetadata(event, version, correlationID string) EventMetadata {
 		Event:         event,
 		Version:       version,
 		Timestamp:     time.Now(),
-		Source:        "user-service",
+		Source:        "transaction-service",
 		CorrelationID: correlationID,
 	}
 }

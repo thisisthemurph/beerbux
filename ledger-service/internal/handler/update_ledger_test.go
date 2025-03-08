@@ -1,6 +1,8 @@
 package handler_test
 
 import (
+	"context"
+	"database/sql"
 	"log/slog"
 	"testing"
 
@@ -12,63 +14,117 @@ import (
 	"github.com/thisisthemurph/beerbux/ledger-service/tests/testinfra"
 )
 
-func TestHandle_Success(t *testing.T) {
+// SetupTestHandler initializes the test database and handler
+func SetupTestHandler(db *sql.DB) *handler.UpdateLedgerHandler {
+	repo := repository.NewLedgerQueries(db)
+	return handler.NewUpdateLedgerHandler(repo, slog.Default())
+}
+
+// CreateTestEvent generates a test TransactionCreatedEvent with given member amounts
+func CreateTestEvent(creatorID uuid.UUID, memberAmounts []event.TransactionCreatedMemberAmount) event.TransactionCreatedEvent {
+	return event.TransactionCreatedEvent{
+		Metadata: event.Metadata{Version: "1.0.0"},
+		Data: event.TransactionCreatedEventData{
+			TransactionID: uuid.New(),
+			CreatorID:     creatorID,
+			SessionID:     uuid.New(),
+			MemberAmounts: memberAmounts,
+		},
+	}
+}
+
+func TestHandle(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
-	repo := repository.NewLedgerQueries(db)
-	h := handler.NewUpdateLedgerHandler(repo, slog.Default())
+	h := SetupTestHandler(db)
 
-	ev := event.TransactionCreatedEvent{
-		Metadata: event.Metadata{
-			Version: "1.0.0",
+	testCases := []struct {
+		name          string
+		memberAmounts []event.TransactionCreatedMemberAmount
+		expectError   bool
+	}{
+		{
+			name: "Valid transaction with two members",
+			memberAmounts: []event.TransactionCreatedMemberAmount{
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 0.5},
+			},
 		},
-		Data: event.TransactionCreatedEventData{
-			TransactionID: uuid.New(),
-			CreatorID:     uuid.New(),
-			SessionID:     uuid.New(),
-			MemberAmounts: []event.TransactionCreatedMemberAmount{
-				{
-					UserID: uuid.New(),
-					Amount: 1,
-				},
-				{
-					UserID: uuid.New(),
-					Amount: 0.5,
-				},
+		{
+			name:          "No members (invalid case)",
+			memberAmounts: []event.TransactionCreatedMemberAmount{},
+			expectError:   true,
+		},
+		{
+			name: "Single member (valid case)",
+			memberAmounts: []event.TransactionCreatedMemberAmount{
+				{UserID: uuid.New(), Amount: 1.5},
+			},
+		},
+		{
+			name: "Many members (valid case)",
+			memberAmounts: []event.TransactionCreatedMemberAmount{
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.New(), Amount: 1.0},
 			},
 		},
 	}
 
-	res, err := h.Handle(ev)
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			creatorID := uuid.New()
+			ev := CreateTestEvent(creatorID, tc.memberAmounts)
 
-	for i, r := range res {
-		assert.NotEmpty(t, r.ID)
-		assert.Equal(t, ev.Data.TransactionID, r.TransactionID)
-		assert.Equal(t, ev.Data.SessionID.String(), r.SessionID.String())
-		assert.Equal(t, ev.Data.MemberAmounts[i].UserID.String(), r.UserID.String())
-		assert.Equal(t, ev.Data.MemberAmounts[i].Amount, r.Amount)
+			res, err := h.Handle(context.Background(), ev)
+
+			if tc.expectError {
+				assert.Error(t, err, "Expected an error but got none")
+				return
+			}
+
+			assert.NoError(t, err, "Handler should not return an error")
+			assert.Len(t, res, len(tc.memberAmounts)*2, "Should have double the entries (debits & credits)")
+
+			// Validate debits and credits
+			debits := make([]*handler.LedgerUpdateResult, 0)
+			credits := make([]*handler.LedgerUpdateResult, 0)
+
+			for _, r := range res {
+				if r.UserID == creatorID {
+					debits = append(debits, r)
+				} else {
+					credits = append(credits, r)
+				}
+			}
+
+			assert.Len(t, debits, len(tc.memberAmounts), "Should have one debit per member")
+			assert.Len(t, credits, len(tc.memberAmounts), "Should have one credit per member")
+
+			for i, r := range debits {
+				assert.Equal(t, ev.Data.TransactionID, r.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.Data.SessionID, r.SessionID, "Session ID mismatch")
+				assert.Equal(t, creatorID, r.UserID, "UserID should match creator")
+				assert.Equal(t, -ev.Data.MemberAmounts[i].Amount, r.Amount, "Debit amount should be negative")
+			}
+
+			for i, r := range credits {
+				assert.Equal(t, ev.Data.TransactionID, r.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.Data.SessionID, r.SessionID, "Session ID mismatch")
+				assert.Equal(t, ev.Data.MemberAmounts[i].UserID, r.UserID, "UserID should match member")
+				assert.Equal(t, ev.Data.MemberAmounts[i].Amount, r.Amount, "Credit amount should match")
+			}
+		})
 	}
-
-	query := `select session_id, user_id, amount from ledger where transaction_id = ?;`
-	rows, err := db.Query(query, ev.Data.TransactionID)
-	assert.NoError(t, err)
-	defer rows.Close()
-
-	var sessionID, userID string
-	var amount float64
-
-	i := 0
-	for rows.Next() {
-		err := rows.Scan(&sessionID, &userID, &amount)
-		assert.NoError(t, err)
-		assert.Equal(t, ev.Data.SessionID.String(), sessionID)
-		assert.Equal(t, ev.Data.MemberAmounts[i].UserID.String(), userID)
-		assert.Equal(t, ev.Data.MemberAmounts[i].Amount, amount)
-		i++
-	}
-
-	assert.Equal(t, len(ev.Data.MemberAmounts), i)
 }

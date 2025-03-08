@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -105,7 +106,7 @@ func transactionCreatedMsgHandlerFn(
 			return
 		}
 
-		results, err := handler.Handle(ev)
+		results, err := handler.Handle(context.Background(), ev)
 		if err != nil {
 			logger.Error("failed to handle message", "error", err)
 			errChan <- ev

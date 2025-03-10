@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/segmentio/kafka-go"
+	"github.com/thisisthemurph/beerbux/shared/kafkatopic"
 	"log/slog"
 	"net"
 	"os"
 
-	"github.com/nats-io/nats.go"
 	"github.com/thisisthemurph/beerbux/user-service/internal/config"
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
@@ -33,6 +34,12 @@ func run() error {
 		Level:     cfg.SlogLevel(),
 	}))
 
+	logger.Debug("ensuring Kafka topics exist")
+	if err := ensureKafkaTopics(cfg.Kafka.Brokers); err != nil {
+		logger.Error("failed to ensure Kafka topics", "error", err)
+		return fmt.Errorf("failed to ensure Kafka topics: %w", err)
+	}
+
 	logger.Debug("connecting to the database")
 	db, err := sql.Open(cfg.Database.Driver, cfg.Database.URI)
 	if err != nil {
@@ -40,16 +47,9 @@ func run() error {
 	}
 	defer db.Close()
 
-	nc, err := nats.Connect(nats.DefaultURL)
-	if err != nil {
-		return err
-	}
-	defer nc.Close()
-
-	userCreatedPublisher := publisher.NewUserCreatedNatsPublisher(nc)
-	userUpdatedPublisher := publisher.NewUserUpdatedNatsPublisher(nc)
-
-	logger.Debug("connected to NATS", "url", nats.DefaultURL)
+	logger.Debug("connecting to Kafka brokers", "brokers", cfg.Kafka.Brokers)
+	userCreatedPublisher := publisher.NewUserCreatedKafkaPublisher(cfg.Kafka.Brokers)
+	userUpdatedPublisher := publisher.NewUserUpdatedKafkaPublisher(cfg.Kafka.Brokers)
 
 	queries := user.New(db)
 	userServer := server.NewUserServer(queries, userCreatedPublisher, userUpdatedPublisher, logger)
@@ -69,4 +69,24 @@ func run() error {
 	defer listener.Close()
 
 	return grpcServer.Serve(listener)
+}
+
+func ensureKafkaTopics(brokers []string) error {
+	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+		Topic:             "user.created",
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to ensure user.created Kafka topic: %w", err)
+	}
+
+	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+		Topic:             "user.updated",
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to ensure user.updated Kafka topic: %w", err)
+	}
+
+	return nil
 }

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	
+	"strings"
+
 	"github.com/joho/godotenv"
 )
 
@@ -18,11 +19,16 @@ type Config struct {
 	Environment       Environment
 	UserServerAddress string
 	Database          DBConfig
+	Kafka             KafkaConfig
 }
 
 type DBConfig struct {
 	Driver string
 	URI    string
+}
+
+type KafkaConfig struct {
+	Brokers []string
 }
 
 func Load() *Config {
@@ -37,6 +43,9 @@ func Load() *Config {
 		Database: DBConfig{
 			Driver: mustGetenv("DB_DRIVER"),
 			URI:    mustGetenv("DB_URI"),
+		},
+		Kafka: KafkaConfig{
+			Brokers: strings.Split(mustGetenv("KAFKA_BROKERS"), ","),
 		},
 	}
 }

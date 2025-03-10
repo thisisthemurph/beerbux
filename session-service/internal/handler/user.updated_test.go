@@ -2,11 +2,10 @@ package handler_test
 
 import (
 	"encoding/json"
-	"log/slog"
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/thisisthemurph/beerbux/session-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
@@ -20,7 +19,7 @@ func TestUserUpdatedHandler_Success(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 
 	sessionRepo := session.New(db)
-	h := handler.NewUserUpdatedEventHandler(sessionRepo, slog.Default())
+	h := handler.NewUserUpdatedEventHandler(sessionRepo)
 
 	member := builder.NewMemberBuilder(t).
 		WithName("John Doe").
@@ -28,25 +27,19 @@ func TestUserUpdatedHandler_Success(t *testing.T) {
 		Build(db)
 
 	data := map[string]interface{}{
-		"user": map[string]interface{}{
-			"user_id": member.ID,
-			"updated_fields": map[string]interface{}{
-				"name":       "Updated Name",
-				"username":   "updated.name",
-				"updated_at": "2021-09-01T00:00:00Z",
-			},
+		"user_id": member.ID,
+		"updated_fields": map[string]interface{}{
+			"name":       "Updated Name",
+			"username":   "updated.name",
+			"updated_at": "2021-09-01T00:00:00Z",
 		},
 	}
 
 	msgData, err := json.Marshal(data)
 	assert.NoError(t, err)
 
-	msg := nats.Msg{
-		Subject: "user.updated",
-		Data:    msgData,
-	}
-
-	h.Handle(&msg)
+	err = h.Handle(kafka.Message{Value: msgData})
+	assert.NoError(t, err)
 
 	var name, username string
 	var updatedAt time.Time

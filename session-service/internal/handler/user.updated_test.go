@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -38,7 +39,7 @@ func TestUserUpdatedHandler_Success(t *testing.T) {
 	msgData, err := json.Marshal(data)
 	assert.NoError(t, err)
 
-	err = h.Handle(kafka.Message{Value: msgData})
+	err = h.Handle(context.Background(), kafka.Message{Value: msgData})
 	assert.NoError(t, err)
 
 	var name, username string

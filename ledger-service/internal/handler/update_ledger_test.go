@@ -21,11 +21,11 @@ func SetupTestHandler(db *sql.DB) *handler.UpdateLedgerHandler {
 }
 
 // CreateTestEvent generates a test event.TransactionCreatedEvent with given member amounts.
-func CreateTestEvent(creatorID uuid.UUID, memberAmounts []event.TransactionCreatedMemberAmount) event.TransactionCreatedEvent {
+func CreateTestEvent(creatorID string, memberAmounts []event.TransactionCreatedMemberAmount) event.TransactionCreatedEvent {
 	return event.TransactionCreatedEvent{
-		TransactionID: uuid.New(),
+		TransactionID: uuid.NewString(),
 		CreatorID:     creatorID,
-		SessionID:     uuid.New(),
+		SessionID:     uuid.NewString(),
 		MemberAmounts: memberAmounts,
 	}
 }
@@ -44,8 +44,8 @@ func TestHandle(t *testing.T) {
 		{
 			name: "Valid transaction with two members",
 			memberAmounts: []event.TransactionCreatedMemberAmount{
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 0.5},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 0.5},
 			},
 		},
 		{
@@ -56,32 +56,32 @@ func TestHandle(t *testing.T) {
 		{
 			name: "Single member (valid case)",
 			memberAmounts: []event.TransactionCreatedMemberAmount{
-				{UserID: uuid.New(), Amount: 1.5},
+				{UserID: uuid.NewString(), Amount: 1.5},
 			},
 		},
 		{
 			name: "Many members (valid case)",
 			memberAmounts: []event.TransactionCreatedMemberAmount{
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
-				{UserID: uuid.New(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
+				{UserID: uuid.NewString(), Amount: 1.0},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			creatorID := uuid.New()
+			creatorID := uuid.NewString()
 			ev := CreateTestEvent(creatorID, tc.memberAmounts)
 
 			res, err := h.Handle(context.Background(), ev)
@@ -95,8 +95,8 @@ func TestHandle(t *testing.T) {
 			assert.Len(t, res, len(tc.memberAmounts)*2, "Should have double the entries (debits & credits)")
 
 			// Validate debits and credits
-			debits := make([]*handler.LedgerUpdateResult, 0)
-			credits := make([]*handler.LedgerUpdateResult, 0)
+			debits := make([]handler.MemberTransaction, 0)
+			credits := make([]handler.MemberTransaction, 0)
 
 			for _, r := range res {
 				if r.UserID == creatorID {
@@ -109,18 +109,20 @@ func TestHandle(t *testing.T) {
 			assert.Len(t, debits, len(tc.memberAmounts), "Should have one debit per member")
 			assert.Len(t, credits, len(tc.memberAmounts), "Should have one credit per member")
 
-			for i, r := range debits {
-				assert.Equal(t, ev.TransactionID, r.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.SessionID, r.SessionID, "Session ID mismatch")
-				assert.Equal(t, creatorID, r.UserID, "UserID should match creator")
-				assert.Equal(t, -ev.MemberAmounts[i].Amount, r.Amount, "Debit amount should be negative")
+			for i, mt := range debits {
+				assert.Equal(t, ev.TransactionID, mt.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.SessionID, mt.SessionID, "Session ID mismatch")
+				assert.Equal(t, creatorID, mt.UserID, "UserID should match creator")
+				assert.Equal(t, ev.MemberAmounts[i].UserID, mt.ParticipantID, "ParticipantID should match member")
+				assert.Equal(t, -ev.MemberAmounts[i].Amount, mt.Amount, "Debit amount should be negative")
 			}
 
-			for i, r := range credits {
-				assert.Equal(t, ev.TransactionID, r.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.SessionID, r.SessionID, "Session ID mismatch")
-				assert.Equal(t, ev.MemberAmounts[i].UserID, r.UserID, "UserID should match member")
-				assert.Equal(t, ev.MemberAmounts[i].Amount, r.Amount, "Credit amount should match")
+			for i, mt := range credits {
+				assert.Equal(t, ev.TransactionID, mt.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.SessionID, mt.SessionID, "Session ID mismatch")
+				assert.Equal(t, creatorID, mt.ParticipantID, "ParticipantID should match creator")
+				assert.Equal(t, ev.MemberAmounts[i].UserID, mt.UserID, "UserID should match member")
+				assert.Equal(t, ev.MemberAmounts[i].Amount, mt.Amount, "Credit amount should match")
 			}
 		})
 	}

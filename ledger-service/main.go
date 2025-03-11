@@ -62,7 +62,7 @@ func run(cfg *config.Config) error {
 	}()
 
 	// ledgerChan is appended to when a new ledger item is added to the database.
-	ledgerChan := make(chan *handler.LedgerUpdateResult)
+	ledgerChan := make(chan handler.MemberTransaction)
 	defer close(ledgerChan)
 
 	// errChan is appended to when an error occurs while processing a transaction.created event.
@@ -80,11 +80,12 @@ func run(cfg *config.Config) error {
 		select {
 		case l := <-ledgerChan:
 			logger.Debug("ledger updated", "result", l)
-			err := ledgerUpdatedPublisher.Publish(ctx, publisher.LedgerUpdatedEvent{
+			err := ledgerUpdatedPublisher.Publish(ctx, event.LedgerUpdatedEvent{
 				ID:            l.ID,
 				TransactionID: l.TransactionID,
 				SessionID:     l.SessionID,
 				UserID:        l.UserID,
+				ParticipantID: l.ParticipantID,
 				Amount:        l.Amount,
 			})
 			if err != nil {
@@ -101,12 +102,16 @@ func run(cfg *config.Config) error {
 }
 
 func ensureKafkaTopics(brokers []string) error {
-	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
-		Topic:             "ledger.updated",
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	}); err != nil {
-		return fmt.Errorf("failed to ensure ledger.updated Kafka topic: %w", err)
+	topics := []string{publisher.TopicLedgerUpdated}
+
+	for _, topic := range topics {
+		if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+			Topic:             topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		}); err != nil {
+			return fmt.Errorf("failed to ensure %v Kafka topic: %w", topic, err)
+		}
 	}
 
 	return nil
@@ -117,7 +122,7 @@ func listenForTransactionCreatedEvents(
 	logger *slog.Logger,
 	brokers []string,
 	h *handler.UpdateLedgerHandler,
-	ledgerChan chan<- *handler.LedgerUpdateResult,
+	ledgerChan chan<- handler.MemberTransaction,
 	errChan chan<- event.TransactionCreatedEvent,
 ) {
 	reader := kafka.NewReader(kafka.ReaderConfig{

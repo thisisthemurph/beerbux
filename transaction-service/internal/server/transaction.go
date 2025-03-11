@@ -56,8 +56,7 @@ func (s *TransactionServer) CreateTransaction(ctx context.Context, r *transactio
 	}
 
 	transactionID := uuid.NewString()
-
-	err := s.transactionCreatedPublisher.Publish(publisher.TransactionCreatedEventData{
+	err := s.transactionCreatedPublisher.Publish(ctx, publisher.TransactionCreatedEvent{
 		TransactionID: transactionID,
 		CreatorID:     r.CreatorId,
 		SessionID:     r.SessionId,

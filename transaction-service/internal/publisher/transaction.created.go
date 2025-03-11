@@ -1,60 +1,56 @@
 package publisher
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
-
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 )
-
-const SubjectTransactionCreated = "transaction.created"
 
 type TransactionCreatedMemberAmount struct {
 	UserID string  `json:"user_id"`
 	Amount float64 `json:"amount"`
 }
 
-type TransactionCreatedEventData struct {
+type TransactionCreatedEvent struct {
 	TransactionID string                           `json:"transaction_id"`
 	CreatorID     string                           `json:"creator_id"`
 	SessionID     string                           `json:"session_id"`
 	MemberAmounts []TransactionCreatedMemberAmount `json:"member_amounts"`
 }
 
-type TransactionCreatedEvent struct {
-	EventMetadata
-	Data TransactionCreatedEventData `json:"data"`
-}
-
 type TransactionCreatedPublisher interface {
-	Publish(t TransactionCreatedEventData) error
+	Publish(ctx context.Context, t TransactionCreatedEvent) error
 }
 
-type TransactionCreatedNatsPublisher struct {
-	nc      *nats.Conn
-	subject string
+type TransactionCreatedKafkaPublisher struct {
+	writer *kafka.Writer
 }
 
-func NewTransactionCreatedNatsPublisher(nc *nats.Conn) TransactionCreatedPublisher {
-	return &TransactionCreatedNatsPublisher{
-		nc:      nc,
-		subject: SubjectTransactionCreated,
+func NewTransactionCreatedKafkaPublisher(brokers []string) TransactionCreatedPublisher {
+	return &TransactionCreatedKafkaPublisher{
+		writer: &kafka.Writer{
+			Addr:  kafka.TCP(brokers...),
+			Topic: TopicTransactionCreated,
+		},
 	}
 }
 
-func (p *TransactionCreatedNatsPublisher) Publish(ev TransactionCreatedEventData) error {
-	msg := TransactionCreatedEvent{
-		EventMetadata: NewEventMetadata(SubjectTransactionCreated, "1.0.0", ev.TransactionID),
-		Data:          ev,
-	}
-
-	msgData, err := json.Marshal(msg)
+func (p *TransactionCreatedKafkaPublisher) Publish(ctx context.Context, ev TransactionCreatedEvent) error {
+	data, err := json.Marshal(ev)
 	if err != nil {
-		return fmt.Errorf("failed to marshal event %v: %w", ev.TransactionID, err)
+		return err
 	}
 
-	if err := p.nc.Publish(p.subject, msgData); err != nil {
-		return fmt.Errorf("failed to publish %q message: %w", p.subject, err)
+	msg := kafka.Message{
+		Value: data,
+		Headers: []kafka.Header{
+			{"version", []byte("1.0.0")},
+			{"source", []byte("transaction-service")},
+		},
+	}
+
+	if err := p.writer.WriteMessages(ctx, msg); err != nil {
+		return err
 	}
 
 	return nil

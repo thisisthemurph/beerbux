@@ -1,36 +1,28 @@
 package event
 
-import (
-	"github.com/google/uuid"
-	"time"
-)
-
-type Metadata struct {
-	Event         string    `json:"event"`
-	Version       string    `json:"version"`
-	Timestamp     time.Time `json:"timestamp"`
-	Source        string    `json:"source,omitempty"`
-	CorrelationID string    `json:"correlation_id,omitempty"`
-}
-
-func NewMetadata(event, version, correlationID string) Metadata {
-	return Metadata{
-		Event:         event,
-		Version:       version,
-		Timestamp:     time.Now(),
-		Source:        "ledger-service",
-		CorrelationID: correlationID,
-	}
-}
-
 type TransactionCreatedMemberAmount struct {
-	UserID uuid.UUID `json:"user_id"`
-	Amount float64   `json:"amount"`
+	UserID string  `json:"user_id"`
+	Amount float64 `json:"amount"`
 }
 
+// TransactionCreatedEvent is an event that is published when a transaction is created.
+// The CreatorID indicates the user who created the transaction.
+// The MemberAmounts slice contains the user IDs and amounts for each member of the transaction.
 type TransactionCreatedEvent struct {
-	TransactionID uuid.UUID                        `json:"transaction_id"`
-	CreatorID     uuid.UUID                        `json:"creator_id"`
-	SessionID     uuid.UUID                        `json:"session_id"`
+	TransactionID string                           `json:"transaction_id"`
+	CreatorID     string                           `json:"creator_id"`
+	SessionID     string                           `json:"session_id"`
 	MemberAmounts []TransactionCreatedMemberAmount `json:"member_amounts"`
+}
+
+// LedgerUpdatedEvent is an event that is published when the ledger is updated.
+// This event contains a single transaction from the ledger.
+// The transaction will be between the creator and one of the members or one of the members and the creator.
+type LedgerUpdatedEvent struct {
+	ID            string  `json:"id"`
+	TransactionID string  `json:"transaction_id"`
+	SessionID     string  `json:"session_id"`
+	UserID        string  `json:"user_id"`
+	ParticipantID string  `json:"participant_id"`
+	Amount        float64 `json:"amount"`
 }

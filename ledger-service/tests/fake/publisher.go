@@ -2,6 +2,7 @@ package fake
 
 import (
 	"context"
+	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/publisher"
 )
 
@@ -11,6 +12,6 @@ func NewFakeLedgerUpdatedPublisher() publisher.LedgerUpdatedPublisher {
 	return &LedgerUpdatedSuccessPublisher{}
 }
 
-func (p *LedgerUpdatedSuccessPublisher) Publish(ctx context.Context, ev publisher.LedgerUpdatedEvent) error {
+func (p *LedgerUpdatedSuccessPublisher) Publish(ctx context.Context, ev event.LedgerUpdatedEvent) error {
 	return nil
 }

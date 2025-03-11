@@ -13,6 +13,8 @@ Start the Kafka cluster in Docker:
 docker compose up -d
 ```
 
+You should be able to access the Kafka UI at [http://localhost:7605](http://localhost:7605).
+
 **Databases**
 
 Each of the services persists their data in their own databases.

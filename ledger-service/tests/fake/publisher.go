@@ -1,7 +1,7 @@
 package fake
 
 import (
-	"github.com/google/uuid"
+	"context"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/publisher"
 )
 
@@ -11,6 +11,6 @@ func NewFakeLedgerUpdatedPublisher() publisher.LedgerUpdatedPublisher {
 	return &LedgerUpdatedSuccessPublisher{}
 }
 
-func (p *LedgerUpdatedSuccessPublisher) Publish(id, transactionID, sessionID, userID uuid.UUID, amount float64) error {
+func (p *LedgerUpdatedSuccessPublisher) Publish(ctx context.Context, ev publisher.LedgerUpdatedEvent) error {
 	return nil
 }

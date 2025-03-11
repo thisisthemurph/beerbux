@@ -1,15 +1,16 @@
 package publisher
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
-	"github.com/nats-io/nats.go"
-	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
+	"github.com/segmentio/kafka-go"
 )
 
-const SubjectLedgerUpdated = "ledger.updated"
+const TopicLedgerUpdated = "ledger.updated"
 
-type LedgerUpdatedEventData struct {
+type LedgerUpdatedEvent struct {
 	ID            uuid.UUID `json:"id"`
 	TransactionID uuid.UUID `json:"transaction_id"`
 	SessionID     uuid.UUID `json:"session_id"`
@@ -17,46 +18,40 @@ type LedgerUpdatedEventData struct {
 	Amount        float64   `json:"amount"`
 }
 
-type LedgerUpdatedEvent struct {
-	event.Metadata
-	Data LedgerUpdatedEventData `json:"data"`
-}
-
 type LedgerUpdatedPublisher interface {
-	Publish(id, transactionID, sessionID, userID uuid.UUID, amount float64) error
+	Publish(ctx context.Context, ev LedgerUpdatedEvent) error
 }
 
-type LedgerUpdatedNatsPublisher struct {
-	nc      *nats.Conn
-	subject string
+type LedgerUpdatedKafkaPublisher struct {
+	writer *kafka.Writer
 }
 
-func NewLedgerUpdatedNatsPublisher(nc *nats.Conn) LedgerUpdatedPublisher {
-	return &LedgerUpdatedNatsPublisher{
-		nc:      nc,
-		subject: SubjectLedgerUpdated,
+func NewLedgerUpdatedKafkaPublisher(brokers []string) LedgerUpdatedPublisher {
+	return &LedgerUpdatedKafkaPublisher{
+		writer: &kafka.Writer{
+			Addr:  kafka.TCP(brokers...),
+			Topic: TopicLedgerUpdated,
+		},
 	}
 }
 
-func (p *LedgerUpdatedNatsPublisher) Publish(id, transactionID, sessionID, userID uuid.UUID, amount float64) error {
-	msg := LedgerUpdatedEvent{
-		Metadata: event.NewMetadata(SubjectLedgerUpdated, "1.0.0", transactionID.String()),
-		Data: LedgerUpdatedEventData{
-			ID:            id,
-			TransactionID: transactionID,
-			SessionID:     sessionID,
-			UserID:        userID,
-			Amount:        amount,
+func (p *LedgerUpdatedKafkaPublisher) Publish(ctx context.Context, ev LedgerUpdatedEvent) error {
+	data, err := json.Marshal(ev)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ledger updated event %v: %w", ev.ID, err)
+	}
+
+	msg := kafka.Message{
+		Key:   []byte(ev.TransactionID.String()),
+		Value: data,
+		Headers: []kafka.Header{
+			{"version", []byte("1.0.0")},
+			{"source", []byte("ledger-service")},
 		},
 	}
 
-	msgData, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	if err := p.nc.Publish(p.subject, msgData); err != nil {
-		return err
+	if err := p.writer.WriteMessages(ctx, msg); err != nil {
+		return fmt.Errorf("failed to publish %q message: %w", p.writer.Topic, err)
 	}
 
 	return nil

@@ -11,7 +11,6 @@ import (
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/repository"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/repository/ledger"
 	"github.com/thisisthemurph/beerbux/ledger-service/pkg/fn"
-	"github.com/thisisthemurph/beerbux/ledger-service/pkg/semanticversion"
 )
 
 type UpdateLedgerHandler struct {
@@ -38,32 +37,22 @@ type LedgerUpdateResult struct {
 }
 
 func (h *UpdateLedgerHandler) Handle(ctx context.Context, ev event.TransactionCreatedEvent) ([]*LedgerUpdateResult, error) {
-	v, err := semanticversion.Parse(ev.Version)
-	if err != nil {
-		h.logger.Error("failed to parse event version", "error", err, "version", ev.Version)
-		return nil, err
-	}
-	if v.Major != 1 {
-		h.logger.Error("unexpected event major version, expected major version 1", "version", ev.Version)
-		return nil, err
+	if len(ev.MemberAmounts) == 0 {
+		h.logger.Error("no member amounts provided", "transactionID", ev.TransactionID)
+		return nil, fmt.Errorf("no member amounts provided for transactionID %q", ev.TransactionID)
 	}
 
-	if len(ev.Data.MemberAmounts) == 0 {
-		h.logger.Error("no member amounts provided", "transactionID", ev.Data.TransactionID)
-		return nil, fmt.Errorf("no member amounts provided for transactionID %q", ev.Data.TransactionID)
-	}
-
-	insertedLedgerItems, err := h.updateLedger(ctx, ev.Data)
+	insertedLedgerItems, err := h.updateLedger(ctx, ev)
 	if err != nil {
-		h.logger.Error("failed to update ledger", "transactionID", ev.Data.TransactionID, "error", err)
+		h.logger.Error("failed to update ledger", "transactionID", ev.TransactionID, "error", err)
 		return nil, err
 	}
 
 	results := fn.Map(insertedLedgerItems, func(l ledger.InsertLedgerParams) *LedgerUpdateResult {
 		return &LedgerUpdateResult{
 			ID:            uuid.MustParse(l.ID),
-			TransactionID: ev.Data.TransactionID,
-			SessionID:     ev.Data.SessionID,
+			TransactionID: ev.TransactionID,
+			SessionID:     ev.SessionID,
 			UserID:        uuid.MustParse(l.UserID),
 			Amount:        l.Amount,
 		}
@@ -72,7 +61,7 @@ func (h *UpdateLedgerHandler) Handle(ctx context.Context, ev event.TransactionCr
 	return results, nil
 }
 
-func (h *UpdateLedgerHandler) updateLedger(ctx context.Context, data event.TransactionCreatedEventData) ([]ledger.InsertLedgerParams, error) {
+func (h *UpdateLedgerHandler) updateLedger(ctx context.Context, data event.TransactionCreatedEvent) ([]ledger.InsertLedgerParams, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

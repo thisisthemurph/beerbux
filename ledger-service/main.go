@@ -10,12 +10,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/config"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/repository"
+	"github.com/thisisthemurph/beerbux/shared/kafkatopic"
 	_ "modernc.org/sqlite"
 )
 
@@ -33,12 +34,12 @@ func run(cfg *config.Config) error {
 		Level:     cfg.SlogLevel(),
 	}))
 
-	nc, err := nats.Connect(nats.DefaultURL)
-	if err != nil {
-		return fmt.Errorf("error connecting to NATS: %w", err)
+	logger.Debug("ensuring Kafka topics exist")
+	if err := ensureKafkaTopics(cfg.Kafka.Brokers); err != nil {
+		return fmt.Errorf("failed to ensure Kafka topics: %w", err)
 	}
-	defer nc.Close()
 
+	logger.Debug("connecting to the database")
 	db, err := sql.Open(cfg.Database.Driver, cfg.Database.URI)
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %w", err)
@@ -48,73 +49,112 @@ func run(cfg *config.Config) error {
 		return fmt.Errorf("error pinging database: %w", err)
 	}
 
-	done := make(chan struct{})
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	doneChan := make(chan struct{})
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		<-sigs
-		close(done)
+		<-sigChan
+		close(doneChan)
 	}()
 
+	// ledgerChan is appended to when a new ledger item is added to the database.
 	ledgerChan := make(chan *handler.LedgerUpdateResult)
 	defer close(ledgerChan)
 
+	// errChan is appended to when an error occurs while processing a transaction.created event.
 	errChan := make(chan event.TransactionCreatedEvent)
 	defer close(errChan)
 
 	ledgerRepository := repository.NewLedgerQueries(db)
-	ledgerUpdatedPublisher := publisher.NewLedgerUpdatedNatsPublisher(nc)
+	ledgerUpdatedPublisher := publisher.NewLedgerUpdatedKafkaPublisher(cfg.Kafka.Brokers)
 	updateLedgerHandler := handler.NewUpdateLedgerHandler(ledgerRepository, logger)
 
-	msgHandler := transactionCreatedMsgHandlerFn(logger, updateLedgerHandler, ledgerChan, errChan)
-	_, err = nc.Subscribe("transaction.created", msgHandler)
-	if err != nil {
-		return fmt.Errorf("error subscribing to transaction.created: %w", err)
-	}
+	logger.Debug("listening for transaction.created events")
+	go listenForTransactionCreatedEvents(ctx, logger, cfg.Kafka.Brokers, updateLedgerHandler, ledgerChan, errChan)
 
 	for {
 		select {
 		case l := <-ledgerChan:
 			logger.Debug("ledger updated", "result", l)
-			if err := ledgerUpdatedPublisher.Publish(l.ID, l.TransactionID, l.SessionID, l.UserID, l.Amount); err != nil {
+			err := ledgerUpdatedPublisher.Publish(ctx, publisher.LedgerUpdatedEvent{
+				ID:            l.ID,
+				TransactionID: l.TransactionID,
+				SessionID:     l.SessionID,
+				UserID:        l.UserID,
+				Amount:        l.Amount,
+			})
+			if err != nil {
 				logger.Error("failed to publish ledger updated event", "error", err)
 			}
 		case errEv := <-errChan:
-			logger.Error("error", "transactionID", errEv.Data.TransactionID)
-		case <-done:
+			logger.Error("failed to process transaction", "transactionID", errEv.TransactionID)
+		case <-doneChan:
 			logger.Debug("shutting down")
+			cancel()
 			return nil
 		}
 	}
 }
 
-// transactionCreatedMsgHandlerFn returns a nats.MsgHandler that handles transaction.created messages.
-// Successful ledger updates are sent to the ledgerChan.
-// Failed ledger updates are sent to the errChan.
-func transactionCreatedMsgHandlerFn(
+func ensureKafkaTopics(brokers []string) error {
+	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+		Topic:             "ledger.updated",
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to ensure ledger.updated Kafka topic: %w", err)
+	}
+
+	return nil
+}
+
+func listenForTransactionCreatedEvents(
+	ctx context.Context,
 	logger *slog.Logger,
-	handler *handler.UpdateLedgerHandler,
+	brokers []string,
+	h *handler.UpdateLedgerHandler,
 	ledgerChan chan<- *handler.LedgerUpdateResult,
 	errChan chan<- event.TransactionCreatedEvent,
-) nats.MsgHandler {
-	return func(msg *nats.Msg) {
-		var ev event.TransactionCreatedEvent
-		err := json.Unmarshal(msg.Data, &ev)
-		if err != nil {
-			logger.Error("failed to unmarshal event", "error", err)
-			return
-		}
+) {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: brokers,
+		Topic:   "transaction.created",
+		GroupID: "ledger-service",
+	})
+	defer reader.Close()
 
-		results, err := handler.Handle(context.Background(), ev)
-		if err != nil {
-			logger.Error("failed to handle message", "error", err)
-			errChan <- ev
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Debug("Kafka consumer shutting down")
 			return
-		}
+		default:
+			msg, err := reader.ReadMessage(ctx)
+			if err != nil {
+				logger.Error("failed to read message", "error", err)
+				continue
+			}
+			logger.Info("received message", "message", msg)
 
-		for _, r := range results {
-			ledgerChan <- r
+			var ev event.TransactionCreatedEvent
+			if err = json.Unmarshal(msg.Value, &ev); err != nil {
+				logger.Error("failed to unmarshal event", "error", err)
+				continue
+			}
+
+			res, err := h.Handle(ctx, ev)
+			if err != nil {
+				errChan <- ev
+				continue
+			}
+
+			for _, r := range res {
+				ledgerChan <- r
+			}
 		}
 	}
 }

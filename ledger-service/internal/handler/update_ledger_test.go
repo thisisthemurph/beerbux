@@ -20,16 +20,13 @@ func SetupTestHandler(db *sql.DB) *handler.UpdateLedgerHandler {
 	return handler.NewUpdateLedgerHandler(repo, slog.Default())
 }
 
-// CreateTestEvent generates a test TransactionCreatedEvent with given member amounts
+// CreateTestEvent generates a test event.TransactionCreatedEvent with given member amounts.
 func CreateTestEvent(creatorID uuid.UUID, memberAmounts []event.TransactionCreatedMemberAmount) event.TransactionCreatedEvent {
 	return event.TransactionCreatedEvent{
-		Metadata: event.Metadata{Version: "1.0.0"},
-		Data: event.TransactionCreatedEventData{
-			TransactionID: uuid.New(),
-			CreatorID:     creatorID,
-			SessionID:     uuid.New(),
-			MemberAmounts: memberAmounts,
-		},
+		TransactionID: uuid.New(),
+		CreatorID:     creatorID,
+		SessionID:     uuid.New(),
+		MemberAmounts: memberAmounts,
 	}
 }
 
@@ -113,17 +110,17 @@ func TestHandle(t *testing.T) {
 			assert.Len(t, credits, len(tc.memberAmounts), "Should have one credit per member")
 
 			for i, r := range debits {
-				assert.Equal(t, ev.Data.TransactionID, r.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.Data.SessionID, r.SessionID, "Session ID mismatch")
+				assert.Equal(t, ev.TransactionID, r.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.SessionID, r.SessionID, "Session ID mismatch")
 				assert.Equal(t, creatorID, r.UserID, "UserID should match creator")
-				assert.Equal(t, -ev.Data.MemberAmounts[i].Amount, r.Amount, "Debit amount should be negative")
+				assert.Equal(t, -ev.MemberAmounts[i].Amount, r.Amount, "Debit amount should be negative")
 			}
 
 			for i, r := range credits {
-				assert.Equal(t, ev.Data.TransactionID, r.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.Data.SessionID, r.SessionID, "Session ID mismatch")
-				assert.Equal(t, ev.Data.MemberAmounts[i].UserID, r.UserID, "UserID should match member")
-				assert.Equal(t, ev.Data.MemberAmounts[i].Amount, r.Amount, "Credit amount should match")
+				assert.Equal(t, ev.TransactionID, r.TransactionID, "Transaction ID mismatch")
+				assert.Equal(t, ev.SessionID, r.SessionID, "Session ID mismatch")
+				assert.Equal(t, ev.MemberAmounts[i].UserID, r.UserID, "UserID should match member")
+				assert.Equal(t, ev.MemberAmounts[i].Amount, r.Amount, "Credit amount should match")
 			}
 		})
 	}

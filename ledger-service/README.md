@@ -5,6 +5,46 @@ and publishes events detailing the ledger with the newly created ledger entries.
 
 ## Manual testing
 
-```shell
-nats pub transaction.created '{"version": "1.0.0", "data": {"transaction_id": "47218b87-3cbb-49c3-a5fc-62b992f35174", "creator_id": "f3232bbf-c579-4995-9012-a75c7cdec425", "session_id": "94eac316-2900-4e1d-bb56-f67f66309b3c", "member_amounts": [{"user_id": "cae11f2d-f0f8-4b38-8cdb-21c979b5ca48", "amount": 1}, {"user_id": "986dd056-0d15-4148-a935-96b8588aea4c", "amount": 1}]}}'
+A `transaction.created` event can be published to Kafka.
+This will be collected; entries will be created in the ledger table and `ledger.updated` events will be published.
+
+```json
+{
+  "transaction_id": "c6037d00-88e2-4479-9468-fb79033fcd27",
+  "creator_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde",
+  "session_id": "5c0327eb-b934-46be-a882-56195fab04d9",
+  "member_amounts": [
+    {
+      "user_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf",
+      "amount": 1
+    }
+  ]
+}
+```
+
+The above event will create two ledger entries in the database, one for the creator and one for the member.
+Two `ledger.updated` events will be published.
+
+One for the creator of the transaction:
+
+```json
+{
+	"id": "1800615e-fd8a-4600-8a27-7e056fe940be",
+	"transaction_id": "c6037d00-88e2-4479-9468-fb79033fcd27",
+	"session_id": "5c0327eb-b934-46be-a882-56195fab04d9",
+	"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde",
+	"amount": -1
+}
+```
+
+And one for the member of the transaction:
+
+```json
+{
+	"id": "e6140322-ed5a-497b-a394-8b511908d181",
+	"transaction_id": "c6037d00-88e2-4479-9468-fb79033fcd27",
+	"session_id": "5c0327eb-b934-46be-a882-56195fab04d9",
+	"user_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf",
+	"amount": 1
+}
 ```

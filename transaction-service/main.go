@@ -6,8 +6,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
+	"github.com/thisisthemurph/beerbux/shared/kafkatopic"
 	"github.com/thisisthemurph/beerbux/transaction-service/internal/config"
 	"github.com/thisisthemurph/beerbux/transaction-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/transaction-service/internal/server"
@@ -31,9 +32,9 @@ func run(cfg *config.Config) error {
 		Level:     cfg.SlogLevel(),
 	}))
 
-	nc, err := nats.Connect(nats.DefaultURL)
-	if err != nil {
-		return err
+	logger.Debug("ensuring Kafka topics exist")
+	if err := ensureKafkaTopics(cfg.Kafka.Brokers); err != nil {
+		return fmt.Errorf("failed to ensure Kafka topics: %w", err)
 	}
 
 	sessionClientConn, err := grpc.NewClient(cfg.SessionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -42,7 +43,7 @@ func run(cfg *config.Config) error {
 	}
 
 	sessionClient := sessionpb.NewSessionClient(sessionClientConn)
-	transactionCreatedPublisher := publisher.NewTransactionCreatedNatsPublisher(nc)
+	transactionCreatedPublisher := publisher.NewTransactionCreatedKafkaPublisher(cfg.Kafka.Brokers)
 	transactionServer := server.NewTransactionServer(sessionClient, transactionCreatedPublisher)
 
 	gs := grpc.NewServer()
@@ -60,6 +61,18 @@ func run(cfg *config.Config) error {
 
 	if err := gs.Serve(listener); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
+	}
+
+	return nil
+}
+
+func ensureKafkaTopics(brokers []string) error {
+	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+		Topic:             publisher.TopicTransactionCreated,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to ensure %v Kafka topic: %w", publisher.TopicTransactionCreated, err)
 	}
 
 	return nil

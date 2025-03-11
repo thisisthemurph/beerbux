@@ -28,14 +28,9 @@ type TransactionCreatedMemberAmount struct {
 	Amount float64   `json:"amount"`
 }
 
-type TransactionCreatedEventData struct {
+type TransactionCreatedEvent struct {
 	TransactionID uuid.UUID                        `json:"transaction_id"`
 	CreatorID     uuid.UUID                        `json:"creator_id"`
 	SessionID     uuid.UUID                        `json:"session_id"`
 	MemberAmounts []TransactionCreatedMemberAmount `json:"member_amounts"`
-}
-
-type TransactionCreatedEvent struct {
-	Metadata
-	Data TransactionCreatedEventData `json:"data"`
 }

@@ -5,64 +5,57 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log/slog"
+	"fmt"
 
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 )
 
 type UserUpdatedEventHandler struct {
 	sessionRepository *session.Queries
-	logger            *slog.Logger
 }
 
-func NewUserUpdatedEventHandler(sessionRepository *session.Queries, logger *slog.Logger) *UserUpdatedEventHandler {
+func NewUserUpdatedEventHandler(sessionRepository *session.Queries) *UserUpdatedEventHandler {
 	return &UserUpdatedEventHandler{
 		sessionRepository: sessionRepository,
-		logger:            logger,
 	}
 }
 
-type UserUpdatedEventData struct {
+type UserUpdatedEvent struct {
 	UserID        string                 `json:"user_id"`
 	UpdatedFields map[string]interface{} `json:"updated_fields"`
 }
 
-type UserUpdatedEvent struct {
-	Data UserUpdatedEventData `json:"user"`
-}
-
-func (h *UserUpdatedEventHandler) Handle(msg *nats.Msg) {
-	var event UserUpdatedEvent
-	if err := json.Unmarshal(msg.Data, &event); err != nil {
-		h.logger.Error("failed to unmarshal user.updated event", "error", err)
-		return
+func (h *UserUpdatedEventHandler) Handle(ctx context.Context, msg kafka.Message) error {
+	var updatedUser UserUpdatedEvent
+	if err := json.Unmarshal(msg.Value, &updatedUser); err != nil {
+		return err
 	}
 
-	existingMember, err := h.getExistingMember(event.Data.UserID)
+	existingMember, err := h.getExistingMember(ctx, updatedUser.UserID)
 	if err != nil {
-		return
+		return err
 	}
 
 	err = h.sessionRepository.UpdateMember(context.TODO(), session.UpdateMemberParams{
-		ID:       event.Data.UserID,
-		Name:     stringFieldOrDefault(event.Data.UpdatedFields, "name", existingMember.Name),
-		Username: stringFieldOrDefault(event.Data.UpdatedFields, "username", existingMember.Username),
+		ID:       updatedUser.UserID,
+		Name:     stringFieldOrDefault(updatedUser.UpdatedFields, "name", existingMember.Name),
+		Username: stringFieldOrDefault(updatedUser.UpdatedFields, "username", existingMember.Username),
 	})
 
 	if err != nil {
-		h.logger.Error("failed to update user", "error", err)
-		return
+		return fmt.Errorf("failed to update user: %w", err)
 	}
+
+	return nil
 }
 
-func (h *UserUpdatedEventHandler) getExistingMember(userID string) (session.Member, error) {
-	existingMember, err := h.sessionRepository.GetMember(context.TODO(), userID)
+// getExistingMember retrieves the existing member from the database.
+func (h *UserUpdatedEventHandler) getExistingMember(ctx context.Context, userID string) (session.Member, error) {
+	existingMember, err := h.sessionRepository.GetMember(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			h.logger.Debug("user not found", "user_id", userID)
-		} else {
-			h.logger.Error("failed to get user", "error", err)
+			return session.Member{}, fmt.Errorf("user not found: %w", err)
 		}
 		return session.Member{}, err
 	}

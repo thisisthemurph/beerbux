@@ -3,14 +3,15 @@ package application
 import (
 	"database/sql"
 	"fmt"
-	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"log/slog"
 
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/session-service/internal/config"
+	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
+	"github.com/thisisthemurph/beerbux/shared/kafkatopic"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,7 +22,6 @@ import (
 
 type App struct {
 	DB                *sql.DB
-	NatsConn          *nats.Conn
 	SessionRepository *session.Queries
 	UserClient        userpb.UserClient
 	Logger            *slog.Logger
@@ -38,21 +38,18 @@ func New(cfg *config.Config, logger *slog.Logger) (*App, error) {
 		return nil, err
 	}
 
-	logger.Debug("connecting to NATS")
-	nc, err := nats.Connect(nats.DefaultURL)
-	if err != nil {
-		return nil, err
-	}
-
 	logger.Debug("creating user-service gRPC client connection")
 	userClientConn, err := grpc.NewClient(cfg.UserServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to user-service: %w", err)
 	}
 
+	if err := ensureKafkaTopics(cfg.Kafka.Brokers); err != nil {
+		return nil, fmt.Errorf("failed to ensure Kafka topics: %w", err)
+	}
+
 	return &App{
 		DB:                db,
-		NatsConn:          nc,
 		SessionRepository: session.New(db),
 		UserClient:        userpb.NewUserClient(userClientConn),
 		Logger:            logger,
@@ -64,9 +61,8 @@ func New(cfg *config.Config, logger *slog.Logger) (*App, error) {
 }
 
 func (app *App) Close() {
-	app.userServerGRPCClient.Close()
-	app.NatsConn.Close()
-	app.DB.Close()
+	_ = app.userServerGRPCClient.Close()
+	_ = app.DB.Close()
 }
 
 func (app *App) NewSessionGRPCServer() *grpc.Server {
@@ -79,7 +75,7 @@ func (app *App) NewSessionGRPCServer() *grpc.Server {
 		app.DB,
 		app.SessionRepository,
 		app.UserClient,
-		publisher.NewSessionMemberAddedNatsPublisher(app.NatsConn),
+		publisher.NewSessionMemberAddedKafkaPublisher(app.cfg.Kafka.Brokers),
 		app.Logger,
 	)
 
@@ -91,4 +87,16 @@ func (app *App) NewSessionGRPCServer() *grpc.Server {
 	}
 
 	return gs
+}
+
+func ensureKafkaTopics(brokers []string) error {
+	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+		Topic:             publisher.TopicSessionMemberAdded,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return fmt.Errorf("failed to ensure session.member.added Kafka topic: %w", err)
+	}
+
+	return nil
 }

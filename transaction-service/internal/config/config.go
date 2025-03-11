@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -18,6 +19,11 @@ type Config struct {
 	Environment              Environment
 	SessionServerAddress     string
 	TransactionServerAddress string
+	Kafka                    KafkaConfig
+}
+
+type KafkaConfig struct {
+	Brokers []string
 }
 
 func Load() *Config {
@@ -30,6 +36,9 @@ func Load() *Config {
 		Environment:              environment,
 		SessionServerAddress:     mustGetenv("SESSION_SERVER_ADDRESS"),
 		TransactionServerAddress: mustGetenv("TRANSACTION_SERVER_ADDRESS"),
+		Kafka: KafkaConfig{
+			Brokers: strings.Split(mustGetenv("KAFKA_BROKERS"), ","),
+		},
 	}
 }
 

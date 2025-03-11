@@ -1,62 +1,65 @@
 package publisher
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nats-io/nats.go"
+	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
+	"time"
 )
 
-const SubjectUserUpdated = "user.updated"
-
-type UserUpdatedEventData struct {
+type UserUpdatedEvent struct {
 	UserID        string                 `json:"user_id"`
 	UpdatedFields map[string]interface{} `json:"updated_fields"`
-}
-
-type UserUpdatedEvent struct {
-	Metadata EventMetadata        `json:"metadata"`
-	Data     UserUpdatedEventData `json:"user"`
 }
 
 type UserUpdatedPublisher interface {
 	Publish(original user.User, new user.User) error
 }
 
-type UserUpdatedNatsPublisher struct {
-	nc      *nats.Conn
-	subject string
+type UserUpdatedKafkaPublisher struct {
+	writer *kafka.Writer
 }
 
-func NewUserUpdatedNatsPublisher(nc *nats.Conn) UserUpdatedPublisher {
-	return &UserUpdatedNatsPublisher{
-		nc:      nc,
-		subject: SubjectUserUpdated,
-	}
-}
-
-func (p *UserUpdatedNatsPublisher) Publish(original user.User, new user.User) error {
-	msg := UserUpdatedEvent{
-		Metadata: NewEventMetadata(SubjectUserUpdated, "1.0.0", new.ID),
-		Data: UserUpdatedEventData{
-			UserID:        new.ID,
-			UpdatedFields: p.determineUpdatedFields(original, new),
+func NewUserUpdatedKafkaPublisher(brokers []string) UserUpdatedPublisher {
+	return &UserUpdatedKafkaPublisher{
+		writer: &kafka.Writer{
+			Addr:         kafka.TCP(brokers...),
+			Topic:        TopicUserUpdated,
+			Balancer:     nil,
+			BatchSize:    0,
+			BatchTimeout: 10 * time.Millisecond,
+			Async:        false,
 		},
 	}
+}
 
-	msgData, err := json.Marshal(msg)
+func (p *UserUpdatedKafkaPublisher) Publish(original, new user.User) error {
+	ev := UserUpdatedEvent{
+		UserID:        original.ID,
+		UpdatedFields: p.determineUpdatedFields(original, new),
+	}
+
+	data, err := json.Marshal(ev)
 	if err != nil {
 		return fmt.Errorf("failed to marshal user %v: %w", new.ID, err)
 	}
 
-	if err := p.nc.Publish(p.subject, msgData); err != nil {
-		return fmt.Errorf("failed to publish %q message: %w", p.subject, err)
+	msg := kafka.Message{
+		Value:   data,
+		Key:     []byte(original.ID),
+		Headers: makeKafkaHeaders(new),
+	}
+
+	if err := p.writer.WriteMessages(context.TODO(), msg); err != nil {
+		return fmt.Errorf("failed to publish %q message: %w", p.writer.Topic, err)
 	}
 
 	return nil
 }
 
-func (p *UserUpdatedNatsPublisher) determineUpdatedFields(original, new user.User) map[string]interface{} {
+func (p *UserUpdatedKafkaPublisher) determineUpdatedFields(original, new user.User) map[string]interface{} {
 	updatedFields := make(map[string]interface{})
 
 	if original.Name != new.Name {

@@ -72,20 +72,16 @@ func run() error {
 }
 
 func ensureKafkaTopics(brokers []string) error {
-	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
-		Topic:             "user.created",
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	}); err != nil {
-		return fmt.Errorf("failed to ensure user.created Kafka topic: %w", err)
-	}
+	topics := []string{publisher.TopicUserCreated, publisher.TopicUserUpdated}
 
-	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
-		Topic:             "user.updated",
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	}); err != nil {
-		return fmt.Errorf("failed to ensure user.updated Kafka topic: %w", err)
+	for _, topic := range topics {
+		if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+			Topic:             topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		}); err != nil {
+			return fmt.Errorf("failed to ensure %v Kafka topic: %w", topic, err)
+		}
 	}
 
 	return nil

@@ -13,7 +13,6 @@ import (
 	"github.com/thisisthemurph/beerbux/user-service/tests/builder"
 	"github.com/thisisthemurph/beerbux/user-service/tests/fake"
 	"github.com/thisisthemurph/beerbux/user-service/tests/testinfra"
-	_ "modernc.org/sqlite"
 )
 
 func setupUserServer(db *sql.DB) *server.UserServer {

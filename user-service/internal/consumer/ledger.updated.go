@@ -19,16 +19,6 @@ type LedgerUpdatedEvent struct {
 	Amount        float64 `json:"amount"`
 }
 
-type KafkaReader interface {
-	ReadMessage(ctx context.Context) (kafka.Message, error)
-	Close() error
-}
-
-type Consumer interface {
-	Listen(ctx context.Context)
-	Close() error
-}
-
 type LedgerUpdatedKafkaConsumer struct {
 	Reader               KafkaReader
 	Logger               *slog.Logger

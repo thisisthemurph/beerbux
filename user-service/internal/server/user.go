@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ import (
 type UserServer struct {
 	userpb.UnimplementedUserServer
 	userRepository       *user.Queries
+	userLedgerRepository *ledger.Queries
 	userCreatedPublisher publisher.UserCreatedPublisher
 	userUpdatedPublisher publisher.UserUpdatedPublisher
 	logger               *slog.Logger
@@ -22,19 +24,21 @@ type UserServer struct {
 
 func NewUserServer(
 	userRepository *user.Queries,
+	userLedgerRepository *ledger.Queries,
 	userCreatedPublisher publisher.UserCreatedPublisher,
 	userUpdatedPublisher publisher.UserUpdatedPublisher,
 	logger *slog.Logger,
 ) *UserServer {
 	return &UserServer{
 		userRepository:       userRepository,
+		userLedgerRepository: userLedgerRepository,
 		userCreatedPublisher: userCreatedPublisher,
 		userUpdatedPublisher: userUpdatedPublisher,
 		logger:               logger,
 	}
 }
 
-func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*userpb.UserResponse, error) {
+func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*userpb.GetUserResponse, error) {
 	if err := validateGetUserRequest(r); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -45,11 +49,17 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
 	}
 
-	return &userpb.UserResponse{
-		UserId:   u.ID,
-		Name:     u.Name,
-		Username: u.Username,
-		Bio:      nullish.ParseNullString(u.Bio),
+	netBalance, err := s.userLedgerRepository.CalculateUserNetBalance(ctx, r.UserId)
+	if err != nil {
+		s.logger.Error("failed to calculate user net balance", "error", err)
+	}
+
+	return &userpb.GetUserResponse{
+		UserId:     u.ID,
+		Name:       u.Name,
+		Username:   u.Username,
+		Bio:        nullish.ParseNullString(u.Bio),
+		NetBalance: netBalance,
 	}, nil
 }
 

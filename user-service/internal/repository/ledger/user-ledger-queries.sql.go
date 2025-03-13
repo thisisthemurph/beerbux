@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const calculateUserNetBalance = `-- name: CalculateUserNetBalance :one
+select cast(coalesce(sum(amount), 0) as real) as net_balance
+from user_ledger
+where user_id = ?1
+or participant_id = ?1
+`
+
+func (q *Queries) CalculateUserNetBalance(ctx context.Context, userID string) (float64, error) {
+	row := q.db.QueryRowContext(ctx, calculateUserNetBalance, userID)
+	var net_balance float64
+	err := row.Scan(&net_balance)
+	return net_balance, err
+}
+
 const insertUserLedger = `-- name: InsertUserLedger :exec
 insert into user_ledger (user_id, participant_id, amount, type)
 values (?1, ?2, ?3, case when ?3 < 0 then 'debit' else 'credit' end)

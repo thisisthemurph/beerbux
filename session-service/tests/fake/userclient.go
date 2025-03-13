@@ -9,7 +9,7 @@ import (
 )
 
 type UserClient struct {
-	data []*userpb.UserResponse
+	data []*userpb.GetUserResponse
 }
 
 func NewFakeUserClient() *UserClient {
@@ -17,7 +17,7 @@ func NewFakeUserClient() *UserClient {
 }
 
 func (c *UserClient) WithUser(id, name, username string) *UserClient {
-	usr := &userpb.UserResponse{
+	usr := &userpb.GetUserResponse{
 		UserId:   id,
 		Name:     name,
 		Username: username,
@@ -28,7 +28,7 @@ func (c *UserClient) WithUser(id, name, username string) *UserClient {
 	return c
 }
 
-func (c *UserClient) GetUser(ctx context.Context, in *userpb.GetUserRequest, opts ...grpc.CallOption) (*userpb.UserResponse, error) {
+func (c *UserClient) GetUser(ctx context.Context, in *userpb.GetUserRequest, opts ...grpc.CallOption) (*userpb.GetUserResponse, error) {
 	for _, user := range c.data {
 		if user.UserId == in.UserId {
 			return user, nil

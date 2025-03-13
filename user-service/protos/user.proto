@@ -3,13 +3,21 @@ syntax = "proto3";
 option go_package = "protos/userpb;userpb";
 
 service User {
-  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc CreateUser(CreateUserRequest) returns (UserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
 }
 
 message GetUserRequest {
   string user_id = 1;
+}
+
+message GetUserResponse {
+  string user_id = 1;
+  string name = 2;
+  string username = 3;
+  optional string bio = 4;
+  double net_balance = 5;
 }
 
 message CreateUserRequest {

@@ -83,8 +83,9 @@ func (a *App) setupGRPCServer(address string, brokers []string, environment conf
 	userUpdatedPublisher := publisher.NewUserUpdatedKafkaPublisher(brokers)
 
 	a.logger.Debug("setting up gRPC server", "address", address)
-	queries := user.New(a.db)
-	userServer := server.NewUserServer(queries, userCreatedPublisher, userUpdatedPublisher, a.logger)
+	userRepo := user.New(a.db)
+	ledgerRepo := ledger.New(a.db)
+	userServer := server.NewUserServer(userRepo, ledgerRepo, userCreatedPublisher, userUpdatedPublisher, a.logger)
 
 	grpcServer := grpc.NewServer()
 	userpb.RegisterUserServer(grpcServer, userServer)

@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"database/sql"
+	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"log/slog"
 	"testing"
 
@@ -17,9 +18,10 @@ import (
 
 func setupUserServer(db *sql.DB) *server.UserServer {
 	userRepo := user.New(db)
+	userLedgerRepo := ledger.New(db)
 	fakeUserCreatedPublished := fake.NewFakeUserCreatedPublisher()
 	fakeUserUpdatedPublished := fake.NewFakeUserUpdatedPublisher()
-	return server.NewUserServer(userRepo, fakeUserCreatedPublished, fakeUserUpdatedPublished, slog.Default())
+	return server.NewUserServer(userRepo, userLedgerRepo, fakeUserCreatedPublished, fakeUserUpdatedPublished, slog.Default())
 }
 
 func TestGetUser_Success(t *testing.T) {

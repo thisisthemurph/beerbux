@@ -33,6 +33,7 @@ One for the creator of the transaction:
 	"transaction_id": "c6037d00-88e2-4479-9468-fb79033fcd27",
 	"session_id": "5c0327eb-b934-46be-a882-56195fab04d9",
 	"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde",
+    "participant_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf",
 	"amount": -1
 }
 ```
@@ -45,6 +46,7 @@ And one for the member of the transaction:
 	"transaction_id": "c6037d00-88e2-4479-9468-fb79033fcd27",
 	"session_id": "5c0327eb-b934-46be-a882-56195fab04d9",
 	"user_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf",
+    "participant_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde",
 	"amount": 1
 }
 ```

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/pressly/goose/v3"
+	_ "modernc.org/sqlite"
 )
 
 func SetupTestDB(t *testing.T, migrationsPath string) *sql.DB {

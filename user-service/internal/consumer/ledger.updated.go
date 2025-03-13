@@ -76,6 +76,5 @@ func (c *LedgerUpdatedKafkaConsumer) Listen(ctx context.Context) {
 }
 
 func (c *LedgerUpdatedKafkaConsumer) Close() error {
-	c.Logger.Info("Closing Kafka consumer")
 	return c.Reader.Close()
 }

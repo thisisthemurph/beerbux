@@ -17,7 +17,7 @@ USER_SERVER_ADDRESS=:50051
 ## Manual testing
 
 ```shell
-grpcurl -plaintext -d '{"username": "jdg", "name": "Julian"}' localhost:50051 User.CreateUser
+grpcurl -plaintext -d '{"username": "user.name", "name": "User Name"}' localhost:50051 User.CreateUser
 ```
 
 ```shell

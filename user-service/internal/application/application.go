@@ -20,11 +20,12 @@ import (
 )
 
 type App struct {
-	logger                *slog.Logger
-	db                    *sql.DB
-	grpcServer            *grpc.Server
-	grpcListener          net.Listener
-	ledgerUpdatedConsumer *consumer.LedgerUpdatedKafkaConsumer
+	logger                 *slog.Logger
+	db                     *sql.DB
+	grpcServer             *grpc.Server
+	grpcListener           net.Listener
+	ledgerUpdatedConsumer  *consumer.LedgerUpdatedKafkaConsumer
+	userRegisteredConsumer *consumer.UserRegisteredKafkaConsumer
 }
 
 func New(logger *slog.Logger, cfg *config.Config) (*App, error) {
@@ -46,7 +47,8 @@ func New(logger *slog.Logger, cfg *config.Config) (*App, error) {
 }
 
 func (a *App) RunLedgerUpdatedEventConsumer(ctx context.Context) {
-	a.ledgerUpdatedConsumer.Listen(ctx)
+	go a.ledgerUpdatedConsumer.Listen(ctx)
+	go a.userRegisteredConsumer.Listen(ctx)
 }
 
 func (a *App) RunGRPCServer() error {
@@ -70,11 +72,15 @@ func (a *App) connectToDatabase(driver, uri string) error {
 
 func (a *App) setupKafka(brokers []string) {
 	a.logger.Debug("setting up Kafka consumers", "brokers", brokers)
+
+	userRepo := user.New(a.db)
 	userLedgerRepo := ledger.New(a.db)
-	ledgerUpdatedConsumer := consumer.NewLedgerUpdatedKafkaConsumer(
+
+	a.ledgerUpdatedConsumer = consumer.NewLedgerUpdatedKafkaConsumer(
 		a.logger, brokers, "ledger.updated", userLedgerRepo)
 
-	a.ledgerUpdatedConsumer = ledgerUpdatedConsumer
+	a.userRegisteredConsumer = consumer.NewUserRegisteredKafkaConsumer(
+		a.logger, brokers, userRepo)
 }
 
 func (a *App) setupGRPCServer(address string, brokers []string, environment config.Environment) error {
@@ -114,6 +120,7 @@ func (a *App) Close() {
 
 	safeClose(a.logger, a.db)
 	safeClose(a.logger, a.ledgerUpdatedConsumer)
+	safeClose(a.logger, a.userRegisteredConsumer)
 }
 
 func safeClose(logger *slog.Logger, closer io.Closer) {

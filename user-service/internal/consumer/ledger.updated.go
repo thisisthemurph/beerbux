@@ -69,8 +69,6 @@ func (c *LedgerUpdatedKafkaConsumer) Listen(ctx context.Context) {
 				c.Logger.Error("Failed to insert user ledger", "error", err, "user_id", ev.UserID, "offset", msg.Offset)
 				continue
 			}
-
-			c.Logger.Info("Successfully processed message", "offset", msg.Offset, "user_id", ev.UserID)
 		}
 	}
 }

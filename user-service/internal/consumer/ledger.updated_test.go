@@ -3,6 +3,7 @@ package consumer_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/thisisthemurph/beerbux/user-service/tests/fake"
 	"log/slog"
 	"testing"
 	"time"
@@ -17,26 +18,12 @@ import (
 	"github.com/thisisthemurph/beerbux/user-service/tests/testinfra"
 )
 
-type MockKafkaReader struct {
-	mock.Mock
-}
-
-func (m *MockKafkaReader) ReadMessage(ctx context.Context) (kafka.Message, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(kafka.Message), args.Error(1)
-}
-
-func (m *MockKafkaReader) Close() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
 func TestLedgerUpdatedKafkaConsumer(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
 	repo := ledger.New(db)
-	mockKafkaReader := new(MockKafkaReader)
+	mockKafkaReader := new(fake.MockKafkaReader)
 
 	c := &consumer.LedgerUpdatedKafkaConsumer{
 		Reader:               mockKafkaReader,

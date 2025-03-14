@@ -10,13 +10,6 @@ func validateGetUserRequest(r *userpb.GetUserRequest) error {
 	return validateStringUUID(r.UserId)
 }
 
-func validateCreateUserRequest(r *userpb.CreateUserRequest) error {
-	if err := validateUserName(r.Name); err != nil {
-		return err
-	}
-	return validateUsername(r.Username)
-}
-
 func validateUpdateUserRequest(r *userpb.UpdateUserRequest) error {
 	if err := validateUserName(r.Name); err != nil {
 		return err

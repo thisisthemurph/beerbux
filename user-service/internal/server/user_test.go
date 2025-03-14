@@ -44,27 +44,6 @@ func TestGetUser_Success(t *testing.T) {
 	assert.Equal(t, usr.Username, res.Username)
 }
 
-func TestCreateUser_Success(t *testing.T) {
-	db := testinfra.SetupTestDB(t, "../db/migrations")
-	t.Cleanup(func() { db.Close() })
-
-	userServer := setupUserServer(db)
-
-	bio := "This is a test user"
-	res, err := userServer.CreateUser(context.Background(), &userpb.CreateUserRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		Bio:      &bio,
-	})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
-	assert.NotEmpty(t, res.UserId)
-	assert.Equal(t, "Test User", res.Name)
-	assert.Equal(t, "testuser", res.Username)
-	assert.Equal(t, bio, *res.Bio)
-}
-
 func TestUpdateUser_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })

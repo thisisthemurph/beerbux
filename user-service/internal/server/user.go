@@ -3,11 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"log/slog"
 
-	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
+	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 	"github.com/thisisthemurph/beerbux/user-service/pkg/nullish"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
@@ -60,35 +59,6 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 		Username:   u.Username,
 		Bio:        nullish.ParseNullString(u.Bio),
 		NetBalance: netBalance,
-	}, nil
-}
-
-func (s *UserServer) CreateUser(ctx context.Context, r *userpb.CreateUserRequest) (*userpb.UserResponse, error) {
-	if err := validateCreateUserRequest(r); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	u, err := s.userRepository.CreateUser(ctx, user.CreateUserParams{
-		ID:       uuid.New().String(),
-		Name:     r.Name,
-		Username: r.Username,
-		Bio:      nullish.CreateNullString(r.Bio),
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user %v: %w", r.Username, err)
-	}
-
-	if err := s.userCreatedPublisher.Publish(u); err != nil {
-		s.logger.Error("failed to publish user created event", "error", err)
-		return nil, err
-	}
-
-	return &userpb.UserResponse{
-		UserId:   u.ID,
-		Name:     u.Name,
-		Username: u.Username,
-		Bio:      nullish.ParseNullString(u.Bio),
 	}, nil
 }
 

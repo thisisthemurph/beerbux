@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/internal/server"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/auth-service/tests/builder"
+	"github.com/thisisthemurph/beerbux/auth-service/tests/fakes"
 	"github.com/thisisthemurph/beerbux/auth-service/tests/testinfra"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,7 +25,8 @@ const jwtSecret = "supersecret"
 func setupAuthServer(db *sql.DB) *server.AuthServer {
 	authRepo := auth.New(db)
 	authTokenRepo := token.New(db)
-	return server.NewAuthServer(authRepo, authTokenRepo, server.AuthServerOptions{
+	userRegisteredProducer := fakes.NewFakeUserRegisteredProducer()
+	return server.NewAuthServer(slog.Default(), authRepo, authTokenRepo, userRegisteredProducer, server.AuthServerOptions{
 		JWTSecret:       jwtSecret,
 		AccessTokenTTL:  time.Hour,
 		RefreshTokenTTL: time.Hour * 24 * 7,

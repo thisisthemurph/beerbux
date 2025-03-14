@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thisisthemurph/beerbux/auth-service/internal/producer"
 	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/auth"
 	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/token"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
@@ -22,9 +24,11 @@ var (
 
 type AuthServer struct {
 	authpb.UnimplementedAuthServer
-	options             AuthServerOptions
-	authRepository      *auth.Queries
-	authTokenRepository *token.Queries
+	authRepository         *auth.Queries
+	authTokenRepository    *token.Queries
+	userRegisteredProducer producer.UserRegisteredProducer
+	options                AuthServerOptions
+	logger                 *slog.Logger
 }
 
 type AuthServerOptions struct {
@@ -33,11 +37,18 @@ type AuthServerOptions struct {
 	RefreshTokenTTL time.Duration
 }
 
-func NewAuthServer(authRepository *auth.Queries, tokenRepository *token.Queries, options AuthServerOptions) *AuthServer {
+func NewAuthServer(
+	logger *slog.Logger,
+	authRepository *auth.Queries,
+	tokenRepository *token.Queries,
+	userRegisteredProducer producer.UserRegisteredProducer,
+	options AuthServerOptions,
+) *AuthServer {
 	return &AuthServer{
-		authRepository:      authRepository,
-		authTokenRepository: tokenRepository,
-		options:             options,
+		authRepository:         authRepository,
+		authTokenRepository:    tokenRepository,
+		userRegisteredProducer: userRegisteredProducer,
+		options:                options,
 	}
 }
 
@@ -124,6 +135,15 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	err = s.userRegisteredProducer.Publish(ctx, producer.UserRegisteredEvent{
+		UserID:   user.ID,
+		Name:     r.Name,
+		Username: user.Username,
+	})
+	if err != nil {
+		s.logger.Error("failed to send user registered event", "error", err)
 	}
 
 	return &authpb.SignupResponse{

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -22,12 +23,17 @@ type Config struct {
 	AccessTokenTTL    time.Duration
 	RefreshTokenTTL   time.Duration
 	Database          DBConfig
+	Kafka             KafkaConfig
 	Secrets           SecretsConfig
 }
 
 type DBConfig struct {
 	Driver string
 	URI    string
+}
+
+type KafkaConfig struct {
+	Brokers []string
 }
 
 type SecretsConfig struct {
@@ -61,6 +67,9 @@ func Load() *Config {
 		Database: DBConfig{
 			Driver: mustGetenv("DB_DRIVER"),
 			URI:    mustGetenv("DB_URI"),
+		},
+		Kafka: KafkaConfig{
+			Brokers: strings.Split(mustGetenv("KAFKA_BROKERS"), ","),
 		},
 		Secrets: SecretsConfig{
 			JWTSecret: mustGetenv("JWT_SECRET"),

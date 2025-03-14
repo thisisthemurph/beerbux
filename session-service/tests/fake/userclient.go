@@ -37,10 +37,6 @@ func (c *UserClient) GetUser(ctx context.Context, in *userpb.GetUserRequest, opt
 	return nil, errors.New("user not found")
 }
 
-func (c *UserClient) CreateUser(ctx context.Context, in *userpb.CreateUserRequest, opts ...grpc.CallOption) (*userpb.UserResponse, error) {
-	panic("not implemented")
-}
-
 func (c *UserClient) UpdateUser(ctx context.Context, in *userpb.UpdateUserRequest, opts ...grpc.CallOption) (*userpb.UserResponse, error) {
 	panic("not implemented")
 }

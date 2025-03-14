@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option go_package = "protos/authpb;authpb";
+
+service Auth {
+  rpc LogIn(LoginRequest) returns (LoginResponse);
+  rpc SignUp(SignupRequest) returns (SignupResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message SignupRequest {
+  string name = 1;
+  string username = 2;
+  string password = 3;
+  string verification_password = 4;
+}
+
+message SignupResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message RefreshTokenRequest {
+  string user_id = 1;
+  string refresh_token = 2;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}

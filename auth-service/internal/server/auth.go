@@ -65,7 +65,7 @@ func (s *AuthServer) Login(ctx context.Context, r *authpb.LoginRequest) (*authpb
 		return nil, ErrInvalidCredentials
 	}
 
-	accessToken, err := generateJWT(s.options.JWTSecret, user.Username, s.options.AccessTokenTTL)
+	accessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 		return nil, err
 	}
 
-	accessToken, err := generateJWT(s.options.JWTSecret, user.Username, s.options.AccessTokenTTL)
+	accessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (s *AuthServer) RefreshToken(ctx context.Context, r *authpb.RefreshTokenReq
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	newAccessToken, err := generateJWT(s.options.JWTSecret, user.Username, s.options.AccessTokenTTL)
+	newAccessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate new access token: %w", err)
 	}

@@ -3,15 +3,17 @@ package server
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/auth"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
-func generateJWT(secret, username string, duration time.Duration) (string, error) {
+func generateJWT(secret string, user auth.User, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
-		"username": username,
+		"sub":      user.ID,
+		"username": user.Username,
 		"exp":      time.Now().Add(duration).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

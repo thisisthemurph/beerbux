@@ -1,6 +1,9 @@
 package claims
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 const (
 	JWTClaimsKey    = "claims"
@@ -14,25 +17,16 @@ type JWTClaims struct {
 	Username   string `json:"username"`
 }
 
-func GetClaims(r *http.Request) (*JWTClaims, bool) {
-	claims, ok := r.Context().Value(JWTClaimsKey).(*JWTClaims)
-	return claims, ok
+func (c JWTClaims) Authenticated() bool {
+	return c.Subject != "" && c.Username != "" && time.Unix(c.Expiration, 0).After(time.Now())
 }
 
-func GetSubject(r *http.Request) (string, bool) {
-	claims, ok := GetClaims(r)
+func GetClaims(r *http.Request) JWTClaims {
+	claims, ok := r.Context().Value(JWTClaimsKey).(JWTClaims)
 	if !ok {
-		return "", false
+		return JWTClaims{}
 	}
-	return claims.Subject, true
-}
-
-func GetUsername(r *http.Request) (string, bool) {
-	claims, ok := GetClaims(r)
-	if !ok {
-		return "", false
-	}
-	return claims.Username, true
+	return claims
 }
 
 func GetRefreshToken(r *http.Request) (string, bool) {

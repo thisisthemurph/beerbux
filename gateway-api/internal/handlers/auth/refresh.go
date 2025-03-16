@@ -21,8 +21,8 @@ func NewRefreshHandler(authClient authpb.AuthClient) *RefreshHandler {
 }
 
 func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, ok := claims.GetSubject(r)
-	if !ok {
+	c := claims.GetClaims(r)
+	if !c.Authenticated() {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -34,7 +34,7 @@ func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.authClient.RefreshToken(r.Context(), &authpb.RefreshTokenRequest{
-		UserId:       userID,
+		UserId:       c.Subject,
 		RefreshToken: refreshToken,
 	})
 

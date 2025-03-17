@@ -13,9 +13,15 @@ message LoginRequest {
   string password = 2;
 }
 
+message UserResponse {
+  string id = 1;
+  string username = 2;
+}
+
 message LoginResponse {
   string access_token = 1;
   string refresh_token = 2;
+  UserResponse user = 3;
 }
 
 message SignupRequest {

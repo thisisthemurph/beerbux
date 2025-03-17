@@ -88,6 +88,10 @@ func (s *AuthServer) Login(ctx context.Context, r *authpb.LoginRequest) (*authpb
 	return &authpb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		User: &authpb.UserResponse{
+			Id:       user.ID,
+			Username: user.Username,
+		},
 	}, nil
 }
 

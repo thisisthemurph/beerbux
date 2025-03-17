@@ -41,7 +41,7 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authClient.Signup(r.Context(), &authpb.SignupRequest{
+	_, err := h.authClient.Signup(r.Context(), &authpb.SignupRequest{
 		Name:                 req.Name,
 		Username:             req.Username,
 		Password:             req.Password,
@@ -52,9 +52,6 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handlers.WriteValidationError(w, err)
 		return
 	}
-
-	setAccessTokenCookie(w, user.AccessToken)
-	setRefreshTokenCookie(w, user.RefreshToken)
 
 	w.WriteHeader(http.StatusCreated)
 }

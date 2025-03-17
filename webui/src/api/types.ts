@@ -3,15 +3,13 @@ export type ValidationErrorResponse = {
 };
 
 export function isValidationErrorResponse(
-	data: any,
+	data: unknown,
 ): data is ValidationErrorResponse {
-	return (
-		typeof data === "object" &&
-		data !== null &&
-		"errors" in data &&
-		!("error" in data) &&
-		typeof data.errors === "object" &&
-		Object.values(data.errors).every((value) => typeof value === "string") &&
-		Object.keys(data.errors).length > 0
-	);
+	if (typeof data !== "object" || data === null) return false;
+	if (!("errors" in data) || "error" in data) return false;
+	if (typeof (data as { errors: Record<string, string> }).errors !== "object")
+		return false;
+
+	const errors = (data as { errors: Record<string, string> }).errors;
+	return errors !== null && Object.keys(errors).length > 0;
 }

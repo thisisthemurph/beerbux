@@ -24,6 +24,11 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type LoginResponse struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+}
+
 func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -36,20 +41,26 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authClient.Login(r.Context(), &authpb.LoginRequest{
+	loginRequest := authpb.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
-	})
+	}
+
+	loginResp, err := h.authClient.Login(r.Context(), &loginRequest)
 
 	if err != nil {
 		handlers.WriteValidationError(w, err)
 		return
 	}
 
-	setAccessTokenCookie(w, user.AccessToken)
-	setRefreshTokenCookie(w, user.RefreshToken)
+	setAccessTokenCookie(w, loginResp.AccessToken)
+	setRefreshTokenCookie(w, loginResp.RefreshToken)
 
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(LoginResponse{
+		ID:       loginResp.User.Id,
+		Username: loginResp.User.Username,
+	})
 }
 
 func (r LoginRequest) Validate() error {

@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+package user.service;
 option go_package = "protos/userpb;userpb";
 
 service User {

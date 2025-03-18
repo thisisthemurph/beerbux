@@ -6,6 +6,7 @@ import (
 
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/cookie"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
 )
 
@@ -53,8 +54,8 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setAccessTokenCookie(w, loginResp.AccessToken)
-	setRefreshTokenCookie(w, loginResp.RefreshToken)
+	cookie.SetAccessTokenCookie(w, loginResp.AccessToken)
+	cookie.SetRefreshTokenCookie(w, loginResp.RefreshToken)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(LoginResponse{

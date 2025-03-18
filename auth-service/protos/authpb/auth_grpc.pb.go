@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Login_FullMethodName        = "/Auth/Login"
-	Auth_Signup_FullMethodName       = "/Auth/Signup"
-	Auth_RefreshToken_FullMethodName = "/Auth/RefreshToken"
+	Auth_Login_FullMethodName        = "/auth.service.Auth/Login"
+	Auth_Signup_FullMethodName       = "/auth.service.Auth/Signup"
+	Auth_RefreshToken_FullMethodName = "/auth.service.Auth/RefreshToken"
 )
 
 // AuthClient is the client API for Auth service.
@@ -176,7 +176,7 @@ func _Auth_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Auth_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Auth",
+	ServiceName: "auth.service.Auth",
 	HandlerType: (*AuthServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

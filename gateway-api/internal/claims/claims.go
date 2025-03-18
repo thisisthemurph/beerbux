@@ -18,7 +18,11 @@ type JWTClaims struct {
 }
 
 func (c JWTClaims) Authenticated() bool {
-	return c.Subject != "" && c.Username != "" && time.Unix(c.Expiration, 0).After(time.Now())
+	return c.Subject != "" && c.Username != "" && !c.Expired()
+}
+
+func (c JWTClaims) Expired() bool {
+	return time.Unix(c.Expiration, 0).Before(time.Now())
 }
 
 func GetClaims(r *http.Request) JWTClaims {

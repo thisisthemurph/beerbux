@@ -1,4 +1,4 @@
-package auth
+package cookie
 
 import (
 	"net/http"
@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	cookieAccessTokenKey  = "access_token"
-	cookieRefreshTokenKey = "refresh_token"
+	AccessTokenKey  = "access_token"
+	RefreshTokenKey = "refresh_token"
 )
 
-func setAccessTokenCookie(w http.ResponseWriter, token string) {
+func SetAccessTokenCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     cookieAccessTokenKey,
+		Name:     AccessTokenKey,
 		Value:    token,
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
@@ -22,9 +22,9 @@ func setAccessTokenCookie(w http.ResponseWriter, token string) {
 	})
 }
 
-func setRefreshTokenCookie(w http.ResponseWriter, token string) {
+func SetRefreshTokenCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     cookieRefreshTokenKey,
+		Name:     RefreshTokenKey,
 		Value:    token,
 		Path:     "/",
 		Expires:  time.Now().Add(7 * time.Hour * 24),

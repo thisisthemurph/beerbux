@@ -5,6 +5,7 @@ import (
 
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/cookie"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
 )
 
@@ -43,8 +44,8 @@ func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setAccessTokenCookie(w, user.AccessToken)
-	setRefreshTokenCookie(w, user.RefreshToken)
+	cookie.SetAccessTokenCookie(w, user.AccessToken)
+	cookie.SetRefreshTokenCookie(w, user.RefreshToken)
 
 	w.WriteHeader(http.StatusNoContent)
 }

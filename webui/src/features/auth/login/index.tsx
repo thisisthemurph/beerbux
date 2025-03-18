@@ -12,7 +12,7 @@ import {
 	LoginForm,
 	type LoginFormValues,
 } from "@/features/auth/login/LoginForm.tsx";
-import { useUser } from "@/hooks/useUser.tsx";
+import { useAuthenticatedUser } from "@/hooks/useAuthenticatedUser.tsx";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ function LoginPage() {
 	const navigatedAfterSignup = searchParams.get("signup") === "true";
 	const hasShownToast = useRef(false);
 
-	const { setUser } = useUser();
+	const { setUser } = useAuthenticatedUser();
 	const navigate = useNavigate();
 	const authClient = useAuthClient();
 

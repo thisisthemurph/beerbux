@@ -1,3 +1,4 @@
+import { AuthenticatedView } from "@/features/home/authenticated/AuthenticatedView.tsx";
 import { useUser } from "@/hooks/useUser.tsx";
 
 function HomePge() {
@@ -5,8 +6,7 @@ function HomePge() {
 
 	return (
 		<div>
-			<h1>Home Page</h1>
-			{user ? <p>Welcome {user.username}</p> : <p>Welcome to Beerbux</p>}
+			{user ? <AuthenticatedView user={user} /> : <p>Welcome to Beerbux</p>}
 		</div>
 	);
 }

@@ -19,6 +19,7 @@ type Config struct {
 	ClientBaseURL     string
 	AuthServerAddress string
 	GatewayAPIAddress string
+	UserServerAddress string
 	Secrets           SecretConfig
 }
 
@@ -37,6 +38,7 @@ func Load() *Config {
 		ClientBaseURL:     mustGetenv("CLIENT_BASE_URL"),
 		AuthServerAddress: mustGetenv("AUTH_SERVER_ADDRESS"),
 		GatewayAPIAddress: mustGetenv("GATEWAY_API_ADDRESS"),
+		UserServerAddress: mustGetenv("USER_SERVER_ADDRESS"),
 		Secrets: SecretConfig{
 			JWTSecret: mustGetenv("JWT_SECRET"),
 		},

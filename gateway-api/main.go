@@ -9,7 +9,9 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/config"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/auth"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/user"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/middleware"
+	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -36,7 +38,13 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	authClient := authpb.NewAuthClient(authClientConn)
 
-	mux := buildServerMux(cfg, authClient)
+	userClientConn, err := grpc.NewClient(cfg.UserServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("error connecting to user server: %w", err)
+	}
+	userClient := userpb.NewUserClient(userClientConn)
+
+	mux := buildServerMux(cfg, authClient, userClient)
 	logger.Debug("Starting server", "add", cfg.GatewayAPIAddress)
 	if err := http.ListenAndServe(cfg.GatewayAPIAddress, mux); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -45,12 +53,15 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	return nil
 }
 
-func buildServerMux(cfg *config.Config, authClient authpb.AuthClient) http.Handler {
+func buildServerMux(cfg *config.Config, authClient authpb.AuthClient, userClient userpb.UserClient) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("POST /auth/login", auth.NewLoginHandler(authClient))
-	mux.Handle("POST /auth/signup", auth.NewSignupHandler(authClient))
-	mux.Handle("POST /auth/refresh", auth.NewRefreshHandler(authClient))
+	mux.Handle("POST /api/auth/login", auth.NewLoginHandler(authClient))
+	mux.Handle("POST /api/auth/signup", auth.NewSignupHandler(authClient))
+	mux.Handle("POST /api/auth/refresh", auth.NewRefreshHandler(authClient))
 
-	return middleware.Recover(middleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL), cfg.Secrets.JWTSecret))
+	mux.Handle("GET /api/user", user.NewGetCurrentUserHandler(userClient))
+
+	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)
+	return middleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))
 }

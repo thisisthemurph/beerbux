@@ -53,19 +53,16 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			w.WriteHeader(http.StatusInternalServerError)
-			handlers.WriteError(w, "There has been an error logging you up", http.StatusUnauthorized)
+			handlers.WriteError(w, "There has been an error signing you up", http.StatusUnauthorized)
 			return
 		}
 
 		switch st.Code() {
 		case codes.InvalidArgument:
 			// Username is already taken or passwords do not match.
-			w.WriteHeader(http.StatusBadRequest)
 			handlers.WriteError(w, st.Message(), http.StatusBadRequest)
 		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			handlers.WriteError(w, "There has been an error logging you up", http.StatusUnauthorized)
+			handlers.WriteError(w, "There has been an error signing you up", http.StatusInternalServerError)
 			return
 		}
 	}

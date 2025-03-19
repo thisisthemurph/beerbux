@@ -53,18 +53,15 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			w.WriteHeader(http.StatusInternalServerError)
 			handlers.WriteError(w, "There has been an error logging you in", http.StatusUnauthorized)
 			return
 		}
 
 		switch st.Code() {
 		case codes.NotFound:
-			w.WriteHeader(http.StatusUnauthorized)
 			handlers.WriteError(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		default:
-			w.WriteHeader(http.StatusInternalServerError)
 			handlers.WriteError(w, "There has been an error logging you in", http.StatusUnauthorized)
 			return
 		}

@@ -1,14 +1,16 @@
 import { AuthenticatedView } from "@/features/home/authenticated/AuthenticatedView.tsx";
 import { useUser } from "@/hooks/useUser.tsx";
 
-function HomePge() {
+function HomePage() {
 	const { user } = useUser();
 
 	return (
-		<div>
-			{user ? <AuthenticatedView user={user} /> : <p>Welcome to Beerbux</p>}
-		</div>
+		<>
+			<div>
+				{user ? <AuthenticatedView user={user} /> : <p>Welcome to Beerbux</p>}
+			</div>
+		</>
 	);
 }
 
-export default HomePge;
+export default HomePage;

@@ -1,5 +1,5 @@
+import { ValidationError } from "@/api/apiFetch.ts";
 import useAuthClient from "@/api/authClient.ts";
-import { isValidationErrorResponse } from "@/api/types";
 import {
 	Card,
 	CardContent,
@@ -12,7 +12,7 @@ import {
 	LoginForm,
 	type LoginFormValues,
 } from "@/features/auth/login/LoginForm.tsx";
-import { useAuthenticatedUser } from "@/hooks/useAuthenticatedUser.tsx";
+import { useUserStore } from "@/stores/userStore.tsx";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -21,10 +21,9 @@ function LoginPage() {
 	const [searchParams] = useSearchParams();
 	const navigatedAfterSignup = searchParams.get("signup") === "true";
 	const hasShownToast = useRef(false);
-
-	const { setUser } = useAuthenticatedUser();
+	const { fetchUser } = useUserStore();
 	const navigate = useNavigate();
-	const authClient = useAuthClient();
+	const { login } = useAuthClient();
 
 	useEffect(() => {
 		if (navigatedAfterSignup && !hasShownToast.current) {
@@ -33,28 +32,31 @@ function LoginPage() {
 		}
 	}, [navigatedAfterSignup]);
 
-	function handleLogin(values: LoginFormValues) {
-		authClient
-			.login(values.username, values.password)
-			.then((response) => {
-				if (isValidationErrorResponse(response)) {
-					toast.error("There was an issue with the data you provided", {
-						description: (
-							<pre className="p-2 bg-foreground text-xs text-background rounded font-mono">
-								{JSON.stringify(response.errors, null, 2)}
-							</pre>
-						),
-					});
+	async function handleLogin({ username, password }: LoginFormValues) {
+		try {
+			await login(username, password);
+			await fetchUser();
+			navigate("/");
+		} catch (err) {
+			handleLoginError(err);
+		}
+	}
 
-					return;
-				}
-
-				setUser({ id: response.id, username: response.username });
-				navigate("/");
-			})
-			.catch((error) => {
-				toast.error("An error occurred", { description: error.message });
+	function handleLoginError(err: unknown) {
+		if (err instanceof ValidationError) {
+			toast.error("There was an issue with the data you provided", {
+				description: (
+					<pre className="p-2 bg-foreground text-xs text-background rounded font-mono">
+						{JSON.stringify(err.validationErrors.errors, null, 2)}
+					</pre>
+				),
 			});
+			return;
+		}
+
+		toast.error("An error occurred", {
+			description: err instanceof Error ? err.message : "Unknown error",
+		});
 	}
 
 	return (

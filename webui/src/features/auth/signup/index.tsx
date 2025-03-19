@@ -1,5 +1,5 @@
+import { ValidationError } from "@/api/apiFetch.ts";
 import useAuthClient from "@/api/authClient.ts";
-import { isValidationErrorResponse } from "@/api/types.ts";
 import {
 	Card,
 	CardContent,
@@ -17,33 +17,37 @@ import { toast } from "sonner";
 
 function SignupPage() {
 	const navigate = useNavigate();
-	const authClient = useAuthClient();
+	const { signup } = useAuthClient();
 
-	function handleSignup(values: SignupFormValues) {
-		authClient
-			.signup(
-				values.name,
-				values.username,
-				values.password,
-				values.verificationPassword,
-			)
-			.then((response) => {
-				if (isValidationErrorResponse(response)) {
-					toast.error("There was an issue with the data you provided", {
-						description: (
-							<pre className="p-2 bg-foreground text-xs text-background rounded font-mono">
-								{JSON.stringify(response.errors, null, 2)}
-							</pre>
-						),
-					});
-					return;
-				}
+	async function handleSignup({
+		name,
+		username,
+		password,
+		verificationPassword,
+	}: SignupFormValues) {
+		try {
+			await signup(name, username, password, verificationPassword);
+			navigate("/login?signup=true");
+		} catch (err) {
+			handleSignupError(err);
+		}
+	}
 
-				navigate("/login?signup=true");
-			})
-			.catch((error) => {
-				toast.error("An error occurred", { description: error.message });
+	function handleSignupError(err: unknown) {
+		if (err instanceof ValidationError) {
+			toast.error("There was an issue with the data you provided", {
+				description: (
+					<pre className="p-2 bg-foreground text-xs text-background rounded font-mono">
+						{JSON.stringify(err.validationErrors.errors, null, 2)}
+					</pre>
+				),
 			});
+			return;
+		}
+
+		toast.error("An error occurred", {
+			description: err instanceof Error ? err.message : "Unknown error",
+		});
 	}
 
 	return (

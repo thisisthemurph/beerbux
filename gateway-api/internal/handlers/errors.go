@@ -8,6 +8,11 @@ import (
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+func WriteError(w http.ResponseWriter, err string, code int) {
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": err})
+}
+
 func WriteValidationError(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusBadRequest)
 	if err == nil {

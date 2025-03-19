@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -14,12 +13,15 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/token"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
-	ErrInvalidCredentials  = errors.New("invalid username or password")
-	ErrUsernameExists      = errors.New("username already exists")
-	ErrPasswordsDoNotMatch = errors.New("passwords do not match")
+	ErrUserNotFound         = status.Error(codes.NotFound, "user not found")
+	ErrUsernameTaken        = status.Error(codes.InvalidArgument, "username is already taken")
+	ErrRefreshTokenNotFound = status.Error(codes.Unauthenticated, "refresh token not found")
+	ErrPasswordMismatch     = status.Error(codes.InvalidArgument, "passwords do not match")
 )
 
 type AuthServer struct {
@@ -56,24 +58,24 @@ func (s *AuthServer) Login(ctx context.Context, r *authpb.LoginRequest) (*authpb
 	user, err := s.authRepository.GetUserByUsername(ctx, r.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrInvalidCredentials
+			return nil, ErrUserNotFound
 		}
-		return nil, err
+		return nil, ErrUserNotFound
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(r.Password)); err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, ErrUserNotFound
 	}
 
 	accessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to generate JWT: %v", err)
 	}
 
 	refreshToken := generateRefreshToken()
 	hashedRefreshToken, err := hashRefreshToken(refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate hashed refresh token: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate hashed refresh token: %v", err)
 	}
 
 	err = s.authTokenRepository.RegisterRefreshToken(ctx, token.RegisterRefreshTokenParams{
@@ -82,7 +84,7 @@ func (s *AuthServer) Login(ctx context.Context, r *authpb.LoginRequest) (*authpb
 		ExpiresAt:   time.Now().Add(s.options.RefreshTokenTTL),
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to store refresh token: %v", err)
 	}
 
 	return &authpb.LoginResponse{
@@ -100,16 +102,16 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 	if err != nil {
 		return nil, err
 	} else if usernameTaken == 1 {
-		return nil, ErrUsernameExists
+		return nil, ErrUsernameTaken
 	}
 
 	if r.Password != r.VerificationPassword {
-		return nil, ErrPasswordsDoNotMatch
+		return nil, ErrPasswordMismatch
 	}
 
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
 	}
 
 	user, err := s.authRepository.RegisterUser(ctx, auth.RegisterUserParams{
@@ -118,18 +120,18 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 		HashedPassword: string(hashedBytes),
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
 
 	accessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to generate JWT: %v", err)
 	}
 
 	refreshToken := generateRefreshToken()
 	hashedRefreshToken, err := hashRefreshToken(refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate hashed refresh token: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate hashed refresh token: %v", err)
 	}
 
 	err = s.authTokenRepository.RegisterRefreshToken(ctx, token.RegisterRefreshTokenParams{
@@ -138,7 +140,7 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 		ExpiresAt:   time.Now().Add(s.options.RefreshTokenTTL),
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to store refresh token: %v", err)
 	}
 
 	err = s.userRegisteredProducer.Publish(ctx, producer.UserRegisteredEvent{
@@ -159,7 +161,7 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 func (s *AuthServer) RefreshToken(ctx context.Context, r *authpb.RefreshTokenRequest) (*authpb.RefreshTokenResponse, error) {
 	userRefreshTokens, err := s.authTokenRepository.GetRefreshTokensByUserID(ctx, r.UserId)
 	if err != nil {
-		return nil, err
+		return nil, ErrRefreshTokenNotFound
 	}
 
 	var matchedToken token.RefreshToken
@@ -173,23 +175,23 @@ func (s *AuthServer) RefreshToken(ctx context.Context, r *authpb.RefreshTokenReq
 	}
 
 	if !tokenFound {
-		return nil, ErrInvalidCredentials
+		return nil, ErrRefreshTokenNotFound
 	}
 
 	user, err := s.authRepository.GetUserByID(ctx, r.UserId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, ErrUserNotFound
 	}
 
 	newAccessToken, err := generateJWT(s.options.JWTSecret, user, s.options.AccessTokenTTL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate new access token: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate JWT: %v", err)
 	}
 
 	newRefreshToken := generateRefreshToken()
 	newHashedRefreshToken, err := hashRefreshToken(newRefreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate hashed refresh token: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to generate hashed refresh token: %v", err)
 	}
 
 	err = s.authTokenRepository.RegisterRefreshToken(ctx, token.RegisterRefreshTokenParams{
@@ -198,11 +200,11 @@ func (s *AuthServer) RefreshToken(ctx context.Context, r *authpb.RefreshTokenReq
 		ExpiresAt:   time.Now().Add(s.options.RefreshTokenTTL),
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to store refresh token: %v", err)
 	}
 
 	if err := s.authTokenRepository.DeleteRefreshToken(ctx, matchedToken.ID); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to delete refresh token: %v", err)
 	}
 
 	return &authpb.RefreshTokenResponse{

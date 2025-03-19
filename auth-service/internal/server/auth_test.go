@@ -60,19 +60,19 @@ func TestAuthServer_Login(t *testing.T) {
 			"invalid password",
 			user.Username,
 			"wrong-password",
-			server.ErrInvalidCredentials,
+			server.ErrUserNotFound,
 		},
 		{
 			"invalid username",
 			"wrong.user",
 			"password",
-			server.ErrInvalidCredentials,
+			server.ErrUserNotFound,
 		},
 		{
 			"invalid username and password",
 			"wrong.user",
 			"wrong-password",
-			server.ErrInvalidCredentials,
+			server.ErrUserNotFound,
 		},
 	}
 
@@ -144,7 +144,7 @@ func TestAuthServer_Signup_WithBadRequests(t *testing.T) {
 				Password:             "password",
 				VerificationPassword: "password2",
 			},
-			server.ErrPasswordsDoNotMatch,
+			server.ErrPasswordMismatch,
 		},
 		{
 			"existing username",
@@ -154,7 +154,7 @@ func TestAuthServer_Signup_WithBadRequests(t *testing.T) {
 				Password:             "password",
 				VerificationPassword: "password",
 			},
-			server.ErrUsernameExists,
+			server.ErrUsernameTaken,
 		},
 	}
 
@@ -203,7 +203,7 @@ func TestAuthServer_RefreshToken(t *testing.T) {
 			"unexpected refresh token",
 			user.ID,
 			"unexpected-token",
-			server.ErrInvalidCredentials,
+			server.ErrRefreshTokenNotFound,
 		},
 	}
 

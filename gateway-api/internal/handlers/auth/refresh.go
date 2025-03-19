@@ -6,7 +6,8 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/cookie"
-	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // RefreshHandler handles the refresh access token request.
@@ -40,8 +41,21 @@ func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		handlers.WriteValidationError(w, err)
-		return
+		st, ok := status.FromError(err)
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		switch st.Code() {
+		case codes.Unauthenticated, codes.NotFound:
+			// Issues with the refresh token or the user could not be found.
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	cookie.SetAccessTokenCookie(w, user.AccessToken)

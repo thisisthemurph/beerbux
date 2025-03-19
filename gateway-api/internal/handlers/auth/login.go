@@ -62,7 +62,7 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			handlers.WriteError(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		default:
-			handlers.WriteError(w, "There has been an error logging you in", http.StatusUnauthorized)
+			handlers.WriteError(w, "There has been an error logging you in", http.StatusInternalServerError)
 			return
 		}
 	}

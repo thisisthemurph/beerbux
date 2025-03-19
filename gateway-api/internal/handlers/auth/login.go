@@ -8,6 +8,8 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/cookie"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type LoginHandler struct {
@@ -48,17 +50,31 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginResp, err := h.authClient.Login(r.Context(), &loginRequest)
-
 	if err != nil {
-		handlers.WriteValidationError(w, err)
-		return
+		st, ok := status.FromError(err)
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.WriteError(w, "There has been an error logging you in", http.StatusUnauthorized)
+			return
+		}
+
+		switch st.Code() {
+		case codes.NotFound:
+			w.WriteHeader(http.StatusUnauthorized)
+			handlers.WriteError(w, "Invalid username or password", http.StatusUnauthorized)
+			return
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.WriteError(w, "There has been an error logging you in", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	cookie.SetAccessTokenCookie(w, loginResp.AccessToken)
 	cookie.SetRefreshTokenCookie(w, loginResp.RefreshToken)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(LoginResponse{
+	_ = json.NewEncoder(w).Encode(LoginResponse{
 		ID:       loginResp.User.Id,
 		Username: loginResp.User.Username,
 	})

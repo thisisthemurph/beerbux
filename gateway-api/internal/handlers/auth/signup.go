@@ -8,6 +8,8 @@ import (
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type SignupHandler struct {
@@ -49,8 +51,23 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		handlers.WriteValidationError(w, err)
-		return
+		st, ok := status.FromError(err)
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.WriteError(w, "There has been an error logging you up", http.StatusUnauthorized)
+			return
+		}
+
+		switch st.Code() {
+		case codes.InvalidArgument:
+			// Username is already taken or passwords do not match.
+			w.WriteHeader(http.StatusBadRequest)
+			handlers.WriteError(w, st.Message(), http.StatusBadRequest)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.WriteError(w, "There has been an error logging you up", http.StatusUnauthorized)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)

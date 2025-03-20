@@ -3,11 +3,11 @@ package server
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/auth"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/thisisthemurph/beerbux/auth-service/internal/repository/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func generateJWT(secret string, user auth.User, duration time.Duration) (string, error) {

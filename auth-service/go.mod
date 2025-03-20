@@ -2,16 +2,14 @@ module github.com/thisisthemurph/beerbux/auth-service
 
 go 1.24.0
 
-replace github.com/thisisthemurph/beerbux/shared => ../shared
-
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.10.0
-	github.com/thisisthemurph/beerbux/shared v0.0.0-00010101000000-000000000000
+	github.com/thisisthemurph/beerbux/shared v0.0.0-20250319083438-6b6f7f777de0
 	golang.org/x/crypto v0.36.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5

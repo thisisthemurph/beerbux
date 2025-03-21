@@ -9,7 +9,7 @@ require (
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.10.0
-	github.com/thisisthemurph/beerbux/shared v0.0.0-20250319083438-6b6f7f777de0
+	github.com/thisisthemurph/beerbux/shared v1.0.0
 	golang.org/x/crypto v0.36.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5

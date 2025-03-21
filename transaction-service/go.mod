@@ -2,11 +2,7 @@ module github.com/thisisthemurph/beerbux/transaction-service
 
 go 1.24.0
 
-replace (
-	github.com/thisisthemurph/beerbux/session-service => ../session-service
-	github.com/thisisthemurph/beerbux/shared => ../shared
-	github.com/thisisthemurph/beerbux/user-service => ../user-service
-)
+replace github.com/thisisthemurph/beerbux/session-service => ../session-service
 
 require (
 	github.com/google/uuid v1.6.0
@@ -14,7 +10,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.10.0
 	github.com/thisisthemurph/beerbux/session-service v0.0.0-00010101000000-000000000000
-	github.com/thisisthemurph/beerbux/shared v0.0.0-00010101000000-000000000000
+	github.com/thisisthemurph/beerbux/shared v1.0.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
 )

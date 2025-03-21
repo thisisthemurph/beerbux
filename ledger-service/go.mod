@@ -2,16 +2,14 @@ module github.com/thisisthemurph/beerbux/ledger-service
 
 go 1.24.0
 
-replace github.com/thisisthemurph/beerbux/shared => ../shared
-
 require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pressly/goose/v3 v3.24.1
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.10.0
-	github.com/thisisthemurph/beerbux/shared v0.0.0-00010101000000-000000000000
-	modernc.org/sqlite v1.36.0
+	github.com/thisisthemurph/beerbux/shared v1.0.0
+	modernc.org/sqlite v1.36.1
 )
 
 require (

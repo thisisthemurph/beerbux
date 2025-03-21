@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/pressly/goose/v3"
 	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/session-service/internal/config"
 	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
@@ -36,6 +37,12 @@ func New(cfg *config.Config, logger *slog.Logger) (*App, error) {
 	db, err := sql.Open(cfg.Database.Driver, cfg.Database.URI)
 	if err != nil {
 		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	if err := migrateDatabase(db, cfg); err != nil {
+		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	logger.Debug("creating user-service gRPC client connection")
@@ -98,5 +105,15 @@ func ensureKafkaTopics(brokers []string) error {
 		return fmt.Errorf("failed to ensure session.member.added Kafka topic: %w", err)
 	}
 
+	return nil
+}
+
+func migrateDatabase(db *sql.DB, cfg *config.Config) error {
+	if err := goose.SetDialect(cfg.Database.Driver); err != nil {
+		return fmt.Errorf("failed to set dialect: %w", err)
+	}
+	if err := goose.Up(db, "./internal/db/migrations"); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
 	return nil
 }

@@ -1,6 +1,18 @@
 -- name: GetSession :one
 select * from sessions where id = ? limit 1;
 
+-- name: ListSessionsForUser :many
+select
+    s.*,
+    m.id as member_id,
+    m.name as member_name,
+    m.username as member_username
+from sessions s
+join session_members sm_target on s.id = sm_target.session_id
+join session_members sm on s.id = sm.session_id
+join members m on sm.member_id = m.id
+where sm_target.member_id = ?;
+
 -- name: CreateSession :one
 insert into sessions (id, name)
 values (?, ?)

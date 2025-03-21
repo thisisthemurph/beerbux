@@ -7,6 +7,7 @@ package session
 
 import (
 	"context"
+	"time"
 )
 
 const addSessionMember = `-- name: AddSessionMember :exec
@@ -106,6 +107,62 @@ func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, 
 			&i.Username,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSessionsForUser = `-- name: ListSessionsForUser :many
+select
+    s.id, s.name, s.is_active, s.created_at, s.updated_at,
+    m.id as member_id,
+    m.name as member_name,
+    m.username as member_username
+from sessions s
+join session_members sm_target on s.id = sm_target.session_id
+join session_members sm on s.id = sm.session_id
+join members m on sm.member_id = m.id
+where sm_target.member_id = ?
+`
+
+type ListSessionsForUserRow struct {
+	ID             string
+	Name           string
+	IsActive       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	MemberID       string
+	MemberName     string
+	MemberUsername string
+}
+
+func (q *Queries) ListSessionsForUser(ctx context.Context, memberID string) ([]ListSessionsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSessionsForUser, memberID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSessionsForUserRow
+	for rows.Next() {
+		var i ListSessionsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MemberID,
+			&i.MemberName,
+			&i.MemberUsername,
 		); err != nil {
 			return nil, err
 		}

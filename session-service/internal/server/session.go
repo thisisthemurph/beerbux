@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"log/slog"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
@@ -72,6 +72,52 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 		Name:      ssn.Name,
 		IsActive:  ssn.IsActive,
 		Members:   sessionMembers,
+	}, nil
+}
+
+// ListSessionsForUser returns the sessions for a user containing the associated members.
+func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.ListSessionsForUserRequest) (*sessionpb.ListSessionsForUserResponse, error) {
+	if err := validateListSessionsForUserRequest(r); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	// Fetch sessions with members from the database.
+	rows, err := s.sessionRepository.ListSessionsForUser(ctx, r.UserId)
+	if err != nil {
+		s.logger.Error("failed to list sessions", "user_id", r.UserId, "error", err)
+		return nil, fmt.Errorf("failed to list sessions for user %s: %w", r.UserId, err)
+	}
+
+	sessionsMap := make(map[string]*sessionpb.SessionResponse, len(rows))
+
+	for _, row := range rows {
+		ssn, exists := sessionsMap[row.ID]
+		if !exists {
+			ssn = &sessionpb.SessionResponse{
+				SessionId: row.ID,
+				Name:      row.Name,
+				IsActive:  row.IsActive,
+				Members:   make([]*sessionpb.SessionMember, 0, 4),
+			}
+			sessionsMap[row.ID] = ssn
+		}
+
+		if row.MemberID != "" {
+			ssn.Members = append(ssn.Members, &sessionpb.SessionMember{
+				UserId:   row.MemberID,
+				Name:     row.MemberName,
+				Username: row.MemberUsername,
+			})
+		}
+	}
+
+	sessions := make([]*sessionpb.SessionResponse, 0, len(sessionsMap))
+	for _, ssn := range sessionsMap {
+		sessions = append(sessions, ssn)
+	}
+
+	return &sessionpb.ListSessionsForUserResponse{
+		Sessions: sessions,
 	}, nil
 }
 

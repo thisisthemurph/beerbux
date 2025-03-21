@@ -9,12 +9,20 @@
 
 ## Manual testing
 
+**List all sessions for a user**
+
+To list all sessions for a user, provide the ID of the user for which the sessions are to be listed.
+
+```shell
+grpcurl -plaintext -d '{"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde"}' localhost:50052 session.service.Session.ListSessionsForUser
+```
+
 **Create a new session**
 
 A session can be created by providing the ID of the creating user and the name of the session to be created.
 
 ```shell
-grpcurl -plaintext -d '{"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde", "name": "My Test Session"}' localhost:50052 Session.CreateSession
+grpcurl -plaintext -d '{"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde", "name": "My Test Session 2"}' localhost:50052 session.service.Session.CreateSession
 ```
 
 **Add a user to a session**
@@ -22,7 +30,7 @@ grpcurl -plaintext -d '{"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde", "name
 A user can be added to a session by providing the ID of the user to be added and the ID of the session to which the user is to be added.
 
 ```shell
-grpcurl -plaintext -d '{"user_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf", "session_id": "5c0327eb-b934-46be-a882-56195fab04d9"}' localhost:50052 Session.AddMemberToSession
+grpcurl -plaintext -d '{"user_id": "6cd0703c-1e23-43c6-96c2-af043e6ad4bf", "session_id": "5c0327eb-b934-46be-a882-56195fab04d9"}' localhost:50052 session.service.Session.AddMemberToSession
 ```
 
 **Updating members of a session**

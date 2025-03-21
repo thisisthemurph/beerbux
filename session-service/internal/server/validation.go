@@ -17,6 +17,10 @@ func validateCreateSessionRequest(r *sessionpb.CreateSessionRequest) error {
 	return validateSessionName(r.Name)
 }
 
+func validateListSessionsForUserRequest(r *sessionpb.ListSessionsForUserRequest) error {
+	return validateStringUUID(r.UserId)
+}
+
 func validateSessionName(name string) error {
 	if name == "" {
 		return fmt.Errorf("name is required")

@@ -1,10 +1,12 @@
 syntax = "proto3";
 
+package session.service;
 option go_package = "protos/sessionpb;sessionpb";
 
 service Session {
   rpc CreateSession(CreateSessionRequest) returns (SessionResponse);
   rpc GetSession(GetSessionRequest) returns (SessionResponse);
+  rpc ListSessionsForUser(ListSessionsForUserRequest) returns (ListSessionsForUserResponse);
   rpc AddMemberToSession(AddMemberToSessionRequest) returns (EmptyResponse);
 }
 
@@ -21,6 +23,14 @@ message SessionMember {
   string user_id = 1;
   string name = 2;
   string username = 3;
+}
+
+message ListSessionsForUserRequest {
+  string user_id = 1;
+}
+
+message ListSessionsForUserResponse {
+  repeated SessionResponse sessions = 1;
 }
 
 message SessionResponse {

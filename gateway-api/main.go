@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/session"
+	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"log/slog"
 	"net/http"
 	"os"
@@ -44,7 +46,13 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	userClient := userpb.NewUserClient(userClientConn)
 
-	mux := buildServerMux(cfg, authClient, userClient)
+	sessionClientConn, err := grpc.NewClient(cfg.SessionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("error connecting to session server: %w", err)
+	}
+	sessionClient := sessionpb.NewSessionClient(sessionClientConn)
+
+	mux := buildServerMux(cfg, authClient, userClient, sessionClient)
 	logger.Debug("Starting server", "add", cfg.GatewayAPIAddress)
 	if err := http.ListenAndServe(cfg.GatewayAPIAddress, mux); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -53,7 +61,12 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	return nil
 }
 
-func buildServerMux(cfg *config.Config, authClient authpb.AuthClient, userClient userpb.UserClient) http.Handler {
+func buildServerMux(
+	cfg *config.Config,
+	authClient authpb.AuthClient,
+	userClient userpb.UserClient,
+	sessionClient sessionpb.SessionClient,
+) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.Handle("POST /api/auth/login", auth.NewLoginHandler(authClient))
@@ -61,6 +74,7 @@ func buildServerMux(cfg *config.Config, authClient authpb.AuthClient, userClient
 	mux.Handle("POST /api/auth/refresh", auth.NewRefreshHandler(authClient))
 
 	mux.Handle("GET /api/user", user.NewGetCurrentUserHandler(userClient))
+	mux.Handle("GET /api/user/sessions", session.NewListSessionsForUserHandler(sessionClient))
 
 	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)
 	return middleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))

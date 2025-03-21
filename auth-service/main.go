@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/pressly/goose/v3"
 	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/auth-service/internal/config"
 	"github.com/thisisthemurph/beerbux/auth-service/internal/producer"
@@ -44,6 +45,9 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
+	}
+	if err := migrateDatabase(db, cfg); err != nil {
+		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	if err := ensureKafkaTopics(cfg.Kafka.Brokers); err != nil {
@@ -116,5 +120,15 @@ func ensureKafkaTopics(brokers []string) error {
 		return fmt.Errorf("failed to ensure session.member.added Kafka topic: %w", err)
 	}
 
+	return nil
+}
+
+func migrateDatabase(db *sql.DB, cfg *config.Config) error {
+	if err := goose.SetDialect(cfg.Database.Driver); err != nil {
+		return fmt.Errorf("failed to set dialect: %w", err)
+	}
+	if err := goose.Up(db, "./internal/db/migrations"); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
 	return nil
 }

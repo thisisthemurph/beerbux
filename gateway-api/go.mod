@@ -4,7 +4,6 @@ go 1.24.0
 
 replace (
 	github.com/thisisthemurph/beerbux/auth-service => ../auth-service
-	github.com/thisisthemurph/beerbux/shared => ../shared
 	github.com/thisisthemurph/beerbux/user-service => ../user-service
 )
 
@@ -14,7 +13,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.10.0
-	github.com/thisisthemurph/beerbux/auth-service v0.0.0-00010101000000-000000000000
+	github.com/thisisthemurph/beerbux/auth-service v1.0.1
 	github.com/thisisthemurph/beerbux/user-service v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.71.0
 )

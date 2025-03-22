@@ -13,6 +13,13 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+var (
+	ErrSessionNotFound = status.Error(codes.NotFound, "session not found")
+	ErrUserNotFound    = status.Error(codes.NotFound, "user not found")
 )
 
 type SessionServer struct {
@@ -43,19 +50,22 @@ func NewSessionServer(
 
 func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionRequest) (*sessionpb.SessionResponse, error) {
 	if err := validateGetSessionRequest(r); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ssn, err := s.sessionRepository.GetSession(ctx, r.SessionId)
 	if err != nil {
 		s.logger.Error("failed to get session", "error", err)
-		return nil, fmt.Errorf("failed to get session %v: %w", r.SessionId, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrSessionNotFound
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get session: %v", err)
 	}
 
 	members, err := s.sessionRepository.ListMembers(ctx, r.SessionId)
 	if err != nil {
 		s.logger.Error("failed to list members", "error", err)
-		return nil, fmt.Errorf("failed to list members for session %v: %w", r.SessionId, err)
+		return nil, status.Errorf(codes.Internal, "failed to list members: %v", err)
 	}
 
 	sessionMembers := make([]*sessionpb.SessionMember, 0, len(members))
@@ -78,14 +88,14 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 // ListSessionsForUser returns the sessions for a user containing the associated members.
 func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.ListSessionsForUserRequest) (*sessionpb.ListSessionsForUserResponse, error) {
 	if err := validateListSessionsForUserRequest(r); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
 
 	// Fetch sessions with members from the database.
 	rows, err := s.sessionRepository.ListSessionsForUser(ctx, r.UserId)
 	if err != nil {
 		s.logger.Error("failed to list sessions", "user_id", r.UserId, "error", err)
-		return nil, fmt.Errorf("failed to list sessions for user %s: %w", r.UserId, err)
+		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
 	}
 
 	sessionsMap := make(map[string]*sessionpb.SessionResponse, len(rows))
@@ -132,12 +142,15 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 		UserId: r.UserId,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch user: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %v", err)
 	}
 
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to begin tx: %v", err)
 	}
 	defer tx.Rollback()
 
@@ -150,7 +163,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to create session: %v", err)
 	}
 
 	// Add the user to the members table.
@@ -161,7 +174,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to upsert member: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to upsert member: %v", err)
 	}
 
 	// Join the member to the sessions in the session_members table.
@@ -172,7 +185,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 	})
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit tx: %v", err)
 	}
 
 	return &sessionpb.SessionResponse{
@@ -186,7 +199,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.AddMemberToSessionRequest) (*sessionpb.EmptyResponse, error) {
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to begin tx: %v", err)
 	}
 	defer func() {
 		_ = tx.Rollback()
@@ -230,11 +243,14 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 	wg.Wait()
 
 	if sessionErr != nil {
-		return nil, fmt.Errorf("failed fetching session %q from database: %w", r.SessionId, sessionErr)
+		if errors.Is(sessionErr, sql.ErrNoRows) {
+			return nil, ErrSessionNotFound
+		}
+		return nil, status.Errorf(codes.Internal, "failed fetching session: %v", sessionErr)
 	}
 
 	if memberErr != nil && !errors.Is(memberErr, sql.ErrNoRows) {
-		return nil, fmt.Errorf("error fetching member %q from database: %w", r.UserId, memberErr)
+		return nil, status.Errorf(codes.Internal, "error fetching member %q from database: %v", r.UserId, memberErr)
 	}
 
 	// If the user is not in the members table, fetch the user from the user service.
@@ -243,6 +259,9 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 			UserId: r.UserId,
 		})
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrUserNotFound
+			}
 			s.logger.Error("error fetching user from user service", "ID", r.UserId, "error", err)
 			return nil, fmt.Errorf("failed to fetch user: %w", err)
 		}
@@ -254,7 +273,7 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 		})
 		if err != nil {
 			s.logger.Error("error upserting member", "ID", u.UserId, "error", err)
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to upsert member: %v", err)
 		}
 	}
 
@@ -265,11 +284,11 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 		IsOwner:   false,
 	})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to add member to session: %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to commit tx: %v", err)
 	}
 
 	if err := s.sessionMemberAddedPublisher.Publish(r.SessionId, r.UserId); err != nil {

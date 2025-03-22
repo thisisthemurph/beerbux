@@ -3,7 +3,6 @@ package server_test
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"testing"
 
@@ -15,8 +14,8 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/tests/builder"
 	"github.com/thisisthemurph/beerbux/session-service/tests/fake"
 	"github.com/thisisthemurph/beerbux/session-service/tests/testinfra"
-
-	_ "modernc.org/sqlite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestGetSession_Success(t *testing.T) {
@@ -105,8 +104,8 @@ func TestGetSession_NotFound(t *testing.T) {
 	sessionID := uuid.New().String()
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: sessionID})
 	assert.Error(t, err)
+	assert.ErrorIs(t, err, server.ErrSessionNotFound)
 	assert.Nil(t, resp)
-	assert.Contains(t, err.Error(), "failed to get session")
 }
 
 func TestGetSession_InvalidRequest(t *testing.T) {
@@ -119,9 +118,8 @@ func TestGetSession_InvalidRequest(t *testing.T) {
 	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: ""})
-	assert.Error(t, err)
+	assertStatusHasCode(t, err, codes.InvalidArgument)
 	assert.Nil(t, resp)
-	assert.Contains(t, err.Error(), "invalid request")
 }
 
 func TestCreateSession_Success(t *testing.T) {
@@ -172,8 +170,8 @@ func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
 
 	resp, err := sessionServer.CreateSession(context.Background(), req)
 	assert.Error(t, err)
+	assert.ErrorIs(t, err, server.ErrUserNotFound)
 	assert.Nil(t, resp)
-	assert.Contains(t, err.Error(), "failed to fetch user")
 }
 
 func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
@@ -244,9 +242,9 @@ func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {
 	}
 
 	_, err := sessionServer.AddMemberToSession(context.Background(), req)
+
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprintf("failed fetching session %q from database", req.SessionId))
-	assert.Contains(t, err.Error(), "sql: no rows in result set")
+	assert.ErrorIs(t, err, server.ErrSessionNotFound)
 }
 
 func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
@@ -270,10 +268,12 @@ func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 
 	_, err := sessionServer.AddMemberToSession(context.Background(), req)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to fetch user: user not found")
+	assert.ErrorIs(t, err, server.ErrUserNotFound)
 }
 
 func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, expectedName, expectedUsername string, expectedOwner bool) {
+	t.Helper()
+
 	var memberName, memberUsername string
 	err := db.QueryRow("select name, username from members where id = ?", memberID).Scan(&memberName, &memberUsername)
 	assert.NoError(t, err)
@@ -284,4 +284,13 @@ func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, e
 	err = db.QueryRow("select is_owner from session_members where session_id = ? and member_id = ?", sessionID, memberID).Scan(&isOwner)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedOwner, isOwner)
+}
+
+func assertStatusHasCode(t *testing.T, err error, expectedCode codes.Code) {
+	t.Helper()
+
+	assert.Error(t, err)
+	st, ok := status.FromError(err)
+	assert.True(t, ok)
+	assert.Equal(t, expectedCode, st.Code())
 }

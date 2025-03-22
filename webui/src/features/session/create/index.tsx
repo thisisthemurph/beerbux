@@ -22,7 +22,7 @@ function CreateSessionPage() {
 
 	function handleCreateSessionError(err: unknown) {
 		if (err instanceof ValidationError) {
-			toast.error("There was an issue creating the session", {
+			toast.error("The session could not be created", {
 				description: err.validationErrors.errors.name,
 			});
 		}
@@ -30,7 +30,7 @@ function CreateSessionPage() {
 
 	return (
 		<>
-			<h1>Create a new session</h1>
+			<h1>Start a session</h1>
 			<NewSessionForm onCreate={handleCreateSession} />
 		</>
 	);

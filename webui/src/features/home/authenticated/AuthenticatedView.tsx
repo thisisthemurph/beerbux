@@ -1,6 +1,9 @@
 import useUserClient from "@/api/userClient.ts";
+import {
+	AllSessionsLink,
+	SessionListing,
+} from "@/components/SessionListing.tsx";
 import { PrimaryActions } from "@/features/home/authenticated/PrimaryActions.tsx";
-import { SessionListing } from "@/features/home/authenticated/SessionListing.tsx";
 import { UserCard } from "@/features/home/authenticated/UserCard.tsx";
 import type { User } from "@/stores/userStore.tsx";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +17,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 
 	const { data: sessions, isLoading: sessionsLoading } = useQuery({
 		queryKey: ["sessions"],
-		queryFn: getSessions,
+		queryFn: () => getSessions(3),
 	});
 
 	return (
@@ -24,7 +27,9 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 			{sessionsLoading ? (
 				<SessionListing.Skeleton />
 			) : (
-				<SessionListing sessions={sessions ?? []} />
+				<SessionListing sessions={sessions ?? []}>
+					{sessions && <AllSessionsLink />}
+				</SessionListing>
 			)}
 		</div>
 	);

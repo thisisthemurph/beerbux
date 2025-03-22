@@ -7,7 +7,7 @@ import (
 
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
-	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/shared/send"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -34,12 +34,12 @@ type SignupRequest struct {
 func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		send.Error(w, "Failed to decode request", http.StatusBadRequest)
 		return
 	}
 
 	if err := req.Validate(); err != nil {
-		handlers.WriteValidationError(w, err)
+		send.ValidationError(w, err)
 		return
 	}
 
@@ -53,16 +53,16 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			handlers.WriteError(w, "There has been an error signing you up", http.StatusUnauthorized)
+			send.Error(w, "There has been an error signing you up", http.StatusUnauthorized)
 			return
 		}
 
 		switch st.Code() {
 		case codes.InvalidArgument:
 			// Username is already taken or passwords do not match.
-			handlers.WriteError(w, st.Message(), http.StatusBadRequest)
+			send.Error(w, st.Message(), http.StatusBadRequest)
 		default:
-			handlers.WriteError(w, "There has been an error signing you up", http.StatusInternalServerError)
+			send.Error(w, "There has been an error signing you up", http.StatusInternalServerError)
 			return
 		}
 	}

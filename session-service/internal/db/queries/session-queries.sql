@@ -11,7 +11,10 @@ from sessions s
 join session_members sm_target on s.id = sm_target.session_id
 join session_members sm on s.id = sm.session_id
 join members m on sm.member_id = m.id
-where sm_target.member_id = ?;
+where sm_target.member_id = :member_id
+and (cast(coalesce(:page_token, '') as text) = '' or :page_token < s.id)
+order by s.updated_at desc, s.id desc
+limit case when :page_size = 0 then -1 else :page_size end;
 
 -- name: CreateSession :one
 insert into sessions (id, name)

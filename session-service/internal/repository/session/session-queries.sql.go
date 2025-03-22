@@ -131,8 +131,17 @@ from sessions s
 join session_members sm_target on s.id = sm_target.session_id
 join session_members sm on s.id = sm.session_id
 join members m on sm.member_id = m.id
-where sm_target.member_id = ?
+where sm_target.member_id = ?1
+and (cast(coalesce(?2, '') as text) = '' or ?2 < s.id)
+order by s.updated_at desc, s.id desc
+limit case when ?3 = 0 then -1 else ?3 end
 `
+
+type ListSessionsForUserParams struct {
+	MemberID  string
+	PageToken string
+	PageSize  interface{}
+}
 
 type ListSessionsForUserRow struct {
 	ID             string
@@ -145,8 +154,8 @@ type ListSessionsForUserRow struct {
 	MemberUsername string
 }
 
-func (q *Queries) ListSessionsForUser(ctx context.Context, memberID string) ([]ListSessionsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, listSessionsForUser, memberID)
+func (q *Queries) ListSessionsForUser(ctx context.Context, arg ListSessionsForUserParams) ([]ListSessionsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSessionsForUser, arg.MemberID, arg.PageToken, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}

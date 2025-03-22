@@ -2,8 +2,7 @@ package fake
 
 import (
 	"context"
-	"errors"
-
+	"database/sql"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"google.golang.org/grpc"
 )
@@ -39,7 +38,11 @@ func (f *SessionClientBuilderFake) GetSession(ctx context.Context, in *sessionpb
 			return ssn, nil
 		}
 	}
-	return nil, errors.New("session not found")
+	return nil, sql.ErrNoRows
+}
+
+func (f *SessionClientBuilderFake) ListSessionsForUser(ctx context.Context, in *sessionpb.ListSessionsForUserRequest, opts ...grpc.CallOption) (*sessionpb.ListSessionsForUserResponse, error) {
+	panic("implement me")
 }
 
 func (f *SessionClientBuilderFake) AddMemberToSession(ctx context.Context, in *sessionpb.AddMemberToSessionRequest, opts ...grpc.CallOption) (*sessionpb.EmptyResponse, error) {

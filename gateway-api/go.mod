@@ -4,12 +4,12 @@ go 1.24.0
 
 require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.10.0
 	github.com/thisisthemurph/beerbux/auth-service v1.0.1
-	github.com/thisisthemurph/beerbux/session-service v1.0.1
+	github.com/thisisthemurph/beerbux/session-service v1.2.1
 	github.com/thisisthemurph/beerbux/user-service v1.0.0
 	google.golang.org/grpc v1.71.0
 )

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/shared/pagination"
 	"net/http"
 
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
@@ -38,8 +39,11 @@ func (h *ListSessionsForUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	page := pagination.FromRequest(r)
 	ssns, err := h.sessionClient.ListSessionsForUser(r.Context(), &sessionpb.ListSessionsForUserRequest{
-		UserId: c.Subject,
+		UserId:    c.Subject,
+		PageSize:  page.PageSize,
+		PageToken: page.PageToken,
 	})
 
 	if err != nil {

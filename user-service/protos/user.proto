@@ -5,7 +5,7 @@ option go_package = "protos/userpb;userpb";
 
 service User {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  rpc GetUserNyUsername(GetUserByUsernameRequest) returns (GetUserResponse);
+  rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
 }
 

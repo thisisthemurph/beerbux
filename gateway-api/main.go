@@ -78,6 +78,7 @@ func buildServerMux(
 
 	mux.Handle("GET /api/session/{sessionId}", session.NewGetSessionByIdHandler(sessionClient))
 	mux.Handle("POST /api/session", session.NewCreateSessionHandler(sessionClient))
+	mux.Handle("POST /api/session/{sessionId}/member", session.NewAddMemberToSessionHandler(sessionClient))
 
 	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)
 	return middleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))

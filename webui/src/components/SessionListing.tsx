@@ -9,13 +9,15 @@ import {
 } from "@/components/ui/card.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 type SessionListingProps = {
 	sessions: Session[];
+	children?: ReactNode;
 };
 
-function SessionListing({ sessions }: SessionListingProps) {
+function SessionListing({ sessions, children }: SessionListingProps) {
 	return (
 		<Card>
 			<CardHeader>
@@ -35,21 +37,25 @@ function SessionListing({ sessions }: SessionListingProps) {
 								<Avatar className="w-10 h-10">
 									<AvatarFallback>{getAvatarText(session.name)}</AvatarFallback>
 								</Avatar>
-								<p>{session.name}</p>
+								<div className="flex justify-between items-center w-full">
+									<p>{session.name}</p>
+								</div>
 							</div>
 							{i < sessions.length - 1 && <Separator />}
 						</Link>
 					))}
 				</section>
 			</CardContent>
-			{sessions.length > 0 && (
-				<CardFooter>
-					<Link to="/sessions" className="text-blue-400">
-						All sessions
-					</Link>
-				</CardFooter>
-			)}
+			{children && <CardFooter>{children}</CardFooter>}
 		</Card>
+	);
+}
+
+export function AllSessionsLink() {
+	return (
+		<Link to="/sessions" className="text-blue-400">
+			All sessions
+		</Link>
 	);
 }
 

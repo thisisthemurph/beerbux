@@ -122,19 +122,24 @@ func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, 
 }
 
 const listSessionsForUser = `-- name: ListSessionsForUser :many
-select
-    s.id, s.name, s.is_active, s.created_at, s.updated_at,
-    m.id as member_id,
-    m.name as member_name,
-    m.username as member_username
-from sessions s
-join session_members sm_target on s.id = sm_target.session_id
-join session_members sm on s.id = sm.session_id
-join members m on sm.member_id = m.id
-where sm_target.member_id = ?1
-and (cast(coalesce(?2, '') as text) = '' or ?2 < s.id)
-order by s.updated_at desc, s.id desc
-limit case when ?3 = 0 then -1 else ?3 end
+WITH paged_sessions AS (
+    SELECT s.id, s.name, s.is_active, s.created_at, s.updated_at
+    FROM sessions s
+             JOIN session_members sm_target ON s.id = sm_target.session_id
+    WHERE sm_target.member_id = ?1
+      AND (CAST(COALESCE(?2, '') AS TEXT) = '' OR ?2 < s.id)
+    ORDER BY s.updated_at DESC, s.id DESC
+    LIMIT CASE WHEN ?3 = 0 THEN -1 ELSE ?3 END
+)
+SELECT
+    ps.id, ps.name, ps.is_active, ps.created_at, ps.updated_at,
+    m.id AS member_id,
+    m.name AS member_name,
+    m.username AS member_username
+FROM paged_sessions ps
+         JOIN session_members sm ON ps.id = sm.session_id
+         JOIN members m ON sm.member_id = m.id
+ORDER BY ps.updated_at DESC, ps.id DESC
 `
 
 type ListSessionsForUserParams struct {

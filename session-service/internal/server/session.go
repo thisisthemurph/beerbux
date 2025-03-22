@@ -92,7 +92,11 @@ func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.Li
 	}
 
 	// Fetch sessions with members from the database.
-	rows, err := s.sessionRepository.ListSessionsForUser(ctx, r.UserId)
+	rows, err := s.sessionRepository.ListSessionsForUser(ctx, session.ListSessionsForUserParams{
+		MemberID:  r.UserId,
+		PageToken: r.PageToken,
+		PageSize:  r.PageSize,
+	})
 	if err != nil {
 		s.logger.Error("failed to list sessions", "user_id", r.UserId, "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
@@ -126,8 +130,14 @@ func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.Li
 		sessions = append(sessions, ssn)
 	}
 
+	pageToken := ""
+	if r.PageSize > 0 && len(sessions) == int(r.PageSize) {
+		pageToken = sessions[len(sessions)-1].SessionId
+	}
+
 	return &sessionpb.ListSessionsForUserResponse{
-		Sessions: sessions,
+		Sessions:      sessions,
+		NextPageToken: pageToken,
 	}, nil
 }
 

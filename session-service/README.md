@@ -14,7 +14,7 @@
 To list all sessions for a user, provide the ID of the user for which the sessions are to be listed.
 
 ```shell
-grpcurl -plaintext -d '{"user_id": "460e1637-8c7d-48c4-9e3f-58e880f77fde"}' localhost:50052 session.service.Session.ListSessionsForUser
+grpcurl -plaintext -d '{"user_id": "10473635-01d4-4e2a-b809-8fce66031ace", "page_size": 1, "page_token": "4a861d2a-5848-4b33-b7b2-201c6cf74f4f"}' localhost:50052 session.service.Session.ListSessionsForUser
 ```
 
 **Create a new session**

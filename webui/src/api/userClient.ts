@@ -1,17 +1,5 @@
 import { apiFetch } from "@/api/apiFetch.ts";
-
-export type Session = {
-	id: string;
-	name: string;
-	isActive: boolean;
-	members: SessionMember[];
-};
-
-type SessionMember = {
-	id: string;
-	name: string;
-	username: string;
-};
+import type { Session } from "@/api/types.ts";
 
 function useUserClient() {
 	const getSessions = async () => {

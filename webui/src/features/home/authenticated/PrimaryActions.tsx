@@ -15,7 +15,7 @@ export function PrimaryActions() {
 			</CardHeader>
 			<CardContent>
 				<section>
-					<Link to="/sessions/create" className="flex items-center gap-4">
+					<Link to="/session/create" className="flex items-center gap-4">
 						<SquareChevronRight className="text-green-300 w-8 h-8" />
 						<span>Start new session</span>
 					</Link>

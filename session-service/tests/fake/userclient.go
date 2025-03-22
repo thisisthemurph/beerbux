@@ -2,8 +2,7 @@ package fake
 
 import (
 	"context"
-	"errors"
-
+	"database/sql"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc"
 )
@@ -34,7 +33,7 @@ func (c *UserClient) GetUser(ctx context.Context, in *userpb.GetUserRequest, opt
 			return user, nil
 		}
 	}
-	return nil, errors.New("user not found")
+	return nil, sql.ErrNoRows
 }
 
 func (c *UserClient) UpdateUser(ctx context.Context, in *userpb.UpdateUserRequest, opts ...grpc.CallOption) (*userpb.UserResponse, error) {

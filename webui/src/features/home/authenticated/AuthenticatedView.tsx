@@ -14,7 +14,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 
 	const { data: sessions, isLoading: sessionsLoading } = useQuery({
 		queryKey: ["sessions"],
-		queryFn: getSessions,
+		queryFn: () => getSessions(3),
 	});
 
 	return (

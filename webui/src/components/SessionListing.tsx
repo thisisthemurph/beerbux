@@ -9,20 +9,28 @@ import {
 } from "@/components/ui/card.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ShieldOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 type SessionListingProps = {
+	title?: string;
 	sessions: Session[];
 	children?: ReactNode;
 };
 
-function SessionListing({ sessions, children }: SessionListingProps) {
+function SessionListing({ title, sessions, children }: SessionListingProps) {
 	return (
 		<Card>
 			<CardHeader>
 				<section className="flex justify-between items-center">
-					<CardTitle>Your sessions</CardTitle>
+					<CardTitle>{title ?? "Your sessions"}</CardTitle>
 					<p className="text-muted-foreground">
 						{sessions.length > 0 ? sessions.length : "No"} sessions
 					</p>
@@ -39,6 +47,7 @@ function SessionListing({ sessions, children }: SessionListingProps) {
 								</Avatar>
 								<div className="flex justify-between items-center w-full">
 									<p>{session.name}</p>
+									{!session.isActive && <InactiveIcon />}
 								</div>
 							</div>
 							{i < sessions.length - 1 && <Separator />}
@@ -48,6 +57,21 @@ function SessionListing({ sessions, children }: SessionListingProps) {
 			</CardContent>
 			{children && <CardFooter>{children}</CardFooter>}
 		</Card>
+	);
+}
+
+function InactiveIcon() {
+	return (
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger>
+					<ShieldOff className="text-muted-foreground" />
+				</TooltipTrigger>
+				<TooltipContent>
+					<p>Inactive session</p>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
 }
 
@@ -83,9 +107,9 @@ function getAvatarText(name: string) {
 	if (name.length === 0) return "S";
 	if (name.split(" ").length > 1) {
 		const [first, last] = name.split(" ");
-		return first[0] + last[0];
+		return (first[0] + last[0]).toUpperCase();
 	}
-	return name[0];
+	return name[0].toUpperCase();
 }
 
 SessionListing.Skeleton = SkeletonCard;

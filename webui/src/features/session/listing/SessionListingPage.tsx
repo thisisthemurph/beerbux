@@ -10,15 +10,25 @@ function SessionListingPage() {
 		queryFn: () => getSessions(),
 	});
 
+	const activeSessions = sessions?.filter((s) => s.isActive) ?? [];
+	const inactiveSessions = sessions?.filter((s) => !s.isActive) ?? [];
+
 	return (
-		<>
+		<section className="space-y-6">
 			<h1>Your sessions</h1>
 			{sessionsLoading ? (
 				<SessionListing.Skeleton />
 			) : (
-				<SessionListing sessions={sessions ?? []} />
+				<SessionListing sessions={activeSessions ?? []} />
 			)}
-		</>
+
+			{inactiveSessions && (
+				<SessionListing
+					title="Your inactive settings"
+					sessions={inactiveSessions}
+				/>
+			)}
+		</section>
 	);
 }
 

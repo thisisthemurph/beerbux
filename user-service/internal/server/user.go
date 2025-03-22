@@ -2,7 +2,11 @@ package server
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log/slog"
 
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
@@ -49,6 +53,30 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 	}
 
 	netBalance, err := s.userLedgerRepository.CalculateUserNetBalance(ctx, r.UserId)
+	if err != nil {
+		s.logger.Error("failed to calculate user net balance", "error", err)
+	}
+
+	return &userpb.GetUserResponse{
+		UserId:     u.ID,
+		Name:       u.Name,
+		Username:   u.Username,
+		Bio:        nullish.ParseNullString(u.Bio),
+		NetBalance: netBalance,
+	}, nil
+}
+
+func (s *UserServer) GetUserByUsername(ctx context.Context, r *userpb.GetUserByUsernameRequest) (*userpb.GetUserResponse, error) {
+	u, err := s.userRepository.GetUserByUsername(ctx, r.Username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		s.logger.Error("failed to get user", "error", err)
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	netBalance, err := s.userLedgerRepository.CalculateUserNetBalance(ctx, u.ID)
 	if err != nil {
 		s.logger.Error("failed to calculate user net balance", "error", err)
 	}

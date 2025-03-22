@@ -5,11 +5,16 @@ option go_package = "protos/userpb;userpb";
 
 service User {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc GetUserNyUsername(GetUserByUsernameRequest) returns (GetUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
 }
 
 message GetUserRequest {
   string user_id = 1;
+}
+
+message GetUserByUsernameRequest {
+  string username = 1;
 }
 
 message GetUserResponse {

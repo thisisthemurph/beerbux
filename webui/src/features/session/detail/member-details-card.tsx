@@ -28,7 +28,7 @@ export function MemberDetailsCard({ members }: MemberDetailsCardProps) {
 									<AvatarFallback>{m.name[0]}</AvatarFallback>
 								</Avatar>
 								<div className="flex justify-between items-center w-full">
-									<p className="py-6">{m.name}</p>
+									<p className="py-4">{m.name}</p>
 									<Balance n={-12} />
 								</div>
 							</div>

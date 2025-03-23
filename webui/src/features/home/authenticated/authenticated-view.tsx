@@ -1,6 +1,10 @@
 import type { User } from "@/api/types.ts";
 import useUserClient from "@/api/user-client.ts";
-import { PrimaryActions } from "@/components/primary-actions.tsx";
+import {
+	PrimaryActionCard,
+	PrimaryActionCardContent,
+	PrimaryActionCardLinkItem,
+} from "@/components/primary-action-card";
 import { SessionListing } from "@/components/session-listing.tsx";
 import { UserCard } from "@/features/home/authenticated/user-card.tsx";
 import { useQuery } from "@tanstack/react-query";
@@ -22,15 +26,15 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 	return (
 		<div className="space-y-6">
 			<UserCard {...user} />
-			<PrimaryActions
-				items={[
-					{
-						text: "Start new session",
-						href: "/session/create",
-						icon: <SquareChevronRight className="text-green-300 w-8 h-8" />,
-					},
-				]}
-			/>
+			<PrimaryActionCard>
+				<PrimaryActionCardContent>
+					<PrimaryActionCardLinkItem
+						to="/session/create"
+						text="Start new session"
+						icon={<SquareChevronRight className="text-green-300 w-8 h-8" />}
+					/>
+				</PrimaryActionCardContent>
+			</PrimaryActionCard>
 			{sessionsLoading ? (
 				<SessionListing.Skeleton />
 			) : (

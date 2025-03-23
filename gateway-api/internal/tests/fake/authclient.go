@@ -31,3 +31,7 @@ func (a AuthClient) RefreshToken(ctx context.Context, in *authpb.RefreshTokenReq
 	}
 	return a.response, nil
 }
+
+func (a AuthClient) InvalidateRefreshToken(ctx context.Context, in *authpb.InvalidateRefreshTokenRequest, opts ...grpc.CallOption) (*authpb.EmptyResponse, error) {
+	panic("implement me")
+}

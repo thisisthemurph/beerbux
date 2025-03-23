@@ -4,10 +4,12 @@ import {
 	NewSessionForm,
 	type NewSessionFormValues,
 } from "@/features/session/create/new-session-form.tsx";
+import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 function CreateSessionPage() {
+	useBackNavigation("/");
 	const navigate = useNavigate();
 	const { createSession } = useSessionClient();
 

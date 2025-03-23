@@ -18,7 +18,14 @@ function useSessionClient() {
 		});
 	};
 
-	return { getSession, createSession };
+	const addMemberToSession = async (sessionId: string, username: string) => {
+		return apiFetch<void>(`/session/${sessionId}/member`, {
+			method: "POST",
+			body: JSON.stringify({ username }),
+		});
+	};
+
+	return { getSession, createSession, addMemberToSession };
 }
 
 export default useSessionClient;

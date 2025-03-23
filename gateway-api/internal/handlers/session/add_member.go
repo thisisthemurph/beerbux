@@ -2,7 +2,9 @@ package session
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
@@ -13,17 +15,19 @@ import (
 )
 
 type AddMemberToSessionHandler struct {
+	userClient    userpb.UserClient
 	sessionClient sessionpb.SessionClient
 }
 
-func NewAddMemberToSessionHandler(sessionClient sessionpb.SessionClient) *AddMemberToSessionHandler {
+func NewAddMemberToSessionHandler(userClient userpb.UserClient, sessionClient sessionpb.SessionClient) *AddMemberToSessionHandler {
 	return &AddMemberToSessionHandler{
+		userClient:    userClient,
 		sessionClient: sessionClient,
 	}
 }
 
 type AddMemberToSessionRequest struct {
-	MemberID string `json:"memberId"`
+	Username string `json:"username"`
 }
 
 func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -71,9 +75,23 @@ func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	//Fetch the user being added to the session
+	userToAdd, err := h.userClient.GetUserByUsername(r.Context(), &userpb.GetUserByUsernameRequest{
+		Username: req.Username,
+	})
+	if err != nil {
+		sc, ok := status.FromError(err)
+		if ok && sc.Code() == codes.NotFound {
+			send.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+		send.Error(w, "Failed to get user", http.StatusInternalServerError)
+		return
+	}
+
 	// Check if the new user is already a member of the session.
 	for _, m := range ssn.Members {
-		if m.UserId == req.MemberID {
+		if m.UserId == userToAdd.UserId {
 			// Exit early with a 200 rather than a 201 to indicate that the member was already added.
 			w.WriteHeader(http.StatusOK)
 			return
@@ -82,7 +100,7 @@ func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	_, err = h.sessionClient.AddMemberToSession(r.Context(), &sessionpb.AddMemberToSessionRequest{
 		SessionId: sessionID.String(),
-		UserId:    req.MemberID,
+		UserId:    userToAdd.UserId,
 	})
 	if err != nil {
 		send.Error(w, "Failed to add member to session", http.StatusInternalServerError)
@@ -94,17 +112,8 @@ func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 func (r AddMemberToSessionRequest) Validate() error {
 	return oz.ValidateStruct(&r,
-		oz.Field(&r.MemberID,
-			oz.Required.Error("Member ID is required"),
-		),
-		oz.Field(&r.MemberID,
-			oz.By(func(value interface{}) error {
-				_, err := uuid.Parse(r.MemberID)
-				if err != nil {
-					return errors.New("invalid member ID")
-				}
-				return nil
-			}),
+		oz.Field(&r.Username,
+			oz.Required.Error("The member's username is required"),
 		),
 	)
 }

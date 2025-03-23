@@ -25,15 +25,24 @@ export async function apiFetch<T>(
 			},
 		});
 
-		const data = await response.json().catch(() => {
-			throw new Error("Invalid JSON response");
-		});
-
 		if (!response.ok) {
-			throw isValidationErrorResponse(data)
-				? new ValidationError(data)
-				: new Error(data.error ?? "An error occurred");
+			const errorData = await response.json().catch(() => null);
+			throw isValidationErrorResponse(errorData)
+				? new ValidationError(errorData)
+				: new Error(errorData?.error ?? "An error occurred");
 		}
+
+		const data = await response.json().catch(() => {
+			response
+				.text()
+				.then((t) => {
+					if (t === "") return undefined as T;
+					throw new Error("Invalid JSON response");
+				})
+				.catch(() => {
+					throw new Error("Could not parse response body");
+				});
+		});
 
 		return data as T;
 	} catch (error) {

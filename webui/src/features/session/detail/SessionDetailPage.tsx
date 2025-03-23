@@ -1,6 +1,8 @@
 import useSessionClient from "@/api/sessionClient.ts";
+import { PrimaryActions } from "@/components/PrimaryActions.tsx";
 import { MemberDetailsCard } from "@/features/session/detail/MemberDetailsCard.tsx";
 import { useQuery } from "@tanstack/react-query";
+import { SquarePlus } from "lucide-react";
 import { useParams } from "react-router";
 
 export default function SessionDetailPage() {
@@ -26,8 +28,17 @@ export default function SessionDetailPage() {
 	}
 
 	return (
-		<div>
+		<div className="space-y-6">
 			<h1>{session.name}</h1>
+			<PrimaryActions
+				items={[
+					{
+						text: "Add a member",
+						href: `/session/${sessionId}/member`,
+						icon: <SquarePlus className="text-green-300 w-8 h-8" />,
+					},
+				]}
+			/>
 			<MemberDetailsCard members={session.members} />
 		</div>
 	);

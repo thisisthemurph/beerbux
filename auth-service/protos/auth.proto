@@ -6,6 +6,7 @@ option go_package = "protos/authpb;authpb";
 service Auth {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Signup(SignupRequest) returns (SignupResponse);
+  rpc InvalidateRefreshToken(InvalidateRefreshTokenRequest) returns (EmptyResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }
 
@@ -46,3 +47,10 @@ message RefreshTokenResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
+
+message InvalidateRefreshTokenRequest {
+  string user_id = 1;
+  string refresh_token = 2;
+}
+
+message EmptyResponse {}

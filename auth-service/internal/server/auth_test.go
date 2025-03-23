@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"log/slog"
 	"testing"
 	"time"
@@ -233,6 +234,98 @@ func TestAuthServer_RefreshToken(t *testing.T) {
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, tc.expectedError)
 			}
+		})
+	}
+}
+
+func TestAuthServer_InvalidateRefreshToken(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	authServer := setupAuthServer(db)
+
+	user := builder.NewUserBuilder(t).
+		WithUsername("testuser").
+		WithPassword("password").
+		Build(db)
+
+	// A separate user to ensure other user's refresh token is not affected.
+	user2 := builder.NewUserBuilder(t).
+		WithUsername("user2").
+		WithPassword("password").
+		Build(db)
+
+	tokenRaw := uuid.NewString()
+	u1ht1, _ := bcrypt.GenerateFromPassword([]byte(tokenRaw), bcrypt.DefaultCost)
+	user1Token1 := builder.NewRefreshTokenBuilder(t).
+		WithUserID(user.ID).
+		WithHashedToken(string(u1ht1)).
+		WithExpiresAt(time.Now().Add(time.Hour)).
+		Build(db)
+
+	// Another refresh token for the same user, should not be affected.
+	u1ht2, _ := bcrypt.GenerateFromPassword([]byte(uuid.NewString()), bcrypt.DefaultCost)
+	user1Token2 := builder.NewRefreshTokenBuilder(t).
+		WithUserID(user.ID).
+		WithHashedToken(string(u1ht2)).
+		WithExpiresAt(time.Now().Add(time.Hour)).
+		Build(db)
+
+	// A refresh token for user2, should not be affected.
+	u2ht, _ := bcrypt.GenerateFromPassword([]byte(uuid.NewString()), bcrypt.DefaultCost)
+	user2Token := builder.NewRefreshTokenBuilder(t).
+		WithUserID(user2.ID).
+		WithHashedToken(string(u2ht)).
+		WithExpiresAt(time.Now().Add(time.Hour)).
+		Build(db)
+
+	testCases := []struct {
+		name          string
+		userID        string
+		refreshToken  string
+		expectedError error
+	}{
+		{
+			"existing refresh token",
+			user.ID,
+			tokenRaw,
+			nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := authServer.InvalidateRefreshToken(context.Background(), &authpb.InvalidateRefreshTokenRequest{
+				UserId:       tc.userID,
+				RefreshToken: tc.refreshToken,
+			})
+
+			assert.NoError(t, err)
+
+			var revoked bool
+			q := "select revoked from refresh_tokens where id = ?;"
+
+			// The main user's first token should be revoked.
+			err = db.QueryRow(q, user1Token1.ID).Scan(&revoked)
+			require.NoError(t, err)
+			assert.True(t, revoked)
+
+			// The main user's second token should not be revoked.
+			err = db.QueryRow(q, user1Token2.ID).Scan(&revoked)
+			require.NoError(t, err)
+			assert.False(t, revoked)
+
+			// The other user's token should not be revoked.
+			err = db.QueryRow(q, user2Token.ID).Scan(&revoked)
+			require.NoError(t, err)
+			assert.False(t, revoked)
+
+			// There should be 3 refresh tokens in the database.
+			q = "select count(*) from refresh_tokens;"
+			var count int
+			err = db.QueryRow(q).Scan(&count)
+			require.NoError(t, err)
+			assert.Equal(t, 3, count)
 		})
 	}
 }

@@ -158,6 +158,24 @@ func (s *AuthServer) Signup(ctx context.Context, r *authpb.SignupRequest) (*auth
 	}, nil
 }
 
+func (s *AuthServer) InvalidateRefreshToken(ctx context.Context, r *authpb.InvalidateRefreshTokenRequest) (*authpb.EmptyResponse, error) {
+	userRefreshTokens, err := s.authTokenRepository.GetRefreshTokensByUserID(ctx, r.UserId)
+	if err != nil {
+		return nil, ErrRefreshTokenNotFound
+	}
+
+	for _, t := range userRefreshTokens {
+		if err := bcrypt.CompareHashAndPassword([]byte(t.HashedToken), []byte(r.RefreshToken)); err == nil {
+			if err := s.authTokenRepository.InvalidateRefreshTokenByID(ctx, t.ID); err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to delete refresh token: %v", err)
+			}
+			break
+		}
+	}
+
+	return &authpb.EmptyResponse{}, nil
+}
+
 func (s *AuthServer) RefreshToken(ctx context.Context, r *authpb.RefreshTokenRequest) (*authpb.RefreshTokenResponse, error) {
 	userRefreshTokens, err := s.authTokenRepository.GetRefreshTokensByUserID(ctx, r.UserId)
 	if err != nil {

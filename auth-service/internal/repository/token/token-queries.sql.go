@@ -7,7 +7,6 @@ package token
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -16,20 +15,8 @@ delete from refresh_tokens where id = ?
 `
 
 func (q *Queries) DeleteRefreshToken(ctx context.Context, id int64) error {
-	res, err := q.db.ExecContext(ctx, deleteRefreshToken, id)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-
-	return nil
+	_, err := q.db.ExecContext(ctx, deleteRefreshToken, id)
+	return err
 }
 
 const getRefreshTokensByUserID = `-- name: GetRefreshTokensByUserID :many
@@ -68,6 +55,17 @@ func (q *Queries) GetRefreshTokensByUserID(ctx context.Context, userID string) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const invalidateRefreshTokenByID = `-- name: InvalidateRefreshTokenByID :exec
+update refresh_tokens
+set revoked = true
+where id = ?
+`
+
+func (q *Queries) InvalidateRefreshTokenByID(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, invalidateRefreshTokenByID, id)
+	return err
 }
 
 const registerRefreshToken = `-- name: RegisterRefreshToken :exec

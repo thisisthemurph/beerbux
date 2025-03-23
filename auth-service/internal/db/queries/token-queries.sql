@@ -11,3 +11,8 @@ and expires_at > current_timestamp;
 
 -- name: DeleteRefreshToken :exec
 delete from refresh_tokens where id = ?;
+
+-- name: InvalidateRefreshTokenByID :exec
+update refresh_tokens
+set revoked = true
+where id = ?;

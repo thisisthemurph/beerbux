@@ -1,9 +1,9 @@
-import { ValidationError } from "@/api/apiFetch.ts";
-import useSessionClient from "@/api/sessionClient.ts";
+import { ValidationError } from "@/api/api-fetch.ts";
+import useSessionClient from "@/api/session-client.ts";
 import {
 	NewSessionForm,
 	type NewSessionFormValues,
-} from "@/features/session/create/NewSessionForm.tsx";
+} from "@/features/session/create/new-session-form.tsx";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 

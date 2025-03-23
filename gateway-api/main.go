@@ -72,6 +72,7 @@ func buildServerMux(
 	mux.Handle("POST /api/auth/login", auth.NewLoginHandler(authClient))
 	mux.Handle("POST /api/auth/signup", auth.NewSignupHandler(authClient))
 	mux.Handle("POST /api/auth/refresh", auth.NewRefreshHandler(authClient))
+	mux.Handle("POST /api/auth/logout", auth.NewLogoutHandler(authClient))
 
 	mux.Handle("GET /api/user", user.NewGetCurrentUserHandler(userClient))
 	mux.Handle("GET /api/user/sessions", session.NewListSessionsForUserHandler(sessionClient))

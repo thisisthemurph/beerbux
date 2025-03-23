@@ -1,5 +1,5 @@
-import useUserClient from "@/api/userClient.ts";
-import { SessionListing } from "@/components/SessionListing";
+import useUserClient from "@/api/user-client.ts";
+import { SessionListing } from "@/components/session-listing.tsx";
 import { useQuery } from "@tanstack/react-query";
 
 function SessionListingPage() {

@@ -1,6 +1,6 @@
-import useSessionClient from "@/api/sessionClient.ts";
-import { PrimaryActions } from "@/components/PrimaryActions.tsx";
-import { MemberDetailsCard } from "@/features/session/detail/MemberDetailsCard.tsx";
+import useSessionClient from "@/api/session-client.ts";
+import { PrimaryActions } from "@/components/primary-actions.tsx";
+import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
 import { useQuery } from "@tanstack/react-query";
 import { SquarePlus } from "lucide-react";
 import { useParams } from "react-router";

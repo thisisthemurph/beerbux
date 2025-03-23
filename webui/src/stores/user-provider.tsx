@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect } from "react";
-import { useUserStore } from "./userStore";
+import { useUserStore } from "./user-store.tsx";
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
 	const user = useUserStore((state) => state.user);

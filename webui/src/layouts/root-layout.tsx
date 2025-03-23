@@ -1,6 +1,6 @@
 import NavigationDrawer from "@/components/navigation-drawer.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { useUserStore } from "@/stores/userStore.tsx";
+import { useUserStore } from "@/stores/user-store.tsx";
 import { Link, Outlet } from "react-router";
 import { Toaster } from "sonner";
 

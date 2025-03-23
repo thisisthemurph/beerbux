@@ -1,5 +1,5 @@
-import { ValidationError } from "@/api/apiFetch.ts";
-import useAuthClient from "@/api/authClient.ts";
+import { ValidationError } from "@/api/api-fetch.ts";
+import useAuthClient from "@/api/auth-client.ts";
 import {
 	Card,
 	CardContent,
@@ -11,8 +11,8 @@ import {
 import {
 	LoginForm,
 	type LoginFormValues,
-} from "@/features/auth/login/LoginForm.tsx";
-import { useUserStore } from "@/stores/userStore.tsx";
+} from "@/features/auth/login/login-form.tsx";
+import { useUserStore } from "@/stores/user-store.tsx";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";

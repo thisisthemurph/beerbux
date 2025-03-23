@@ -1,8 +1,8 @@
 import { AuthenticatedView } from "@/features/home/authenticated/AuthenticatedView.tsx";
-import { useUser } from "@/hooks/useUser.tsx";
+import { useUserStore } from "@/stores/userStore.tsx";
 
 function HomePage() {
-	const { user } = useUser();
+	const user = useUserStore((state) => state.user);
 
 	return (
 		<>

@@ -3,8 +3,8 @@ import SignupPage from "@/features/auth/signup";
 import HomePage from "@/features/home";
 import AddMemberPage from "@/features/session/add_member";
 import CreateSessionPage from "@/features/session/create";
-import SessionDetailPage from "@/features/session/detail/SessionDetailPage.tsx";
-import SessionListingPage from "@/features/session/listing/SessionListingPage.tsx";
+import SessionDetailPage from "@/features/session/detail";
+import SessionListingPage from "@/features/session/listing";
 import RootLayout from "@/layouts/root-layout";
 import { Route, Routes } from "react-router";
 

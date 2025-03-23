@@ -1,11 +1,11 @@
 import NavigationDrawer from "@/components/navigation-drawer.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { useUser } from "@/hooks/useUser.tsx";
+import { useUserStore } from "@/stores/userStore.tsx";
 import { Link, Outlet } from "react-router";
 import { Toaster } from "sonner";
 
 function RootLayout() {
-	const { user } = useUser();
+	const user = useUserStore((state) => state.user);
 
 	return (
 		<div>

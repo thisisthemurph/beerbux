@@ -1,10 +1,12 @@
 import useSessionClient from "@/api/session-client.ts";
 import { AddMemberForm } from "@/features/session/add_member/add-member-form.tsx";
+import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 function AddMemberPage() {
 	const { sessionId } = useParams();
+	useBackNavigation(`/session/${sessionId}`);
 	const navigate = useNavigate();
 	const { addMemberToSession } = useSessionClient();
 

@@ -1,13 +1,11 @@
+import type { User } from "@/api/types.ts";
 import useUserClient from "@/api/user-client.ts";
 import { PrimaryActions } from "@/components/primary-actions.tsx";
-import {
-	AllSessionsLink,
-	SessionListing,
-} from "@/components/session-listing.tsx";
+import { SessionListing } from "@/components/session-listing.tsx";
 import { UserCard } from "@/features/home/authenticated/user-card.tsx";
-import type { User } from "@/stores/user-store.tsx";
 import { useQuery } from "@tanstack/react-query";
 import { SquareChevronRight } from "lucide-react";
+import { Link } from "react-router";
 
 type AuthenticatedViewProps = {
 	user: User;
@@ -41,5 +39,13 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 				</SessionListing>
 			)}
 		</div>
+	);
+}
+
+function AllSessionsLink() {
+	return (
+		<Link to="/sessions" className="text-blue-400">
+			All sessions
+		</Link>
 	);
 }

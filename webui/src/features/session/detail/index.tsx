@@ -1,6 +1,7 @@
 import useSessionClient from "@/api/session-client.ts";
 import { PrimaryActions } from "@/components/primary-actions.tsx";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
+import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useQuery } from "@tanstack/react-query";
 import { SquarePlus } from "lucide-react";
 import { useParams } from "react-router";
@@ -8,6 +9,7 @@ import { useParams } from "react-router";
 export default function SessionDetailPage() {
 	const { getSession } = useSessionClient();
 	const { sessionId } = useParams();
+	useBackNavigation("/");
 
 	const { data: session, isLoading: sessionLoading } = useQuery({
 		queryKey: ["session", sessionId],

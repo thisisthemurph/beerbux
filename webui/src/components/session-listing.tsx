@@ -15,6 +15,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { withBackLinkOverride } from "@/hooks/use-back-navigation.ts";
 import { ShieldOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -23,9 +24,15 @@ type SessionListingProps = {
 	title?: string;
 	sessions: Session[];
 	children?: ReactNode;
+	parentPath?: string;
 };
 
-function SessionListing({ title, sessions, children }: SessionListingProps) {
+function SessionListing({
+	title,
+	sessions,
+	children,
+	parentPath,
+}: SessionListingProps) {
 	return (
 		<Card>
 			<CardHeader>
@@ -39,20 +46,29 @@ function SessionListing({ title, sessions, children }: SessionListingProps) {
 			<CardContent>
 				<section className="flex flex-col">
 					{sessions.length === 0 && <NoSessionsIndicator />}
-					{sessions.map((session, i) => (
-						<Link to={`/session/${session.id}`} key={session.id + i.toString()}>
-							<div className="flex items-center gap-6 py-6">
-								<Avatar className="w-10 h-10">
-									<AvatarFallback>{getAvatarText(session.name)}</AvatarFallback>
-								</Avatar>
-								<div className="flex justify-between items-center w-full">
-									<p>{session.name}</p>
-									{!session.isActive && <InactiveIcon />}
+					{sessions.map((session, i) => {
+						const url = withBackLinkOverride(
+							`/session/${session.id}`,
+							parentPath,
+						);
+
+						return (
+							<Link to={url} key={session.id}>
+								<div className="flex items-center gap-6 py-6">
+									<Avatar className="w-10 h-10">
+										<AvatarFallback>
+											{getAvatarText(session.name)}
+										</AvatarFallback>
+									</Avatar>
+									<div className="flex justify-between items-center w-full">
+										<p>{session.name}</p>
+										{!session.isActive && <InactiveIcon />}
+									</div>
 								</div>
-							</div>
-							{i < sessions.length - 1 && <Separator />}
-						</Link>
-					))}
+								{i < sessions.length - 1 && <Separator />}
+							</Link>
+						);
+					})}
 				</section>
 			</CardContent>
 			{children && <CardFooter>{children}</CardFooter>}
@@ -72,14 +88,6 @@ function InactiveIcon() {
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>
-	);
-}
-
-export function AllSessionsLink() {
-	return (
-		<Link to="/sessions" className="text-blue-400">
-			All sessions
-		</Link>
 	);
 }
 

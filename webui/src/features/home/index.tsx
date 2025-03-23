@@ -1,5 +1,5 @@
-import { AuthenticatedView } from "@/features/home/authenticated/AuthenticatedView.tsx";
-import { useUserStore } from "@/stores/userStore.tsx";
+import { AuthenticatedView } from "@/features/home/authenticated/authenticated-view.tsx";
+import { useUserStore } from "@/stores/user-store.tsx";
 
 function HomePage() {
 	const user = useUserStore((state) => state.user);

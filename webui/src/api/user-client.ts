@@ -1,7 +1,11 @@
-import { apiFetch } from "@/api/apiFetch.ts";
+import { apiFetch } from "@/api/api-fetch.ts";
 import type { Session } from "@/api/types.ts";
 
 function useUserClient() {
+	const logout = async () => {
+		return apiFetch("/auth/logout", { method: "POST" });
+	};
+
 	const getSessions = async (pageSize = 0, pageToken: string | null = null) => {
 		const params = new URLSearchParams();
 		params.append("page_size", pageSize.toString());
@@ -12,7 +16,7 @@ function useUserClient() {
 		return apiFetch<Session[]>(`/user/sessions?${params.toString()}`);
 	};
 
-	return { getSessions };
+	return { getSessions, logout };
 }
 
 export default useUserClient;

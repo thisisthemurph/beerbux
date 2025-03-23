@@ -1,4 +1,4 @@
-import { apiFetch } from "@/api/apiFetch";
+import { apiFetch } from "@/api/api-fetch.ts";
 
 type LoginResponse = {
 	id: string;

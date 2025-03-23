@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.10.0
-	github.com/thisisthemurph/beerbux/auth-service v1.0.1
+	github.com/thisisthemurph/beerbux/auth-service v1.1.0
 	github.com/thisisthemurph/beerbux/session-service v1.2.1
 	github.com/thisisthemurph/beerbux/user-service v1.2.0
 	google.golang.org/grpc v1.71.0

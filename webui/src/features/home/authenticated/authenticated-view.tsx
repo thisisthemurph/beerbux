@@ -1,11 +1,11 @@
-import useUserClient from "@/api/userClient.ts";
-import { PrimaryActions } from "@/components/PrimaryActions.tsx";
+import useUserClient from "@/api/user-client.ts";
+import { PrimaryActions } from "@/components/primary-actions.tsx";
 import {
 	AllSessionsLink,
 	SessionListing,
-} from "@/components/SessionListing.tsx";
-import { UserCard } from "@/features/home/authenticated/UserCard.tsx";
-import type { User } from "@/stores/userStore.tsx";
+} from "@/components/session-listing.tsx";
+import { UserCard } from "@/features/home/authenticated/user-card.tsx";
+import type { User } from "@/stores/user-store.tsx";
 import { useQuery } from "@tanstack/react-query";
 import { SquareChevronRight } from "lucide-react";
 

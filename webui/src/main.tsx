@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import "./index.css";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
-import { UserProvider } from "@/stores/userProvider.tsx";
+import { UserProvider } from "@/stores/user-provider.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 

@@ -1,4 +1,4 @@
-import { apiFetch } from "@/api/apiFetch.ts";
+import { apiFetch } from "@/api/api-fetch.ts";
 import type { Session } from "@/api/types.ts";
 
 type SessionCreatedResponse = {

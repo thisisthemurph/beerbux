@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Login_FullMethodName        = "/auth.service.Auth/Login"
-	Auth_Signup_FullMethodName       = "/auth.service.Auth/Signup"
-	Auth_RefreshToken_FullMethodName = "/auth.service.Auth/RefreshToken"
+	Auth_Login_FullMethodName                  = "/auth.service.Auth/Login"
+	Auth_Signup_FullMethodName                 = "/auth.service.Auth/Signup"
+	Auth_InvalidateRefreshToken_FullMethodName = "/auth.service.Auth/InvalidateRefreshToken"
+	Auth_RefreshToken_FullMethodName           = "/auth.service.Auth/RefreshToken"
 )
 
 // AuthClient is the client API for Auth service.
@@ -30,6 +31,7 @@ const (
 type AuthClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SignupResponse, error)
+	InvalidateRefreshToken(ctx context.Context, in *InvalidateRefreshTokenRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 }
 
@@ -61,6 +63,16 @@ func (c *authClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc
 	return out, nil
 }
 
+func (c *authClient) InvalidateRefreshToken(ctx context.Context, in *InvalidateRefreshTokenRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, Auth_InvalidateRefreshToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RefreshTokenResponse)
@@ -77,6 +89,7 @@ func (c *authClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, 
 type AuthServer interface {
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Signup(context.Context, *SignupRequest) (*SignupResponse, error)
+	InvalidateRefreshToken(context.Context, *InvalidateRefreshTokenRequest) (*EmptyResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
@@ -93,6 +106,9 @@ func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginResp
 }
 func (UnimplementedAuthServer) Signup(context.Context, *SignupRequest) (*SignupResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
+}
+func (UnimplementedAuthServer) InvalidateRefreshToken(context.Context, *InvalidateRefreshTokenRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InvalidateRefreshToken not implemented")
 }
 func (UnimplementedAuthServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
@@ -154,6 +170,24 @@ func _Auth_Signup_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_InvalidateRefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InvalidateRefreshTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).InvalidateRefreshToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_InvalidateRefreshToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).InvalidateRefreshToken(ctx, req.(*InvalidateRefreshTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Auth_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RefreshTokenRequest)
 	if err := dec(in); err != nil {
@@ -186,6 +220,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Signup",
 			Handler:    _Auth_Signup_Handler,
+		},
+		{
+			MethodName: "InvalidateRefreshToken",
+			Handler:    _Auth_InvalidateRefreshToken_Handler,
 		},
 		{
 			MethodName: "RefreshToken",

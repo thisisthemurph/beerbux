@@ -1,7 +1,6 @@
 import useSessionClient from "@/api/session-client.ts";
 import {
 	PrimaryActionCard,
-	PrimaryActionCardButtonItem,
 	PrimaryActionCardContent,
 	PrimaryActionCardLinkItem,
 	PrimaryActionCardSeparator,
@@ -49,10 +48,10 @@ export default function SessionDetailPage() {
 						{session.members.length > 1 && (
 							<>
 								<PrimaryActionCardSeparator />
-								<PrimaryActionCardButtonItem
+								<PrimaryActionCardLinkItem
 									text="Buy a beer"
 									icon={<Beer className="text-green-300 w-8 h-8" />}
-									onClick={() => console.log("buy a beer")}
+									to={`/session/${sessionId}/transaction`}
 								/>
 							</>
 						)}

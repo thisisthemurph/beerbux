@@ -75,7 +75,7 @@ export function TransactionForm({
 							key={member.id}
 							name={member.id}
 							control={form.control}
-							render={({ field, fieldState }) => (
+							render={({ field }) => (
 								<FormItem className="flex justify-between items-center">
 									<FormLabel htmlFor={field.name} className="w-full">
 										{member.name}
@@ -123,11 +123,6 @@ export function TransactionForm({
 									>
 										<Plus />
 									</Button>
-									{fieldState.error && (
-										<p className="text-red-500 text-sm">
-											{fieldState.error.message}
-										</p>
-									)}
 								</FormItem>
 							)}
 						/>

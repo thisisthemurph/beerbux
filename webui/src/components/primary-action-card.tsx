@@ -10,7 +10,7 @@ import { Link } from "react-router";
 
 function PrimaryActionCard({ children }: { children: ReactNode }) {
 	return (
-		<Card>
+		<Card className="p-0">
 			<CardHeader className="sr-only">
 				<CardTitle>Actions</CardTitle>
 			</CardHeader>
@@ -30,7 +30,7 @@ function PrimaryActionContent({
 	return (
 		<div className="flex items-center gap-4 cursor-pointer">
 			{icon}
-			<span className="py-4">{text}</span>
+			<span className="py-6">{text}</span>
 		</div>
 	);
 }
@@ -47,7 +47,7 @@ function PrimaryActionCardLinkItem({
 	icon,
 }: PrimaryActionCardLinkItemProps) {
 	return (
-		<Link to={to} key={text}>
+		<Link to={to} key={text} className="w-full">
 			<PrimaryActionContent text={text} icon={icon} />
 		</Link>
 	);
@@ -65,7 +65,7 @@ function PrimaryActionCardButtonItem({
 	onClick,
 }: PrimaryActionCardButtonItemProps) {
 	return (
-		<button type="button" onClick={onClick}>
+		<button type="button" onClick={onClick} className="w-full">
 			<PrimaryActionContent text={text} icon={icon} />
 		</button>
 	);

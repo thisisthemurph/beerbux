@@ -46,12 +46,16 @@ export default function SessionDetailPage() {
 							text="Add a member"
 							icon={<SquarePlus className="text-green-300 w-8 h-8" />}
 						/>
-						<PrimaryActionCardSeparator />
-						<PrimaryActionCardButtonItem
-							text="Buy a beer"
-							icon={<Beer className="text-green-300 w-8 h-8" />}
-							onClick={() => console.log("buy a beer")}
-						/>
+						{session.members.length > 1 && (
+							<>
+								<PrimaryActionCardSeparator />
+								<PrimaryActionCardButtonItem
+									text="Buy a beer"
+									icon={<Beer className="text-green-300 w-8 h-8" />}
+									onClick={() => console.log("buy a beer")}
+								/>
+							</>
+						)}
 					</PrimaryActionCardContent>
 				</PrimaryActionCard>
 			)}

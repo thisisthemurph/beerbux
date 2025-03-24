@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/session"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/transaction"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
+	"github.com/thisisthemurph/beerbux/transaction-service/protos/transactionpb"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,7 +54,13 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	sessionClient := sessionpb.NewSessionClient(sessionClientConn)
 
-	mux := buildServerMux(cfg, authClient, userClient, sessionClient)
+	transactionConn, err := grpc.NewClient(cfg.TransactionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("error connecting to transaction server: %w", err)
+	}
+	transactionClient := transactionpb.NewTransactionClient(transactionConn)
+
+	mux := buildServerMux(cfg, authClient, userClient, sessionClient, transactionClient)
 	logger.Debug("Starting server", "add", cfg.GatewayAPIAddress)
 	if err := http.ListenAndServe(cfg.GatewayAPIAddress, mux); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -66,6 +74,7 @@ func buildServerMux(
 	authClient authpb.AuthClient,
 	userClient userpb.UserClient,
 	sessionClient sessionpb.SessionClient,
+	transactionClient transactionpb.TransactionClient,
 ) http.Handler {
 	mux := http.NewServeMux()
 
@@ -80,6 +89,7 @@ func buildServerMux(
 	mux.Handle("GET /api/session/{sessionId}", session.NewGetSessionByIdHandler(sessionClient))
 	mux.Handle("POST /api/session", session.NewCreateSessionHandler(sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/member", session.NewAddMemberToSessionHandler(userClient, sessionClient))
+	mux.Handle("POST /api/session/{sessionId}/transaction", transaction.NewCreateTransactionHandler(transactionClient))
 
 	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)
 	return middleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))

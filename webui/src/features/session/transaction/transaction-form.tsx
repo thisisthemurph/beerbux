@@ -1,4 +1,4 @@
-import type { SessionMember } from "@/api/types";
+import type { SessionMember, TransactionMemberAmounts } from "@/api/types";
 import { Button } from "@/components/ui/button.tsx";
 import {
 	Form,
@@ -21,7 +21,6 @@ const formSchema = z.record(
 );
 
 type TransactionFormValues = z.infer<typeof formSchema>;
-export type Transaction = Record<string, number>;
 
 type TransactionFormProps = {
 	members: SessionMember[];
@@ -45,7 +44,7 @@ export function TransactionForm({
 	}, [total, onTotalChanged]);
 
 	function handleSubmit(values: TransactionFormValues) {
-		const transaction = Object.entries(values).reduce<Transaction>(
+		const transaction = Object.entries(values).reduce<TransactionMemberAmounts>(
 			(acc, [memberId, amount]) => {
 				const value = Number(amount);
 				if (value > 0) acc[memberId] = value;

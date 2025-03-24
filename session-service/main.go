@@ -79,7 +79,7 @@ func listenForUserUpdatedEvents(ctx context.Context, logger *slog.Logger, broker
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: brokers,
 		Topic:   "user.updated",
-		GroupID: "ledger-service",
+		GroupID: "session-service",
 	})
 	defer reader.Close()
 

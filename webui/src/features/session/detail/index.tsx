@@ -59,6 +59,19 @@ export default function SessionDetailPage() {
 				</PrimaryActionCard>
 			)}
 			<MemberDetailsCard members={session.members} />
+
+			{/*
+
+			I want a listing of the transactions here.
+			In reality, I want a timeline of all events that happened in the session; including user added etc.
+			- Who bought the beer
+			- Who received the beer (everyone vs specific people)
+			- How much was the transaction?
+
+			This should be achieved by the session service listening for ledger.updated
+			events and adding the data to the sessions database.
+
+		*/}
 		</div>
 	);
 }

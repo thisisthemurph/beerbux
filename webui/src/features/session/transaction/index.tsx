@@ -1,14 +1,13 @@
 import useSessionClient from "@/api/session-client.ts";
+import useTransactionClient from "@/api/transaction-client.ts";
+import { TransactionMemberAmounts } from "@/api/types.ts";
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card.tsx";
-import {
-	type Transaction,
-	TransactionForm,
-} from "@/features/session/transaction/transaction-form.tsx";
+import { TransactionForm } from "@/features/session/transaction/transaction-form.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { useQuery } from "@tanstack/react-query";
@@ -23,23 +22,29 @@ function TransactionPage() {
 	const navigate = useNavigate();
 	useBackNavigation(`/session/${sessionId}`);
 	const [total, setTotal] = useState(0);
+	const { createTransaction } = useTransactionClient();
 
-	function handleNewTransaction(transaction: Transaction) {
+	function handleNewTransaction(transaction: TransactionMemberAmounts) {
+		if (!sessionId) return;
+
 		const total = Object.values(transaction).reduce(
 			(acc, value) => acc + value,
 			0,
 		);
 
-		toast.success("Transaction created:", {
-			description: (
-				<p>
-					A transaction of <span className="font-semibold">${total}</span> has
-					been created.
-				</p>
-			),
-		});
-
-		navigate(`/session/${sessionId}`);
+		createTransaction(sessionId, transaction)
+			.then(() =>
+				toast.success("Transaction created:", {
+					description: (
+						<p>
+							A transaction of <span className="font-semibold">${total}</span>{" "}
+							has been created.
+						</p>
+					),
+				}),
+			)
+			.then(() => navigate(`/session/${sessionId}`))
+			.catch(() => toast.error("There was an issue creating the transaction."));
 	}
 
 	const { data: session, isPending: sessionIsPending } = useQuery({

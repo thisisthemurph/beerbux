@@ -29,6 +29,8 @@ github.com/thisisthemurph/beerbux/auth-service v1.1.0 h1:DKfGdsqrmfwg05dIoDiTgEB
 github.com/thisisthemurph/beerbux/auth-service v1.1.0/go.mod h1:CzIUV4cOWNvigezd1YkfLWPLd9xa0fqsGS1N4X7IJRM=
 github.com/thisisthemurph/beerbux/session-service v1.2.1 h1:zmj4s/FHbCCaUVqv1yJsk7iQ/7EF0g93++Fyhg/Pfyw=
 github.com/thisisthemurph/beerbux/session-service v1.2.1/go.mod h1:1eZ2GYmTAusZg54DslysjeqSMBYiNebI6krNer44rOo=
+github.com/thisisthemurph/beerbux/transaction-service v1.0.0 h1:iYq/gkKIKJENN/0cxulvwWjbSNMg6NUhytXjvgU0Zq4=
+github.com/thisisthemurph/beerbux/transaction-service v1.0.0/go.mod h1:hEgopQMkkBP0JiS5Lny+ANP/ibDQJ3SNx7ls73BqgX0=
 github.com/thisisthemurph/beerbux/user-service v1.2.0 h1:cQWAlq0dBVD5bGNV6s7IIANHdDiRoXmy5JE9CxJuB2Q=
 github.com/thisisthemurph/beerbux/user-service v1.2.0/go.mod h1:DxnQjtNM/P8RW3htzB9RBum8b3hcRlCHVgAOiESC2W4=
 go.opentelemetry.io/auto/sdk v1.1.0 h1:cH53jehLUN6UFLY71z+NDOiNJqDdPRaXzTel0sJySYA=

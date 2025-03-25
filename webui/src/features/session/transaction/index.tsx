@@ -1,6 +1,6 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
-import { TransactionMemberAmounts } from "@/api/types.ts";
+import type { TransactionMemberAmounts } from "@/api/types.ts";
 import {
 	Card,
 	CardContent,

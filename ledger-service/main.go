@@ -65,16 +65,28 @@ func run(cfg *config.Config) error {
 	ledgerChan := make(chan handler.MemberTransaction)
 	defer close(ledgerChan)
 
+	// ledgerTransactionUpdatedChan is appended to when a transaction has been calculated in the ledger table.
+	ledgerTransactionUpdatedChan := make(chan []handler.MemberTransaction)
+	defer close(ledgerTransactionUpdatedChan)
+
 	// errChan is appended to when an error occurs while processing a transaction.created event.
 	errChan := make(chan event.TransactionCreatedEvent)
 	defer close(errChan)
 
 	ledgerRepository := repository.NewLedgerQueries(db)
 	ledgerUpdatedPublisher := publisher.NewLedgerUpdatedKafkaPublisher(cfg.Kafka.Brokers)
+	ledgerTransactionUpdatedPublisher := publisher.NewLedgerTransactionUpdatedKafkaPublisher(cfg.Kafka.Brokers)
 	updateLedgerHandler := handler.NewUpdateLedgerHandler(ledgerRepository, logger)
 
 	logger.Debug("listening for transaction.created events")
-	go listenForTransactionCreatedEvents(ctx, logger, cfg.Kafka.Brokers, updateLedgerHandler, ledgerChan, errChan)
+	go listenForTransactionCreatedEvents(
+		ctx,
+		logger,
+		cfg.Kafka.Brokers,
+		updateLedgerHandler,
+		ledgerChan,
+		ledgerTransactionUpdatedChan,
+		errChan)
 
 	for {
 		select {
@@ -91,6 +103,12 @@ func run(cfg *config.Config) error {
 			if err != nil {
 				logger.Error("failed to publish ledger updated event", "error", err)
 			}
+		case lt := <-ledgerTransactionUpdatedChan:
+			logger.Debug("ledger transaction updated", "result", lt)
+			err := ledgerTransactionUpdatedPublisher.Publish(ctx, lt)
+			if err != nil {
+				logger.Error("failed to publish ledger transaction updated event", "error", err)
+			}
 		case errEv := <-errChan:
 			logger.Error("failed to process transaction", "transactionID", errEv.TransactionID)
 		case <-doneChan:
@@ -102,7 +120,7 @@ func run(cfg *config.Config) error {
 }
 
 func ensureKafkaTopics(brokers []string) error {
-	topics := []string{publisher.TopicLedgerUpdated}
+	topics := []string{publisher.TopicLedgerUpdated, publisher.TopicLedgerTransactionUpdated}
 
 	for _, topic := range topics {
 		if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
@@ -121,8 +139,9 @@ func listenForTransactionCreatedEvents(
 	ctx context.Context,
 	logger *slog.Logger,
 	brokers []string,
-	h *handler.UpdateLedgerHandler,
+	updateLedgerHandler *handler.UpdateLedgerHandler,
 	ledgerChan chan<- handler.MemberTransaction,
+	ledgerTransactionUpdatedChan chan<- []handler.MemberTransaction,
 	errChan chan<- event.TransactionCreatedEvent,
 ) {
 	reader := kafka.NewReader(kafka.ReaderConfig{
@@ -151,14 +170,15 @@ func listenForTransactionCreatedEvents(
 				continue
 			}
 
-			res, err := h.Handle(ctx, ev)
+			memberTransactions, err := updateLedgerHandler.Handle(ctx, ev)
 			if err != nil {
 				errChan <- ev
 				continue
 			}
 
-			for _, r := range res {
-				ledgerChan <- r
+			ledgerTransactionUpdatedChan <- memberTransactions
+			for _, mt := range memberTransactions {
+				ledgerChan <- mt
 			}
 		}
 	}

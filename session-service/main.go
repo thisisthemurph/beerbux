@@ -141,11 +141,9 @@ func setupAndRunKafkaConsumers(
 	sessionRepository *session.Queries,
 ) {
 	userUpdatedConsumer := kafka.NewConsumer(logger, cfg.Kafka.Brokers, "user.updated", "session-service")
-	ledgerTransactionUpdatedConsumer := kafka.NewConsumer(logger, cfg.Kafka.Brokers, "ledger.transaction.updated", "session-service")
 
 	consumerHandlerMap := map[kafka.ConsumerListener]handler.KafkaMessageHandler{
-		userUpdatedConsumer:              handler.NewUserUpdatedEventHandler(sessionRepository),
-		ledgerTransactionUpdatedConsumer: handler.NewLedgerTransactionUpdatedMessageHandler(),
+		userUpdatedConsumer: handler.NewUserUpdatedEventHandler(sessionRepository),
 	}
 
 	for consumer, h := range consumerHandlerMap {

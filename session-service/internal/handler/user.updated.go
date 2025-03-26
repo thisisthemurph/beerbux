@@ -15,7 +15,7 @@ type UserUpdatedEventHandler struct {
 	sessionRepository *session.Queries
 }
 
-func NewUserUpdatedEventHandler(sessionRepository *session.Queries) *UserUpdatedEventHandler {
+func NewUserUpdatedEventHandler(sessionRepository *session.Queries) KafkaMessageHandler {
 	return &UserUpdatedEventHandler{
 		sessionRepository: sessionRepository,
 	}

@@ -1,3 +1,5 @@
+delete from transaction_lines;
+delete from transactions;
 delete from session_members;
 delete from members;
 delete from sessions;
@@ -35,3 +37,21 @@ values
     ('4c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', true),
     ('4c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false),
     ('4c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false);
+
+insert into transactions (id, session_id, member_id)
+values
+    ('f3d7ec98-034d-4c25-8b9e-023faa19fd37', '1c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace'),
+    ('ed36a838-db7b-4de6-93f5-5bcde30a1a30', '1c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace'),
+    ('1d732ace-5034-483c-95b1-879a75c297f5', '1c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace');
+
+insert into transaction_lines (transaction_id, member_id, amount)
+values
+    ('f3d7ec98-034d-4c25-8b9e-023faa19fd37', '20473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('f3d7ec98-034d-4c25-8b9e-023faa19fd37', '30473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('f3d7ec98-034d-4c25-8b9e-023faa19fd37', '40473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('ed36a838-db7b-4de6-93f5-5bcde30a1a30', '20473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('ed36a838-db7b-4de6-93f5-5bcde30a1a30', '30473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('ed36a838-db7b-4de6-93f5-5bcde30a1a30', '40473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('1d732ace-5034-483c-95b1-879a75c297f5', '10473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('1d732ace-5034-483c-95b1-879a75c297f5', '30473635-01d4-4e2a-b809-8fce66031ace', 1),
+    ('1d732ace-5034-483c-95b1-879a75c297f5', '40473635-01d4-4e2a-b809-8fce66031ace', 1);

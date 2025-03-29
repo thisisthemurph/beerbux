@@ -41,6 +41,7 @@ message SessionResponse {
   string name = 2;
   bool is_active = 3;
   repeated SessionMember members = 4;
+  double total = 5;
 }
 
 message AddMemberToSessionRequest {

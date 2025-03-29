@@ -82,6 +82,7 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 		Name:      ssn.Name,
 		IsActive:  ssn.IsActive,
 		Members:   sessionMembers,
+		Total:     ssn.Total,
 	}, nil
 }
 
@@ -112,6 +113,7 @@ func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.Li
 				Name:      row.Name,
 				IsActive:  row.IsActive,
 				Members:   make([]*sessionpb.SessionMember, 0, 4),
+				Total:     row.TotalAmount,
 			}
 			sessionsMap[row.ID] = ssn
 		}

@@ -31,3 +31,15 @@ type SessionMember struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type Transaction struct {
+	ID        string
+	SessionID string
+	MemberID  string
+}
+
+type TransactionLine struct {
+	TransactionID string
+	MemberID      string
+	Amount        float64
+}

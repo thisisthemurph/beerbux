@@ -15,6 +15,7 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/session-service/internal/kafka"
 	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
+	"github.com/thisisthemurph/beerbux/session-service/internal/repository"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
@@ -63,7 +64,7 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 	sessionRepository := session.New(db)
 
 	// Setup and run Kafka consumers.
-	setupAndRunKafkaConsumers(ctx, cfg, logger, sessionRepository)
+	setupAndRunKafkaConsumers(ctx, cfg, logger, db, sessionRepository)
 
 	// Set up the session gRPC server.
 	listener, grpcServer, err := setupSessionGRPCServer(
@@ -138,12 +139,17 @@ func setupAndRunKafkaConsumers(
 	ctx context.Context,
 	cfg *config.Config,
 	logger *slog.Logger,
+	db *sql.DB,
 	sessionRepository *session.Queries,
 ) {
-	userUpdatedConsumer := kafka.NewConsumer(logger, cfg.Kafka.Brokers, "user.updated", "session-service")
+	newConsumer := func(topic string) kafka.ConsumerListener {
+		return kafka.NewConsumer(logger, cfg.Kafka.Brokers, topic, "session-service")
+	}
 
+	sessionRepositoryWithTransactions := repository.NewSessionQueries(db)
 	consumerHandlerMap := map[kafka.ConsumerListener]handler.KafkaMessageHandler{
-		userUpdatedConsumer: handler.NewUserUpdatedEventHandler(sessionRepository),
+		newConsumer("user.updated"):               handler.NewUserUpdatedEventHandler(sessionRepository),
+		newConsumer("ledger.transaction.updated"): handler.NewLedgerTransactionUpdatedMessageHandler(sessionRepositoryWithTransactions),
 	}
 
 	for consumer, h := range consumerHandlerMap {

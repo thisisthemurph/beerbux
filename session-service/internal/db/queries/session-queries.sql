@@ -1,25 +1,36 @@
 -- name: GetSession :one
-select * from sessions where id = ? limit 1;
+select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total
+from sessions s
+left join transactions t on s.id = t.session_id
+left join transaction_lines l on t.id = l.transaction_id
+where s.id = ?
+group by s.id, s.name, s.is_active, s.created_at, s.updated_at;
 
 -- name: ListSessionsForUser :many
-WITH paged_sessions AS (
-    SELECT s.*
-    FROM sessions s
-             JOIN session_members sm_target ON s.id = sm_target.session_id
-    WHERE sm_target.member_id = :member_id
-      AND (CAST(COALESCE(:page_token, '') AS TEXT) = '' OR :page_token < s.id)
-    ORDER BY s.updated_at DESC, s.id DESC
-    LIMIT CASE WHEN :page_size = 0 THEN -1 ELSE :page_size END
+with paged_sessions AS (
+    select s.*, cast(coalesce(sum(l.amount), 0) as real) as total_amount
+    from sessions s
+    join session_members sm_target
+        on s.id = sm_target.session_id
+    left join transactions t
+        on s.id = t.session_id
+    left join transaction_lines l
+        on t.id = l.transaction_id
+    where sm_target.member_id = :member_id
+        and (cast(coalesce(:page_token, '') as text) = '' or :page_token < s.id)
+    group by s.id, s.name, s.is_active, s.created_at, s.updated_at
+    order by s.updated_at desc, s.id desc
+    limit case when :page_size = 0 then -1 else :page_size end
 )
-SELECT
+select
     ps.*,
-    m.id AS member_id,
-    m.name AS member_name,
-    m.username AS member_username
-FROM paged_sessions ps
-         JOIN session_members sm ON ps.id = sm.session_id
-         JOIN members m ON sm.member_id = m.id
-ORDER BY ps.updated_at DESC, ps.id DESC;
+    m.id as member_id,
+    m.name as member_name,
+    m.username as member_username
+from paged_sessions ps
+join session_members sm on ps.id = sm.session_id
+join members m on sm.member_id = m.id
+order by ps.updated_at desc, ps.id desc;
 
 -- name: CreateSession :one
 insert into sessions (id, name)
@@ -60,4 +71,17 @@ update sessions
 set name = ?,
     updated_at = current_timestamp
 where id = ?
+returning *;
+
+-- name: AddTransaction :one
+insert into transactions (id, session_id, member_id)
+values (?, ?, ?)
+on conflict do nothing
+returning *;
+
+-- name: AddTransactionLine :one
+insert into transaction_lines (transaction_id, member_id, amount)
+values (?, ?, ?)
+on conflict (transaction_id, member_id)
+    do update set amount = excluded.amount
 returning *;

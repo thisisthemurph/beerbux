@@ -27,6 +27,47 @@ func (q *Queries) AddSessionMember(ctx context.Context, arg AddSessionMemberPara
 	return err
 }
 
+const addTransaction = `-- name: AddTransaction :one
+insert into transactions (id, session_id, member_id)
+values (?, ?, ?)
+on conflict do nothing
+returning id, session_id, member_id
+`
+
+type AddTransactionParams struct {
+	ID        string
+	SessionID string
+	MemberID  string
+}
+
+func (q *Queries) AddTransaction(ctx context.Context, arg AddTransactionParams) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, addTransaction, arg.ID, arg.SessionID, arg.MemberID)
+	var i Transaction
+	err := row.Scan(&i.ID, &i.SessionID, &i.MemberID)
+	return i, err
+}
+
+const addTransactionLine = `-- name: AddTransactionLine :one
+insert into transaction_lines (transaction_id, member_id, amount)
+values (?, ?, ?)
+on conflict (transaction_id, member_id)
+    do update set amount = excluded.amount
+returning transaction_id, member_id, amount
+`
+
+type AddTransactionLineParams struct {
+	TransactionID string
+	MemberID      string
+	Amount        float64
+}
+
+func (q *Queries) AddTransactionLine(ctx context.Context, arg AddTransactionLineParams) (TransactionLine, error) {
+	row := q.db.QueryRowContext(ctx, addTransactionLine, arg.TransactionID, arg.MemberID, arg.Amount)
+	var i TransactionLine
+	err := row.Scan(&i.TransactionID, &i.MemberID, &i.Amount)
+	return i, err
+}
+
 const createSession = `-- name: CreateSession :one
 insert into sessions (id, name)
 values (?, ?)
@@ -69,18 +110,33 @@ func (q *Queries) GetMember(ctx context.Context, id string) (Member, error) {
 }
 
 const getSession = `-- name: GetSession :one
-select id, name, is_active, created_at, updated_at from sessions where id = ? limit 1
+select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total
+from sessions s
+left join transactions t on s.id = t.session_id
+left join transaction_lines l on t.id = l.transaction_id
+where s.id = ?
+group by s.id, s.name, s.is_active, s.created_at, s.updated_at
 `
 
-func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
+type GetSessionRow struct {
+	ID        string
+	Name      string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Total     float64
+}
+
+func (q *Queries) GetSession(ctx context.Context, id string) (GetSessionRow, error) {
 	row := q.db.QueryRowContext(ctx, getSession, id)
-	var i Session
+	var i GetSessionRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Total,
 	)
 	return i, err
 }
@@ -122,24 +178,30 @@ func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, 
 }
 
 const listSessionsForUser = `-- name: ListSessionsForUser :many
-WITH paged_sessions AS (
-    SELECT s.id, s.name, s.is_active, s.created_at, s.updated_at
-    FROM sessions s
-             JOIN session_members sm_target ON s.id = sm_target.session_id
-    WHERE sm_target.member_id = ?1
-      AND (CAST(COALESCE(?2, '') AS TEXT) = '' OR ?2 < s.id)
-    ORDER BY s.updated_at DESC, s.id DESC
-    LIMIT CASE WHEN ?3 = 0 THEN -1 ELSE ?3 END
+with paged_sessions AS (
+    select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total_amount
+    from sessions s
+    join session_members sm_target
+        on s.id = sm_target.session_id
+    left join transactions t
+        on s.id = t.session_id
+    left join transaction_lines l
+        on t.id = l.transaction_id
+    where sm_target.member_id = ?1
+        and (cast(coalesce(?2, '') as text) = '' or ?2 < s.id)
+    group by s.id, s.name, s.is_active, s.created_at, s.updated_at
+    order by s.updated_at desc, s.id desc
+    limit case when ?3 = 0 then -1 else ?3 end
 )
-SELECT
-    ps.id, ps.name, ps.is_active, ps.created_at, ps.updated_at,
-    m.id AS member_id,
-    m.name AS member_name,
-    m.username AS member_username
-FROM paged_sessions ps
-         JOIN session_members sm ON ps.id = sm.session_id
-         JOIN members m ON sm.member_id = m.id
-ORDER BY ps.updated_at DESC, ps.id DESC
+select
+    ps.id, ps.name, ps.is_active, ps.created_at, ps.updated_at, ps.total_amount,
+    m.id as member_id,
+    m.name as member_name,
+    m.username as member_username
+from paged_sessions ps
+join session_members sm on ps.id = sm.session_id
+join members m on sm.member_id = m.id
+order by ps.updated_at desc, ps.id desc
 `
 
 type ListSessionsForUserParams struct {
@@ -154,6 +216,7 @@ type ListSessionsForUserRow struct {
 	IsActive       bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	TotalAmount    float64
 	MemberID       string
 	MemberName     string
 	MemberUsername string
@@ -174,6 +237,7 @@ func (q *Queries) ListSessionsForUser(ctx context.Context, arg ListSessionsForUs
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TotalAmount,
 			&i.MemberID,
 			&i.MemberName,
 			&i.MemberUsername,

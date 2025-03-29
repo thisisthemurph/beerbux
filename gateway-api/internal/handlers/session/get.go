@@ -57,6 +57,7 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	ssn := SessionResponse{
 		ID:       s.SessionId,
 		Name:     s.Name,
+		Total:    s.Total,
 		IsActive: s.IsActive,
 		Members:  make([]SessionMember, 0, len(s.Members)),
 	}

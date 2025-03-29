@@ -20,10 +20,11 @@ func NewListSessionsForUserHandler(sessionClient sessionpb.SessionClient) *ListS
 }
 
 type ListSessionsForUserResponse struct {
-	ID       string                      `json:"id"`
-	Name     string                      `json:"name"`
-	IsActive bool                        `json:"isActive"`
-	Members  []ListSessionsForUserMember `json:"members"`
+	SessionID string                      `json:"id"`
+	Name      string                      `json:"name"`
+	Total     float64                     `json:"total"`
+	IsActive  bool                        `json:"isActive"`
+	Members   []ListSessionsForUserMember `json:"members"`
 }
 
 type ListSessionsForUserMember struct {
@@ -63,10 +64,11 @@ func (h *ListSessionsForUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 
 		sessions = append(sessions, ListSessionsForUserResponse{
-			ID:       ssn.SessionId,
-			Name:     ssn.Name,
-			IsActive: ssn.IsActive,
-			Members:  mm,
+			SessionID: ssn.SessionId,
+			Name:      ssn.Name,
+			Total:     ssn.Total,
+			IsActive:  ssn.IsActive,
+			Members:   mm,
 		})
 	}
 

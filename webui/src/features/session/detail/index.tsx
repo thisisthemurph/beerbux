@@ -5,6 +5,7 @@ import {
 	PrimaryActionCardLinkItem,
 	PrimaryActionCardSeparator,
 } from "@/components/primary-action-card";
+import { Badge } from "@/components/ui/badge.tsx";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +37,18 @@ export default function SessionDetailPage() {
 
 	return (
 		<div className="space-y-6">
-			<h1>{session.name}</h1>
+			<div className="flex justify-between m-0">
+				<h1>{session.name}</h1>
+				{session.total > 0 && (
+					<Badge
+						variant="secondary"
+						className="flex justify-between gap-4 mb-8 px-6 text-lg font-normal text-muted-foreground"
+					>
+						<span className="">total:</span>
+						<span className="font-semibold">${session.total}</span>
+					</Badge>
+				)}
+			</div>
 			{session.isActive && (
 				<PrimaryActionCard>
 					<PrimaryActionCardContent>

@@ -64,6 +64,9 @@ function SessionListing({
 										<p>{session.name}</p>
 										{!session.isActive && <InactiveIcon />}
 									</div>
+									<p className="text-xl text-muted-foreground font-semibold">
+										${session.total}
+									</p>
 								</div>
 								{i < sessions.length - 1 && <Separator />}
 							</Link>

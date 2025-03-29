@@ -1,9 +1,10 @@
 -- name: GetSession :one
-select s.*, cast(coalesce(sum(l.amount), 0) as real) as total
+select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total
 from sessions s
 left join transactions t on s.id = t.session_id
 left join transaction_lines l on t.id = l.transaction_id
-where s.id = ?;
+where s.id = ?
+group by s.id, s.name, s.is_active, s.created_at, s.updated_at;
 
 -- name: ListSessionsForUser :many
 with paged_sessions AS (

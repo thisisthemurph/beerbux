@@ -8,6 +8,7 @@ export type User = {
 export type Session = {
 	id: string;
 	name: string;
+	total: number;
 	isActive: boolean;
 	members: SessionMember[];
 };

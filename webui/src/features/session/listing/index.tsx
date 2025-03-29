@@ -14,7 +14,7 @@ function SessionListingPage() {
 
 	const activeSessions = sessions?.filter((s) => s.isActive) ?? [];
 	const inactiveSessions = sessions?.filter((s) => !s.isActive) ?? [];
-	//http://localhost:5173/sessions/1533f3c3-c3a0-4c57-8c35-ff7a9aa963fa?bl=%2Fsessions
+
 	return (
 		<section className="space-y-6">
 			<h1>Your sessions</h1>
@@ -27,7 +27,7 @@ function SessionListingPage() {
 				/>
 			)}
 
-			{inactiveSessions && (
+			{inactiveSessions.length > 0 && (
 				<SessionListing
 					title="Your inactive settings"
 					sessions={inactiveSessions}

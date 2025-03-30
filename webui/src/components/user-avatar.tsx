@@ -14,8 +14,6 @@ export function UserAvatar({
 		return <InnerUserAvatar data={data} />;
 	}
 
-	console.log({ tt: tooltip ?? data.username ?? "unknown" });
-
 	return (
 		<Tooltip>
 			<TooltipTrigger>

@@ -11,7 +11,6 @@ function AddMemberPage() {
 	const { addMemberToSession } = useSessionClient();
 
 	async function handleAddMember(username: string) {
-		console.log({ sessionId, username });
 		if (!sessionId) return;
 		try {
 			await addMemberToSession(sessionId, username);

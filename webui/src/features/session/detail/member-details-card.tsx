@@ -1,5 +1,4 @@
 import type { SessionMember } from "@/api/types.ts";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
 import {
 	Card,
 	CardContent,
@@ -7,37 +6,39 @@ import {
 	CardTitle,
 } from "@/components/ui/card.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
+import { UserAvatar } from "@/components/user-avatar.tsx";
+import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils";
 
 type MemberDetailsCardProps = {
 	members: SessionMember[];
+	avatarData: Record<string, AvatarData>;
 };
 
-export function MemberDetailsCard({ members }: MemberDetailsCardProps) {
+export function MemberDetailsCard({
+	members,
+	avatarData,
+}: MemberDetailsCardProps) {
 	return (
-		<>
-			<Card>
-				<CardHeader>
-					<CardTitle>Members</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{members.map((m, i) => (
-						<div key={m.id}>
-							<div className="flex items-center gap-4">
-								<Avatar className="size-10">
-									<AvatarFallback>{m.name[0]}</AvatarFallback>
-								</Avatar>
-								<div className="flex justify-between items-center w-full">
-									<p className="py-6">{m.name}</p>
-									<Balance n={-12} />
-								</div>
+		<Card>
+			<CardHeader>
+				<CardTitle>Members</CardTitle>
+			</CardHeader>
+			<CardContent>
+				{members.map((m, i) => (
+					<div key={m.id}>
+						<div className="flex items-center gap-4">
+							<UserAvatar data={avatarData[m.username]} tooltip={m.name} />
+							<div className="flex justify-between items-center w-full">
+								<p className="py-6">{m.username}</p>
+								<Balance n={-12} />
 							</div>
-							{i < members.length - 1 && <Separator />}
 						</div>
-					))}
-				</CardContent>
-			</Card>
-		</>
+						{i < members.length - 1 && <Separator />}
+					</div>
+				))}
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -50,7 +51,7 @@ function Balance({ n }: { n: number }) {
 				n < 0 && "text-red-500",
 			)}
 		>
-			{n}
+			${n < 0 ? n * -1 : n}
 		</p>
 	);
 }

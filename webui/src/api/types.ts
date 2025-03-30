@@ -11,12 +11,27 @@ export type Session = {
 	total: number;
 	isActive: boolean;
 	members: SessionMember[];
+	transactions: SessionTransaction[];
 };
 
 export type SessionMember = {
 	id: string;
 	name: string;
 	username: string;
+};
+
+export type SessionTransaction = {
+	id: string;
+	creatorId: string;
+	total: number;
+	members: SessionTransactionMember[];
+};
+
+export type SessionTransactionMember = {
+	userId: string;
+	name: string;
+	username: string;
+	amount: number;
 };
 
 // TransactionMemberAmounts is a Record where the key is the member ID and the value is the amount in the transaction.

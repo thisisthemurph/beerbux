@@ -7,7 +7,9 @@ import {
 } from "@/components/primary-action-card";
 import { Badge } from "@/components/ui/badge.tsx";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
+import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
+import { useUserAvatarData } from "@/hooks/user-avatar-data.ts";
 import { useQuery } from "@tanstack/react-query";
 import { Beer, SquarePlus } from "lucide-react";
 import { useParams } from "react-router";
@@ -26,6 +28,10 @@ export default function SessionDetailPage() {
 			return getSession(sessionId);
 		},
 	});
+
+	const { avatarData } = useUserAvatarData(
+		session?.members.map((m) => m.username) ?? [],
+	);
 
 	if (sessionIsPending) {
 		return <p>Loading</p>;
@@ -70,7 +76,13 @@ export default function SessionDetailPage() {
 					</PrimaryActionCardContent>
 				</PrimaryActionCard>
 			)}
-			<MemberDetailsCard members={session.members} />
+			<MemberDetailsCard members={session.members} avatarData={avatarData} />
+
+			<TransactionListing
+				transactions={session.transactions}
+				members={session.members}
+				avatarData={avatarData}
+			/>
 
 			{/*
 

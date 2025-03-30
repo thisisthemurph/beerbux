@@ -10,12 +10,12 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 )
 
-type LedgerTransactionUpdatedMessageHandler struct {
+type TransactionCreatedMessageHandler struct {
 	sessionRepository *repository.SessionQueriesWrapper
 }
 
-func NewLedgerTransactionUpdatedMessageHandler(sessionRepository *repository.SessionQueriesWrapper) KafkaMessageHandler {
-	return &LedgerTransactionUpdatedMessageHandler{
+func NewTransactionCreatedMessageHandler(sessionRepository *repository.SessionQueriesWrapper) KafkaMessageHandler {
+	return &TransactionCreatedMessageHandler{
 		sessionRepository: sessionRepository,
 	}
 }
@@ -28,12 +28,11 @@ type MemberAmount struct {
 type LedgerTransactionUpdatedEvent struct {
 	TransactionID string         `json:"transaction_id"`
 	SessionID     string         `json:"session_id"`
-	CreatorID     string         `json:"user_id"`
-	Total         float64        `json:"total"`
-	Amounts       []MemberAmount `json:"amounts"`
+	CreatorID     string         `json:"creator_id"`
+	Amounts       []MemberAmount `json:"member_amounts"`
 }
 
-func (h LedgerTransactionUpdatedMessageHandler) Handle(ctx context.Context, msg kafka.Message) error {
+func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.Message) error {
 	var event LedgerTransactionUpdatedEvent
 	if err := json.Unmarshal(msg.Value, &event); err != nil {
 		return err

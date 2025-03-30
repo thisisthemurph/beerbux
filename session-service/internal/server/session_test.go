@@ -39,7 +39,7 @@ func TestGetSession_Success(t *testing.T) {
 	assert.True(t, resp.IsActive)
 }
 
-func TestGetSession_FetchesAllSessionMembers_Success(t *testing.T) {
+func TestGetSession_FetchesAllSessionData_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
@@ -48,23 +48,39 @@ func TestGetSession_FetchesAllSessionMembers_Success(t *testing.T) {
 	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
+	sessionID := uuid.New()
+	member1ID := uuid.NewString()
+	member2ID := uuid.NewString()
+	member3ID := uuid.NewString()
+	transactionID := uuid.NewString()
+
 	ssn := builder.NewSessionBuilder(t).
+		WithID(sessionID).
 		WithName("Test Session").
 		WithMember(builder.SessionMemberParams{
-			ID:       uuid.NewString(),
+			ID:       member1ID,
 			Name:     "member1",
 			Username: "username1",
 			IsOwner:  true,
 		}).
 		WithMember(builder.SessionMemberParams{
-			ID:       uuid.NewString(),
+			ID:       member2ID,
 			Name:     "member2",
 			Username: "username2",
 		}).
 		WithMember(builder.SessionMemberParams{
-			ID:       uuid.NewString(),
+			ID:       member3ID,
 			Name:     "member3",
 			Username: "username3",
+		}).
+		WithTransaction(builder.SessionTransactionParams{
+			ID:        transactionID,
+			SessionID: sessionID.String(),
+			CreatorID: member1ID,
+			Lines: []builder.SessionTransactionLine{
+				{MemberID: member2ID, Amount: 1},
+				{MemberID: member3ID, Amount: 1},
+			},
 		}).
 		Build(db)
 
@@ -74,6 +90,19 @@ func TestGetSession_FetchesAllSessionMembers_Success(t *testing.T) {
 	assert.Equal(t, ssn.ID, resp.SessionId)
 	assert.Equal(t, ssn.Name, resp.Name)
 	assert.True(t, resp.IsActive)
+
+	// Check the transactions
+
+	assert.Len(t, resp.Transactions, 1)
+	assert.Equal(t, transactionID, resp.Transactions[0].TransactionId)
+	assert.Equal(t, member1ID, resp.Transactions[0].UserId)
+	assert.Len(t, resp.Transactions[0].Lines, 2)
+	// Hack because we don't know the order of the transaction lines
+	assert.True(t, resp.Transactions[0].Lines[0].UserId == member2ID || resp.Transactions[0].Lines[0].UserId == member3ID)
+	assert.True(t, resp.Transactions[0].Lines[1].UserId == member2ID || resp.Transactions[0].Lines[1].UserId == member3ID)
+	assert.NotEqual(t, resp.Transactions[0].Lines[0].UserId, resp.Transactions[0].Lines[1].UserId)
+
+	// Check the members
 
 	expectedMembers := map[string]string{
 		"member1": "username1",

@@ -16,6 +16,7 @@ func TestCreateTransaction_Success(t *testing.T) {
 	sessionID := uuid.NewString()
 	member1ID := uuid.NewString()
 	member2ID := uuid.NewString()
+	member3ID := uuid.NewString()
 
 	fakeSessionClient := fake.NewFakeSessionClientBuilder().
 		WithSession(&sessionpb.SessionResponse{
@@ -30,6 +31,10 @@ func TestCreateTransaction_Success(t *testing.T) {
 				UserId:   member2ID,
 				Name:     "Member 2",
 				Username: "member2",
+			}, {
+				UserId:   member3ID,
+				Name:     "Member 3",
+				Username: "member3",
 			}},
 		}).
 		Build()
@@ -42,6 +47,7 @@ func TestCreateTransaction_Success(t *testing.T) {
 		SessionId: sessionID,
 		MemberAmounts: []*transactionpb.MemberAmount{
 			{UserId: member2ID, Amount: 1},
+			{UserId: member3ID, Amount: 2},
 		},
 	})
 
@@ -53,6 +59,17 @@ func TestCreateTransaction_Success(t *testing.T) {
 
 	assert.Equal(t, member1ID, res.CreatorId)
 	assert.Equal(t, sessionID, res.SessionId)
+
+	capturedEvent := fakeTransactionCreatedPublisher.CapturedEvent
+	assert.NotNil(t, capturedEvent)
+	assert.Equal(t, res.TransactionId, capturedEvent.TransactionID)
+	assert.Equal(t, member1ID, capturedEvent.CreatorID)
+	assert.Equal(t, sessionID, capturedEvent.SessionID)
+	assert.Len(t, capturedEvent.MemberAmounts, 2)
+	assert.Equal(t, member2ID, capturedEvent.MemberAmounts[0].UserID)
+	assert.Equal(t, 1.0, capturedEvent.MemberAmounts[0].Amount)
+	assert.Equal(t, member3ID, capturedEvent.MemberAmounts[1].UserID)
+	assert.Equal(t, 2.0, capturedEvent.MemberAmounts[1].Amount)
 }
 
 func TestCreateTransaction_WithInvalidInputs_ReturnsError(t *testing.T) {

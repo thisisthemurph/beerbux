@@ -12,6 +12,7 @@ type SessionBuilder struct {
 	model               session.Session
 	isActiveSetManually bool
 	members             []SessionMemberParams
+	transactions        []SessionTransactionParams
 }
 
 func NewSessionBuilder(t *testing.T) *SessionBuilder {
@@ -46,6 +47,23 @@ type SessionMemberParams struct {
 
 func (b *SessionBuilder) WithMember(m SessionMemberParams) *SessionBuilder {
 	b.members = append(b.members, m)
+	return b
+}
+
+type SessionTransactionLine struct {
+	MemberID string
+	Amount   float64
+}
+
+type SessionTransactionParams struct {
+	ID        string
+	SessionID string
+	CreatorID string
+	Lines     []SessionTransactionLine
+}
+
+func (b *SessionBuilder) WithTransaction(t SessionTransactionParams) *SessionBuilder {
+	b.transactions = append(b.transactions, t)
 	return b
 }
 
@@ -84,6 +102,21 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 
 		if err != nil {
 			b.t.Fatalf("failed to insert session member: %v", err)
+		}
+	}
+
+	insertTransaction := "insert into transactions (id, session_id, member_id) values (?, ?, ?);"
+	insertTransactionLine := "insert into transaction_lines (transaction_id, member_id, amount) values (?, ?, ?);"
+	for _, t := range b.transactions {
+		_, err := db.Exec(insertTransaction, t.ID, t.SessionID, t.CreatorID)
+		if err != nil {
+			b.t.Fatalf("failed to insert transaction: %v", err)
+		}
+		for _, line := range t.Lines {
+			_, err := db.Exec(insertTransactionLine, t.ID, line.MemberID, line.Amount)
+			if err != nil {
+				b.t.Fatalf("failed to insert transaction line: %v", err)
+			}
 		}
 	}
 

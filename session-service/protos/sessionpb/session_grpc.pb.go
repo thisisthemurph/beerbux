@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SessionClient interface {
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
-	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
+	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
 	ListSessionsForUser(ctx context.Context, in *ListSessionsForUserRequest, opts ...grpc.CallOption) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
@@ -53,9 +53,9 @@ func (c *sessionClient) CreateSession(ctx context.Context, in *CreateSessionRequ
 	return out, nil
 }
 
-func (c *sessionClient) GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
+func (c *sessionClient) GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SessionResponse)
+	out := new(GetSessionResponse)
 	err := c.cc.Invoke(ctx, Session_GetSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToS
 // for forward compatibility.
 type SessionServer interface {
 	CreateSession(context.Context, *CreateSessionRequest) (*SessionResponse, error)
-	GetSession(context.Context, *GetSessionRequest) (*SessionResponse, error)
+	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
 	mustEmbedUnimplementedSessionServer()
@@ -104,7 +104,7 @@ type UnimplementedSessionServer struct{}
 func (UnimplementedSessionServer) CreateSession(context.Context, *CreateSessionRequest) (*SessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSession not implemented")
 }
-func (UnimplementedSessionServer) GetSession(context.Context, *GetSessionRequest) (*SessionResponse, error) {
+func (UnimplementedSessionServer) GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
 }
 func (UnimplementedSessionServer) ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error) {

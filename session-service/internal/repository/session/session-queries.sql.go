@@ -141,6 +141,55 @@ func (q *Queries) GetSession(ctx context.Context, id string) (GetSessionRow, err
 	return i, err
 }
 
+const getSessionTransactionLines = `-- name: GetSessionTransactionLines :many
+select
+    t.id as transaction_id,
+    t.session_id,
+    t.member_id as creator_id,
+    l.member_id,
+    l.amount
+from transactions t
+join transaction_lines l on t.id = l.transaction_id
+where t.session_id = ?
+`
+
+type GetSessionTransactionLinesRow struct {
+	TransactionID string
+	SessionID     string
+	CreatorID     string
+	MemberID      string
+	Amount        float64
+}
+
+func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID string) ([]GetSessionTransactionLinesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionTransactionLines, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSessionTransactionLinesRow
+	for rows.Next() {
+		var i GetSessionTransactionLinesRow
+		if err := rows.Scan(
+			&i.TransactionID,
+			&i.SessionID,
+			&i.CreatorID,
+			&i.MemberID,
+			&i.Amount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMembers = `-- name: ListMembers :many
 select m.id, m.name, m.username, m.created_at, m.updated_at
 from members m

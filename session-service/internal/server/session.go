@@ -48,7 +48,7 @@ func NewSessionServer(
 	}
 }
 
-func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionRequest) (*sessionpb.SessionResponse, error) {
+func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionRequest) (*sessionpb.GetSessionResponse, error) {
 	if err := validateGetSessionRequest(r); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -60,6 +60,12 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 			return nil, ErrSessionNotFound
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get session: %v", err)
+	}
+
+	lines, err := s.sessionRepository.GetSessionTransactionLines(ctx, r.SessionId)
+	if err != nil {
+		s.logger.Error("failed to get session transaction lines", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get session transaction lines: %v", err)
 	}
 
 	members, err := s.sessionRepository.ListMembers(ctx, r.SessionId)
@@ -77,13 +83,38 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 		})
 	}
 
-	return &sessionpb.SessionResponse{
-		SessionId: ssn.ID,
-		Name:      ssn.Name,
-		IsActive:  ssn.IsActive,
-		Members:   sessionMembers,
-		Total:     ssn.Total,
-	}, nil
+	transactionMap := make(map[string]*sessionpb.SessionTransaction)
+	for _, line := range lines {
+		if _, exists := transactionMap[line.TransactionID]; !exists {
+			transactionMap[line.TransactionID] = &sessionpb.SessionTransaction{
+				TransactionId: line.TransactionID,
+				UserId:        line.CreatorID,
+				Total:         0,
+				Lines:         make([]*sessionpb.SessionTransactionLine, 0),
+			}
+		}
+
+		transactionMap[line.TransactionID].Total += line.Amount
+		transactionMap[line.TransactionID].Lines = append(transactionMap[line.TransactionID].Lines, &sessionpb.SessionTransactionLine{
+			UserId: line.MemberID,
+			Amount: line.Amount,
+		})
+	}
+
+	result := &sessionpb.GetSessionResponse{
+		SessionId:    ssn.ID,
+		Name:         ssn.Name,
+		IsActive:     ssn.IsActive,
+		Members:      sessionMembers,
+		Total:        ssn.Total,
+		Transactions: make([]*sessionpb.SessionTransaction, 0, len(transactionMap)),
+	}
+
+	for _, transaction := range transactionMap {
+		result.Transactions = append(result.Transactions, transaction)
+	}
+
+	return result, nil
 }
 
 // ListSessionsForUser returns the sessions for a user containing the associated members.

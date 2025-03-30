@@ -32,6 +32,17 @@ join session_members sm on ps.id = sm.session_id
 join members m on sm.member_id = m.id
 order by ps.updated_at desc, ps.id desc;
 
+-- name: GetSessionTransactionLines :many
+select
+    t.id as transaction_id,
+    t.session_id,
+    t.member_id as creator_id,
+    l.member_id,
+    l.amount
+from transactions t
+join transaction_lines l on t.id = l.transaction_id
+where t.session_id = ?;
+
 -- name: CreateSession :one
 insert into sessions (id, name)
 values (?, ?)

@@ -148,8 +148,8 @@ func setupAndRunKafkaConsumers(
 
 	sessionRepositoryWithTransactions := repository.NewSessionQueries(db)
 	consumerHandlerMap := map[kafka.ConsumerListener]handler.KafkaMessageHandler{
-		newConsumer("user.updated"):               handler.NewUserUpdatedEventHandler(sessionRepository),
-		newConsumer("ledger.transaction.updated"): handler.NewLedgerTransactionUpdatedMessageHandler(sessionRepositoryWithTransactions),
+		newConsumer("user.updated"):        handler.NewUserUpdatedEventHandler(sessionRepository),
+		newConsumer("transaction.created"): handler.NewTransactionCreatedMessageHandler(sessionRepositoryWithTransactions),
 	}
 
 	for consumer, h := range consumerHandlerMap {

@@ -17,13 +17,12 @@ func TestLedgerTransactionUpdatedMessageHandler_Success(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 
 	sessionRepo := repository.NewSessionQueries(db)
-	handler := NewLedgerTransactionUpdatedMessageHandler(sessionRepo)
+	handler := NewTransactionCreatedMessageHandler(sessionRepo)
 
 	event := LedgerTransactionUpdatedEvent{
 		TransactionID: uuid.NewString(),
 		SessionID:     uuid.NewString(),
 		CreatorID:     uuid.NewString(),
-		Total:         2,
 		Amounts: []MemberAmount{
 			{
 				MemberID: "a3d7ec98-034d-4c25-8b9e-023faa19fd37",

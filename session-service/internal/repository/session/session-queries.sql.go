@@ -28,22 +28,33 @@ func (q *Queries) AddSessionMember(ctx context.Context, arg AddSessionMemberPara
 }
 
 const addTransaction = `-- name: AddTransaction :one
-insert into transactions (id, session_id, member_id)
-values (?, ?, ?)
+insert into transactions (id, session_id, member_id, created_at)
+values (?, ?, ?, ?)
 on conflict do nothing
-returning id, session_id, member_id
+returning id, session_id, member_id, created_at
 `
 
 type AddTransactionParams struct {
 	ID        string
 	SessionID string
 	MemberID  string
+	CreatedAt time.Time
 }
 
 func (q *Queries) AddTransaction(ctx context.Context, arg AddTransactionParams) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, addTransaction, arg.ID, arg.SessionID, arg.MemberID)
+	row := q.db.QueryRowContext(ctx, addTransaction,
+		arg.ID,
+		arg.SessionID,
+		arg.MemberID,
+		arg.CreatedAt,
+	)
 	var i Transaction
-	err := row.Scan(&i.ID, &i.SessionID, &i.MemberID)
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.MemberID,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -146,6 +157,7 @@ select
     t.id as transaction_id,
     t.session_id,
     t.member_id as creator_id,
+    t.created_at,
     l.member_id,
     l.amount
 from transactions t
@@ -157,6 +169,7 @@ type GetSessionTransactionLinesRow struct {
 	TransactionID string
 	SessionID     string
 	CreatorID     string
+	CreatedAt     time.Time
 	MemberID      string
 	Amount        float64
 }
@@ -174,6 +187,7 @@ func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID stri
 			&i.TransactionID,
 			&i.SessionID,
 			&i.CreatorID,
+			&i.CreatedAt,
 			&i.MemberID,
 			&i.Amount,
 		); err != nil {

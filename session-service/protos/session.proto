@@ -38,6 +38,7 @@ message SessionTransaction {
   string user_id = 2;
   double total = 3;
   repeated SessionTransactionLine lines = 4;
+  string created_at = 5;
 }
 
 message SessionMember {

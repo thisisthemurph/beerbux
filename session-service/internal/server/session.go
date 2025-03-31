@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
@@ -91,6 +92,7 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 				UserId:        line.CreatorID,
 				Total:         0,
 				Lines:         make([]*sessionpb.SessionTransactionLine, 0),
+				CreatedAt:     line.CreatedAt.Format(time.RFC3339),
 			}
 		}
 

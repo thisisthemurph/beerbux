@@ -55,9 +55,10 @@ func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.
 		ID:        event.TransactionID,
 		SessionID: event.SessionID,
 		MemberID:  event.CreatorID,
+		CreatedAt: msg.Time,
 	})
 	if err != nil {
-		return fmt.Errorf("failedadding transaction: %w", err)
+		return fmt.Errorf("failed adding transaction: %w", err)
 	}
 
 	for _, a := range event.Amounts {

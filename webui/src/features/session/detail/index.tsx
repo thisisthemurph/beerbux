@@ -61,14 +61,14 @@ export default function SessionDetailPage() {
 						<PrimaryActionCardLinkItem
 							to={`/session/${sessionId}/member`}
 							text="Add a member"
-							icon={<SquarePlus className="text-green-300 w-8 h-8" />}
+							icon={<SquarePlus className="text-green-400 w-8 h-8" />}
 						/>
 						{session.members.length > 1 && (
 							<>
 								<PrimaryActionCardSeparator />
 								<PrimaryActionCardLinkItem
-									text="Buy a beer"
-									icon={<Beer className="text-green-300 w-8 h-8" />}
+									text="Buy a round"
+									icon={<Beer className="text-green-400 w-8 h-8" />}
 									to={`/session/${sessionId}/transaction`}
 								/>
 							</>
@@ -76,6 +76,7 @@ export default function SessionDetailPage() {
 					</PrimaryActionCardContent>
 				</PrimaryActionCard>
 			)}
+
 			<MemberDetailsCard members={session.members} avatarData={avatarData} />
 
 			<TransactionListing
@@ -83,19 +84,6 @@ export default function SessionDetailPage() {
 				members={session.members}
 				avatarData={avatarData}
 			/>
-
-			{/*
-
-			I want a listing of the transactions here.
-			In reality, I want a timeline of all events that happened in the session; including user added etc.
-			- Who bought the beer
-			- Who received the beer (everyone vs specific people)
-			- How much was the transaction?
-
-			This should be achieved by the session service listening for ledger.updated
-			events and adding the data to the sessions database.
-
-		*/}
 		</div>
 	);
 }

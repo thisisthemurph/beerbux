@@ -5,7 +5,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card.tsx";
-import { Separator } from "@/components/ui/separator.tsx";
 import { UserAvatar } from "@/components/user-avatar.tsx";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils";
@@ -25,16 +24,13 @@ export function MemberDetailsCard({
 				<CardTitle>Members</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{members.map((m, i) => (
-					<div key={m.id}>
-						<div className="flex items-center gap-4">
-							<UserAvatar data={avatarData[m.username]} tooltip={m.name} />
-							<div className="flex justify-between items-center w-full">
-								<p className="py-6">{m.username}</p>
-								<Balance n={-12} />
-							</div>
+				{members.map(({ id, name, username, transactionSummary }) => (
+					<div key={id} className="flex items-center gap-4">
+						<UserAvatar data={avatarData[username]} tooltip={name} />
+						<div className="flex justify-between items-center w-full">
+							<p className="py-6 font-semibold">{username}</p>
+							<Balance {...transactionSummary} />
 						</div>
-						{i < members.length - 1 && <Separator />}
 					</div>
 				))}
 			</CardContent>
@@ -42,16 +38,18 @@ export function MemberDetailsCard({
 	);
 }
 
-function Balance({ n }: { n: number }) {
+function Balance({ credit, debit }: { credit: number; debit: number }) {
+	const value = credit - debit;
+
 	return (
 		<p
 			className={cn(
-				"text-muted-foreground",
-				n > 0 && "text-green-500",
-				n < 0 && "text-red-500",
+				"font-semibold text-muted-foreground",
+				value > 0 && "text-green-600",
+				value < 0 && "text-red-600",
 			)}
 		>
-			${n < 0 ? n * -1 : n}
+			${value < 0 ? value * -1 : value}
 		</p>
 	);
 }

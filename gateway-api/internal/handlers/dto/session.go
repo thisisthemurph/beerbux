@@ -10,9 +10,10 @@ type SessionResponse struct {
 }
 
 type SessionMember struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
+	ID                 string             `json:"id"`
+	Name               string             `json:"name"`
+	Username           string             `json:"username"`
+	TransactionSummary TransactionSummary `json:"transactionSummary"`
 }
 
 type SessionTransactionMember struct {
@@ -26,5 +27,11 @@ type SessionTransaction struct {
 	ID        string                     `json:"id"`
 	CreatorID string                     `json:"creatorId"`
 	Total     float64                    `json:"total"`
+	CreatedAt string                     `json:"createdAt"`
 	Members   []SessionTransactionMember `json:"members"`
+}
+
+type TransactionSummary struct {
+	Credit float64 `json:"credit"`
+	Debit  float64 `json:"debit"`
 }

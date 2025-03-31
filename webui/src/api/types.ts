@@ -18,12 +18,17 @@ export type SessionMember = {
 	id: string;
 	name: string;
 	username: string;
+	transactionSummary: {
+		credit: number;
+		debit: number;
+	};
 };
 
 export type SessionTransaction = {
 	id: string;
 	creatorId: string;
 	total: number;
+	createdAt: string;
 	members: SessionTransactionMember[];
 };
 

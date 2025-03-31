@@ -72,10 +72,15 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			Username: m.Username,
 		}
 
+		credit, debit := calculateCreditAndDebitForMember(m.UserId, s.Transactions)
 		ssn.Members = append(ssn.Members, dto.SessionMember{
 			ID:       m.UserId,
 			Name:     m.Name,
 			Username: m.Username,
+			TransactionSummary: dto.TransactionSummary{
+				Credit: credit,
+				Debit:  debit,
+			},
 		})
 	}
 
@@ -103,9 +108,30 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			ID:        t.TransactionId,
 			CreatorID: t.UserId,
 			Total:     t.Total,
+			CreatedAt: t.CreatedAt,
 			Members:   transactionMembers,
 		})
 	}
 
 	send.JSON(w, ssn, http.StatusOK)
+}
+
+func calculateCreditAndDebitForMember(memberID string, transactions []*sessionpb.SessionTransaction) (float64, float64) {
+	credit, debit := 0.0, 0.0
+	for _, t := range transactions {
+		// If the transaction is created by the member, add to credit
+		if t.UserId == memberID {
+			credit += t.Total
+			continue
+		}
+
+		// If the transaction is not created by the member, check the lines
+		for _, l := range t.Lines {
+			if l.UserId == memberID && l.Amount > 0 {
+				debit += l.Amount
+			}
+		}
+	}
+
+	return credit, debit
 }

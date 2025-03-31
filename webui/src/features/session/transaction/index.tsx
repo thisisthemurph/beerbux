@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/card.tsx";
 import { TransactionForm } from "@/features/session/transaction/transaction-form.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
+import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -23,28 +24,33 @@ function TransactionPage() {
 	useBackNavigation(`/session/${sessionId}`);
 	const [total, setTotal] = useState(0);
 	const { createTransaction } = useTransactionClient();
+	const queryClient = useQueryClient();
 
-	function handleNewTransaction(transaction: TransactionMemberAmounts) {
+	async function handleNewTransaction(transaction: TransactionMemberAmounts) {
 		if (!sessionId) return;
-
 		const total = Object.values(transaction).reduce(
 			(acc, value) => acc + value,
 			0,
 		);
 
-		createTransaction(sessionId, transaction)
-			.then(() =>
-				toast.success("Transaction created:", {
-					description: (
-						<p>
-							A transaction of <span className="font-semibold">${total}</span>{" "}
-							has been created.
-						</p>
-					),
-				}),
-			)
-			.then(() => navigate(`/session/${sessionId}`))
-			.catch(() => toast.error("There was an issue creating the transaction."));
+		const { err } = await tryCatch(createTransaction(sessionId, transaction));
+		if (err) {
+			console.error(err);
+			toast.error("There was an issue creating the transaction.");
+			return;
+		}
+
+		toast.success("Transaction created:", {
+			description: (
+				<p>
+					A transaction of <span className="font-semibold">${total}</span> has
+					been created.
+				</p>
+			),
+		});
+
+		await queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+		navigate(`/session/${sessionId}`);
 	}
 
 	const { data: session, isPending: sessionIsPending } = useQuery({

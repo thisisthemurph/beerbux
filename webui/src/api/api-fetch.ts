@@ -37,7 +37,7 @@ export async function apiFetch<T>(
 		}
 
 		const data = await response.json().catch(() => {
-			throw new Error("Could not parse response body");
+			return undefined as T;
 		});
 
 		return data as T;

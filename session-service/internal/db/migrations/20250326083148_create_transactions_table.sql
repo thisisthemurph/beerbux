@@ -4,6 +4,7 @@ create table if not exists transactions (
     id text primary key,
     session_id text not null,
     member_id text not null,
+    created_at timestamp not null default current_timestamp,
 
     foreign key (session_id) references sessions (id) on delete cascade,
     foreign key (member_id) references members (id) on delete cascade

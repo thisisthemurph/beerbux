@@ -37,6 +37,7 @@ select
     t.id as transaction_id,
     t.session_id,
     t.member_id as creator_id,
+    t.created_at,
     l.member_id,
     l.amount
 from transactions t
@@ -85,8 +86,8 @@ where id = ?
 returning *;
 
 -- name: AddTransaction :one
-insert into transactions (id, session_id, member_id)
-values (?, ?, ?)
+insert into transactions (id, session_id, member_id, created_at)
+values (?, ?, ?, ?)
 on conflict do nothing
 returning *;
 

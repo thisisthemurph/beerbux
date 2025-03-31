@@ -36,6 +36,7 @@ type Transaction struct {
 	ID        string
 	SessionID string
 	MemberID  string
+	CreatedAt time.Time
 }
 
 type TransactionLine struct {

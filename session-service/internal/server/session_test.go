@@ -92,15 +92,17 @@ func TestGetSession_FetchesAllSessionData_Success(t *testing.T) {
 	assert.True(t, resp.IsActive)
 
 	// Check the transactions
+	transaction := resp.Transactions[0]
 
 	assert.Len(t, resp.Transactions, 1)
-	assert.Equal(t, transactionID, resp.Transactions[0].TransactionId)
-	assert.Equal(t, member1ID, resp.Transactions[0].UserId)
-	assert.Len(t, resp.Transactions[0].Lines, 2)
+	assert.Equal(t, transactionID, transaction.TransactionId)
+	assert.Equal(t, member1ID, transaction.UserId)
+	assert.NotEmpty(t, transaction.CreatedAt)
+	assert.Len(t, transaction.Lines, 2)
 	// Hack because we don't know the order of the transaction lines
-	assert.True(t, resp.Transactions[0].Lines[0].UserId == member2ID || resp.Transactions[0].Lines[0].UserId == member3ID)
-	assert.True(t, resp.Transactions[0].Lines[1].UserId == member2ID || resp.Transactions[0].Lines[1].UserId == member3ID)
-	assert.NotEqual(t, resp.Transactions[0].Lines[0].UserId, resp.Transactions[0].Lines[1].UserId)
+	assert.True(t, transaction.Lines[0].UserId == member2ID || transaction.Lines[0].UserId == member3ID)
+	assert.True(t, transaction.Lines[1].UserId == member2ID || transaction.Lines[1].UserId == member3ID)
+	assert.NotEqual(t, transaction.Lines[0].UserId, transaction.Lines[1].UserId)
 
 	// Check the members
 

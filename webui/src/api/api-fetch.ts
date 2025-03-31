@@ -32,16 +32,12 @@ export async function apiFetch<T>(
 				: new Error(errorData?.error ?? "An error occurred");
 		}
 
+		if (response.status === 204) {
+			return undefined as T;
+		}
+
 		const data = await response.json().catch(() => {
-			response
-				.text()
-				.then((t) => {
-					if (t === "") return undefined as T;
-					throw new Error("Invalid JSON response");
-				})
-				.catch(() => {
-					throw new Error("Could not parse response body");
-				});
+			throw new Error("Could not parse response body");
 		});
 
 		return data as T;

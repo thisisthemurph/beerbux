@@ -15,10 +15,10 @@ type TransactionCreatedEvent struct {
 	MemberAmounts []TransactionCreatedMemberAmount `json:"member_amounts"`
 }
 
-// LedgerUpdatedEvent is an event that is published when the ledger is updated.
+// LedgerUpdateEvent is an event that is published when the ledger is updated.
 // This event contains a single transaction from the ledger.
 // The transaction will be between the creator and one of the members or one of the members and the creator.
-type LedgerUpdatedEvent struct {
+type LedgerUpdateEvent struct {
 	ID            string  `json:"id"`
 	TransactionID string  `json:"transaction_id"`
 	SessionID     string  `json:"session_id"`

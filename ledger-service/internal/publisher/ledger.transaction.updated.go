@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/segmentio/kafka-go"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
-	"github.com/thisisthemurph/beerbux/ledger-service/internal/handler"
 )
 
 const TopicLedgerTransactionUpdated = "ledger.transaction.updated"
 
 type LedgerTransactionUpdatedPublisher interface {
-	Publish(ctx context.Context, ledgerItems []handler.MemberTransaction) error
+	Publish(ctx context.Context, ledgerItems []event.LedgerUpdateEvent) error
 }
 
 type LedgerTransactionUpdatedKafkaPublisher struct {
@@ -28,7 +28,7 @@ func NewLedgerTransactionUpdatedKafkaPublisher(brokers []string) LedgerTransacti
 	}
 }
 
-func (p *LedgerTransactionUpdatedKafkaPublisher) Publish(ctx context.Context, ledgerItems []handler.MemberTransaction) error {
+func (p *LedgerTransactionUpdatedKafkaPublisher) Publish(ctx context.Context, ledgerItems []event.LedgerUpdateEvent) error {
 	transactionEvent := event.LedgerTransactionUpdatedEvent{}
 
 	for i, item := range ledgerItems {

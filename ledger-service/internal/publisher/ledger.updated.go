@@ -12,7 +12,7 @@ import (
 const TopicLedgerUpdated = "ledger.updated"
 
 type LedgerUpdatedPublisher interface {
-	Publish(ctx context.Context, ev event.LedgerUpdatedEvent) error
+	Publish(ctx context.Context, ev event.LedgerUpdateEvent) error
 }
 
 type LedgerUpdatedKafkaPublisher struct {
@@ -28,7 +28,7 @@ func NewLedgerUpdatedKafkaPublisher(brokers []string) LedgerUpdatedPublisher {
 	}
 }
 
-func (p *LedgerUpdatedKafkaPublisher) Publish(ctx context.Context, ev event.LedgerUpdatedEvent) error {
+func (p *LedgerUpdatedKafkaPublisher) Publish(ctx context.Context, ev event.LedgerUpdateEvent) error {
 	data, err := json.Marshal(ev)
 	if err != nil {
 		return fmt.Errorf("failed to marshal ledger updated event %v: %w", ev.ID, err)

@@ -3,11 +3,14 @@ package handler_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log/slog"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/repository"
@@ -15,26 +18,39 @@ import (
 )
 
 // SetupTestHandler initializes the test database and handler
-func SetupTestHandler(db *sql.DB) *handler.UpdateLedgerHandler {
+func SetupTestHandler(db *sql.DB) (*handler.UpdateLedgerHandler, chan []event.LedgerUpdateEvent) {
 	repo := repository.NewLedgerQueries(db)
-	return handler.NewUpdateLedgerHandler(repo, slog.Default())
+	c := make(chan []event.LedgerUpdateEvent, 10)
+	return handler.NewUpdateLedgerHandler(repo, c, slog.Default()), c
 }
 
-// CreateTestEvent generates a test event.TransactionCreatedEvent with given member amounts.
-func CreateTestEvent(creatorID string, memberAmounts []event.TransactionCreatedMemberAmount) event.TransactionCreatedEvent {
-	return event.TransactionCreatedEvent{
+// CreateKafkaMessageAndEvent generates a test event.TransactionCreatedEvent with given member amounts.
+func CreateKafkaMessageAndEvent(
+	t *testing.T,
+	creatorID string,
+	memberAmounts []event.TransactionCreatedMemberAmount,
+) (kafka.Message, event.TransactionCreatedEvent) {
+	baseEvent := event.TransactionCreatedEvent{
 		TransactionID: uuid.NewString(),
 		CreatorID:     creatorID,
 		SessionID:     uuid.NewString(),
 		MemberAmounts: memberAmounts,
 	}
+
+	data, err := json.Marshal(baseEvent)
+	require.NoError(t, err)
+
+	return kafka.Message{
+		Key:   []byte(baseEvent.TransactionID),
+		Value: data,
+	}, baseEvent
 }
 
 func TestHandle(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
-	h := SetupTestHandler(db)
+	h, resultChan := SetupTestHandler(db)
 
 	testCases := []struct {
 		name          string
@@ -82,21 +98,26 @@ func TestHandle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			creatorID := uuid.NewString()
-			ev := CreateTestEvent(creatorID, tc.memberAmounts)
+			msg, ev := CreateKafkaMessageAndEvent(t, creatorID, tc.memberAmounts)
 
-			res, err := h.Handle(context.Background(), ev)
+			err := h.Handle(context.Background(), msg)
 
 			if tc.expectError {
 				assert.Error(t, err, "Expected an error but got none")
 				return
+			} else {
+				require.NoError(t, err, "Handler should not return an error")
+				if err != nil {
+					return
+				}
 			}
 
-			assert.NoError(t, err, "Handler should not return an error")
+			res := <-resultChan
 			assert.Len(t, res, len(tc.memberAmounts)*2, "Should have double the entries (debits & credits)")
 
 			// Validate debits and credits
-			debits := make([]handler.MemberTransaction, 0)
-			credits := make([]handler.MemberTransaction, 0)
+			debits := make([]event.LedgerUpdateEvent, 0)
+			credits := make([]event.LedgerUpdateEvent, 0)
 
 			for _, r := range res {
 				if r.UserID == creatorID {

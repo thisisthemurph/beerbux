@@ -12,6 +12,6 @@ func NewFakeLedgerUpdatedPublisher() publisher.LedgerUpdatedPublisher {
 	return &LedgerUpdatedSuccessPublisher{}
 }
 
-func (p *LedgerUpdatedSuccessPublisher) Publish(ctx context.Context, ev event.LedgerUpdatedEvent) error {
+func (p *LedgerUpdatedSuccessPublisher) Publish(ctx context.Context, ev event.LedgerUpdateEvent) error {
 	return nil
 }

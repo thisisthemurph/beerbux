@@ -55,6 +55,23 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 	setupAndRunKafkaConsumers(ctx, cfg, logger, db, ledgerUpdatedChan)
 	ledgerUpdatedPublisher := publisher.NewLedgerUpdatedKafkaPublisher(cfg.Kafka.Brokers)
 	ledgerTransactionUpdatedPublisher := publisher.NewLedgerTransactionUpdatedKafkaPublisher(cfg.Kafka.Brokers)
+	ledgerUserTotalsCalculatedPublisher := publisher.NewLedgerUserTotalsCalculatedKafkaPublisher(cfg.Kafka.Brokers)
+
+	ledgerRepository := repository.NewLedgerQueries(db)
+	calculateUserTotalsHandler := handler.NewCalculateUserTotalsHandler(ledgerRepository)
+
+	handleLedgerUpdated := makeLedgerUpdatedHandler(
+		ledgerTransactionUpdatedPublisher,
+		ledgerUserTotalsCalculatedPublisher,
+		calculateUserTotalsHandler,
+		logger)
+
+	handleLedgerItemUpdated := makeIndividualLedgerItemUpdatedHandler(
+		ledgerUpdatedPublisher,
+		ledgerUserTotalsCalculatedPublisher,
+		calculateUserTotalsHandler,
+		logger,
+	)
 
 	for {
 		select {
@@ -62,16 +79,63 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 			logger.Debug("shutting down")
 			return nil
 		case updates := <-ledgerUpdatedChan:
-			logger.Debug("ledger updated", "result", updates)
-
-			if err := ledgerTransactionUpdatedPublisher.Publish(ctx, updates); err != nil {
-				logger.Error("failed to publish ledger transaction updated event", "error", err)
+			if len(updates) == 0 {
+				logger.Error("expected updates to have a non-zero length")
+				continue
 			}
 
+			handleLedgerUpdated(ctx, updates)
 			for _, update := range updates {
-				if err := ledgerUpdatedPublisher.Publish(ctx, update); err != nil {
-					logger.Error("failed to publish ledger updated event", "error", err)
-				}
+				handleLedgerItemUpdated(ctx, update)
+			}
+		}
+	}
+}
+
+func makeLedgerUpdatedHandler(
+	ledgerTransactionUpdatedPublisher publisher.LedgerTransactionUpdatedPublisher,
+	ledgerUserTotalsCalculatedPublisher publisher.LedgerUserTotalsCalculatedPublisher,
+	calculateUserTotalsHandler *handler.CalculateUserTotalsHandler,
+	logger *slog.Logger,
+) func(context.Context, []event.LedgerUpdateEvent) {
+	return func(ctx context.Context, updates []event.LedgerUpdateEvent) {
+		// Publish the entire transaction/ledger update.
+		if err := ledgerTransactionUpdatedPublisher.Publish(ctx, updates); err != nil {
+			logger.Error("failed to publish ledger transaction updated event", "error", err)
+		}
+
+		// Calculate the new totals for the creator and publish.
+		creatorUserID := updates[0].UserID
+		creatorTotals, err := calculateUserTotalsHandler.Handle(ctx, creatorUserID)
+		if err != nil {
+			logger.Error("failed calculating user totals", "userID", creatorUserID, "error", "err")
+		} else {
+			if err := ledgerUserTotalsCalculatedPublisher.Publish(ctx, creatorTotals); err != nil {
+				logger.Error("failed to publish event", "error", err)
+			}
+		}
+	}
+}
+
+func makeIndividualLedgerItemUpdatedHandler(
+	ledgerUpdatedPublisher publisher.LedgerUpdatedPublisher,
+	ledgerUserTotalsCalculatedPublisher publisher.LedgerUserTotalsCalculatedPublisher,
+	calculateUserTotalsHandler *handler.CalculateUserTotalsHandler,
+	logger *slog.Logger,
+) func(context.Context, event.LedgerUpdateEvent) {
+	return func(ctx context.Context, update event.LedgerUpdateEvent) {
+		// Publish the individual ledger update.
+		if err := ledgerUpdatedPublisher.Publish(ctx, update); err != nil {
+			logger.Error("failed to publish ledger updated event", "error", err)
+		}
+
+		// Calculate the new totals for each of the transaction participants and publish.
+		participantTotals, err := calculateUserTotalsHandler.Handle(ctx, update.ParticipantID)
+		if err != nil {
+			logger.Error("failed calculating user totals", "userID", participantTotals, "error", "err")
+		} else {
+			if err := ledgerUserTotalsCalculatedPublisher.Publish(ctx, participantTotals); err != nil {
+				logger.Error("failed to publish event", "error", err)
 			}
 		}
 	}

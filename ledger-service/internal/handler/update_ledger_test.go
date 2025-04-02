@@ -17,8 +17,8 @@ import (
 	"github.com/thisisthemurph/beerbux/ledger-service/tests/testinfra"
 )
 
-// SetupTestHandler initializes the test database and handler
-func SetupTestHandler(db *sql.DB) (*handler.UpdateLedgerHandler, chan []event.LedgerUpdateEvent) {
+// NewTestUpdateLedgerHandler initializes the test database and handler.
+func NewTestUpdateLedgerHandler(db *sql.DB) (*handler.UpdateLedgerHandler, chan []event.LedgerUpdateEvent) {
 	repo := repository.NewLedgerQueries(db)
 	c := make(chan []event.LedgerUpdateEvent, 10)
 	return handler.NewUpdateLedgerHandler(repo, c, slog.Default()), c
@@ -50,7 +50,7 @@ func TestHandle(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
-	h, resultChan := SetupTestHandler(db)
+	h, resultChan := NewTestUpdateLedgerHandler(db)
 
 	testCases := []struct {
 		name          string

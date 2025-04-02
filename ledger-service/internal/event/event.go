@@ -39,3 +39,11 @@ type LedgerTransactionUpdatedEvent struct {
 	Total         float64                            `json:"total"`
 	Amounts       []LedgerUpdateCompleteMemberAmount `json:"amounts"`
 }
+
+// UserTotalsEvent describes the total amounts of a specific user at the time the event was sent.
+type UserTotalsEvent struct {
+	UserID string  `json:"user_id"`
+	Credit float64 `json:"credit"`
+	Debit  float64 `json:"debit"`
+	Net    float64 `json:"net"`
+}

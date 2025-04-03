@@ -15,7 +15,6 @@ import (
 	"github.com/thisisthemurph/beerbux/user-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/user-service/internal/kafka"
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
-	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 	"github.com/thisisthemurph/beerbux/user-service/internal/server"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
@@ -99,7 +98,8 @@ func setupAndRunKafkaConsumers(
 
 	userRepository := user.New(db)
 	consumerHandlerMap := map[kafka.ConsumerListener]handler.KafkaMessageHandler{
-		newConsumer("auth.user.registered"): handler.NewAuthUserRegisteredHandler(userRepository),
+		newConsumer("auth.user.registered"):          handler.NewAuthUserRegisteredHandler(userRepository),
+		newConsumer("ledger.user.totals.calculated"): handler.NewLedgerUserTotalsCalculatedEventHandler(userRepository),
 	}
 
 	for c, h := range consumerHandlerMap {
@@ -112,8 +112,7 @@ func setupGRPCServer(logger *slog.Logger, db *sql.DB, address string, brokers []
 	userUpdatedPublisher := publisher.NewUserUpdatedKafkaPublisher(brokers)
 
 	userRepo := user.New(db)
-	ledgerRepo := ledger.New(db)
-	userServer := server.NewUserServer(userRepo, ledgerRepo, userCreatedPublisher, userUpdatedPublisher, logger)
+	userServer := server.NewUserServer(userRepo, userCreatedPublisher, userUpdatedPublisher, logger)
 
 	grpcServer := grpc.NewServer()
 	userpb.RegisterUserServer(grpcServer, userServer)

@@ -37,11 +37,13 @@ func TestUserRegisteredHandler(t *testing.T) {
 	err = h.Handle(context.Background(), msg)
 	require.NoError(t, err)
 
-	q := "select name, username, balance from users where id = ?;"
+	q := "select name, username, credit, debit, net from users where id = ?;"
 	var u user.User
-	err = db.QueryRow(q, event.UserID).Scan(&u.Name, &u.Username, &u.Balance)
+	err = db.QueryRow(q, event.UserID).Scan(&u.Name, &u.Username, &u.Credit, &u.Debit, &u.Net)
 	require.NoError(t, err)
 	assert.Equal(t, event.Name, u.Name)
 	assert.Equal(t, event.Username, u.Username)
-	assert.Equal(t, 0.0, u.Balance)
+	assert.Equal(t, 0.0, u.Credit)
+	assert.Equal(t, 0.0, u.Debit)
+	assert.Equal(t, 0.0, u.Net)
 }

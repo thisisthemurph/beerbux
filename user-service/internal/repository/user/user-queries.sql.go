@@ -12,7 +12,7 @@ import (
 
 const createUser = `-- name: CreateUser :one
 insert into users (id, name, username, bio) values (?, ?, ?, ?)
-returning id, name, username, bio, balance, created_at, updated_at
+returning id, name, username, bio, credit, debit, net, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -35,7 +35,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Name,
 		&i.Username,
 		&i.Bio,
-		&i.Balance,
+		&i.Credit,
+		&i.Debit,
+		&i.Net,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -43,7 +45,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUser = `-- name: GetUser :one
-select id, name, username, bio, balance, created_at, updated_at from users where id = ? limit 1
+select id, name, username, bio, credit, debit, net, created_at, updated_at from users where id = ? limit 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
@@ -54,7 +56,9 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 		&i.Name,
 		&i.Username,
 		&i.Bio,
-		&i.Balance,
+		&i.Credit,
+		&i.Debit,
+		&i.Net,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -62,7 +66,7 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-select id, name, username, bio, balance, created_at, updated_at from users where username = ? limit 1
+select id, name, username, bio, credit, debit, net, created_at, updated_at from users where username = ? limit 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -73,7 +77,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Name,
 		&i.Username,
 		&i.Bio,
-		&i.Balance,
+		&i.Credit,
+		&i.Debit,
+		&i.Net,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -83,7 +89,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 const updateUser = `-- name: UpdateUser :one
 update users
 set name = ?, username = ?, bio = ? where id = ?
-returning id, name, username, bio, balance, created_at, updated_at
+returning id, name, username, bio, credit, debit, net, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -106,9 +112,34 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Name,
 		&i.Username,
 		&i.Bio,
-		&i.Balance,
+		&i.Credit,
+		&i.Debit,
+		&i.Net,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateUserTotals = `-- name: UpdateUserTotals :exec
+update users
+set credit = ?, debit = ?, net = ?
+where id = ?
+`
+
+type UpdateUserTotalsParams struct {
+	Credit float64
+	Debit  float64
+	Net    float64
+	ID     string
+}
+
+func (q *Queries) UpdateUserTotals(ctx context.Context, arg UpdateUserTotalsParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserTotals,
+		arg.Credit,
+		arg.Debit,
+		arg.Net,
+		arg.ID,
+	)
+	return err
 }

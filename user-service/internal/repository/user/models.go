@@ -14,16 +14,9 @@ type User struct {
 	Name      string
 	Username  string
 	Bio       sql.NullString
-	Balance   float64
+	Credit    float64
+	Debit     float64
+	Net       float64
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type UserLedger struct {
-	ID            int64
-	UserID        string
-	ParticipantID string
-	Amount        float64
-	Type          string
-	CreatedAt     time.Time
 }

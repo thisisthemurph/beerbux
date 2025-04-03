@@ -18,9 +18,9 @@ import (
 )
 
 // NewTestUpdateLedgerHandler initializes the test database and handler.
-func NewTestUpdateLedgerHandler(db *sql.DB) (*handler.UpdateLedgerHandler, chan []event.LedgerUpdateEvent) {
+func NewTestUpdateLedgerHandler(db *sql.DB) (*handler.UpdateLedgerHandler, chan handler.LedgerTransaction) {
 	repo := repository.NewLedgerQueries(db)
-	c := make(chan []event.LedgerUpdateEvent, 10)
+	c := make(chan handler.LedgerTransaction, 10)
 	return handler.NewUpdateLedgerHandler(repo, c, slog.Default()), c
 }
 
@@ -112,15 +112,19 @@ func TestHandle(t *testing.T) {
 				}
 			}
 
-			res := <-resultChan
-			assert.Len(t, res, len(tc.memberAmounts)*2, "Should have double the entries (debits & credits)")
+			ledgerTransaction := <-resultChan
+
+			assert.Equal(t, ev.TransactionID, ledgerTransaction.TransactionID)
+			assert.Equal(t, ev.SessionID, ledgerTransaction.SessionID)
+			assert.Equal(t, ev.CreatorID, ledgerTransaction.CreatorID)
+			assert.Len(t, ledgerTransaction.LedgerItems, len(tc.memberAmounts)*2, "Should have double the entries (debits & credits)")
 
 			// Validate debits and credits
-			debits := make([]event.LedgerUpdateEvent, 0)
-			credits := make([]event.LedgerUpdateEvent, 0)
+			debits := make([]handler.LedgerItem, 0)
+			credits := make([]handler.LedgerItem, 0)
 
-			for _, r := range res {
-				if r.UserID == creatorID {
+			for _, r := range ledgerTransaction.LedgerItems {
+				if r.Type == "debit" {
 					debits = append(debits, r)
 				} else {
 					credits = append(credits, r)
@@ -131,16 +135,12 @@ func TestHandle(t *testing.T) {
 			assert.Len(t, credits, len(tc.memberAmounts), "Should have one credit per member")
 
 			for i, mt := range debits {
-				assert.Equal(t, ev.TransactionID, mt.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.SessionID, mt.SessionID, "Session ID mismatch")
 				assert.Equal(t, creatorID, mt.UserID, "UserID should match creator")
 				assert.Equal(t, ev.MemberAmounts[i].UserID, mt.ParticipantID, "ParticipantID should match member")
 				assert.Equal(t, -ev.MemberAmounts[i].Amount, mt.Amount, "Debit amount should be negative")
 			}
 
 			for i, mt := range credits {
-				assert.Equal(t, ev.TransactionID, mt.TransactionID, "Transaction ID mismatch")
-				assert.Equal(t, ev.SessionID, mt.SessionID, "Session ID mismatch")
 				assert.Equal(t, creatorID, mt.ParticipantID, "ParticipantID should match creator")
 				assert.Equal(t, ev.MemberAmounts[i].UserID, mt.UserID, "UserID should match member")
 				assert.Equal(t, ev.MemberAmounts[i].Amount, mt.Amount, "Credit amount should match")

@@ -9,11 +9,7 @@ import (
 )
 
 func EnsureKafkaTopics(brokers []string) error {
-	topics := []string{
-		publisher.TopicLedgerUpdated,
-		publisher.TopicLedgerTransactionUpdated,
-		publisher.TopicLedgerUserTotalsCalculated,
-	}
+	topics := []string{publisher.TopicLedgerUserTotalsCalculated}
 
 	for _, topic := range topics {
 		if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{

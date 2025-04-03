@@ -45,6 +45,8 @@ func (c *Consumer) StartListening(ctx context.Context, handler func(context.Cont
 				log.Println("failed to read message", err)
 				continue
 			}
+
+			c.logger.Debug("Received message", "topic", c.reader.Config().Topic, "offset", msg.Offset)
 			if err := handler(ctx, msg); err != nil {
 				log.Println("failed to handle message", err)
 			}

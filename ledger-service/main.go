@@ -11,7 +11,6 @@ import (
 
 	"github.com/pressly/goose/v3"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/config"
-	"github.com/thisisthemurph/beerbux/ledger-service/internal/event"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/handler"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/kafka"
 	"github.com/thisisthemurph/beerbux/ledger-service/internal/publisher"
@@ -49,25 +48,18 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 	defer cancel()
 
 	// ledgerUpdatedChan is appended to when a set of ledger items are added
-	// to the database from a transaction.created event.
-	ledgerUpdatedChan := make(chan []event.LedgerUpdateEvent)
+	// to the database from a single transaction.created event.
+	ledgerUpdatedChan := make(chan handler.LedgerTransaction)
 
 	setupAndRunKafkaConsumers(ctx, cfg, logger, db, ledgerUpdatedChan)
-	ledgerUpdatedPublisher := publisher.NewLedgerUpdatedKafkaPublisher(cfg.Kafka.Brokers)
-	ledgerTransactionUpdatedPublisher := publisher.NewLedgerTransactionUpdatedKafkaPublisher(cfg.Kafka.Brokers)
 	ledgerUserTotalsCalculatedPublisher := publisher.NewLedgerUserTotalsCalculatedKafkaPublisher(cfg.Kafka.Brokers)
 
 	ledgerRepository := repository.NewLedgerQueries(db)
 	calculateUserTotalsHandler := handler.NewCalculateUserTotalsHandler(ledgerRepository)
 
-	handleLedgerUpdated := makeLedgerUpdatedHandler(
-		ledgerTransactionUpdatedPublisher,
-		ledgerUserTotalsCalculatedPublisher,
-		calculateUserTotalsHandler,
-		logger)
-
-	handleLedgerItemUpdated := makeIndividualLedgerItemUpdatedHandler(
-		ledgerUpdatedPublisher,
+	// calculateUserTotals calculates the totals for a user and publishes
+	// the result to the ledger.user.totals.calculated Kafka queue.
+	calculateUserTotals := makeLedgerTransactionParticipantCalculatorHandler(
 		ledgerUserTotalsCalculatedPublisher,
 		calculateUserTotalsHandler,
 		logger,
@@ -78,63 +70,32 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 		case <-ctx.Done():
 			logger.Debug("shutting down")
 			return nil
-		case updates := <-ledgerUpdatedChan:
-			if len(updates) == 0 {
-				logger.Error("expected updates to have a non-zero length")
+		case ledgerTransaction := <-ledgerUpdatedChan:
+			if len(ledgerTransaction.LedgerItems) == 0 {
+				logger.Error("expected updates to have a non-zero length", "transactionID", ledgerTransaction.TransactionID, "sessionID", ledgerTransaction.SessionID)
 				continue
 			}
 
-			handleLedgerUpdated(ctx, updates)
-			for _, update := range updates {
-				handleLedgerItemUpdated(ctx, update)
+			for _, userID := range ledgerTransaction.GetAllMemberIDs() {
+				calculateUserTotals(ctx, userID)
 			}
 		}
 	}
 }
 
-func makeLedgerUpdatedHandler(
-	ledgerTransactionUpdatedPublisher publisher.LedgerTransactionUpdatedPublisher,
+// makeLedgerTransactionParticipantCalculatorHandler returns a function that calculates user totals
+// and publishes the result to the ledger.user.totals.calculated Kafka queue.
+func makeLedgerTransactionParticipantCalculatorHandler(
 	ledgerUserTotalsCalculatedPublisher publisher.LedgerUserTotalsCalculatedPublisher,
 	calculateUserTotalsHandler *handler.CalculateUserTotalsHandler,
 	logger *slog.Logger,
-) func(context.Context, []event.LedgerUpdateEvent) {
-	return func(ctx context.Context, updates []event.LedgerUpdateEvent) {
-		// Publish the entire transaction/ledger update.
-		if err := ledgerTransactionUpdatedPublisher.Publish(ctx, updates); err != nil {
-			logger.Error("failed to publish ledger transaction updated event", "error", err)
-		}
-
-		// Calculate the new totals for the creator and publish.
-		creatorUserID := updates[0].UserID
-		creatorTotals, err := calculateUserTotalsHandler.Handle(ctx, creatorUserID)
+) func(context.Context, string) {
+	return func(ctx context.Context, userID string) {
+		totals, err := calculateUserTotalsHandler.Handle(ctx, userID)
 		if err != nil {
-			logger.Error("failed calculating user totals", "userID", creatorUserID, "error", "err")
+			logger.Error("failed calculating user totals", "userID", userID, "error", err)
 		} else {
-			if err := ledgerUserTotalsCalculatedPublisher.Publish(ctx, creatorTotals); err != nil {
-				logger.Error("failed to publish event", "error", err)
-			}
-		}
-	}
-}
-
-func makeIndividualLedgerItemUpdatedHandler(
-	ledgerUpdatedPublisher publisher.LedgerUpdatedPublisher,
-	ledgerUserTotalsCalculatedPublisher publisher.LedgerUserTotalsCalculatedPublisher,
-	calculateUserTotalsHandler *handler.CalculateUserTotalsHandler,
-	logger *slog.Logger,
-) func(context.Context, event.LedgerUpdateEvent) {
-	return func(ctx context.Context, update event.LedgerUpdateEvent) {
-		// Publish the individual ledger update.
-		if err := ledgerUpdatedPublisher.Publish(ctx, update); err != nil {
-			logger.Error("failed to publish ledger updated event", "error", err)
-		}
-
-		// Calculate the new totals for each of the transaction participants and publish.
-		participantTotals, err := calculateUserTotalsHandler.Handle(ctx, update.ParticipantID)
-		if err != nil {
-			logger.Error("failed calculating user totals", "userID", participantTotals, "error", "err")
-		} else {
-			if err := ledgerUserTotalsCalculatedPublisher.Publish(ctx, participantTotals); err != nil {
+			if err := ledgerUserTotalsCalculatedPublisher.Publish(ctx, totals); err != nil {
 				logger.Error("failed to publish event", "error", err)
 			}
 		}
@@ -186,7 +147,7 @@ func setupAndRunKafkaConsumers(
 	cfg *config.Config,
 	logger *slog.Logger,
 	db *sql.DB,
-	ledgerUpdatedChan chan<- []event.LedgerUpdateEvent,
+	ledgerUpdatedChan chan<- handler.LedgerTransaction,
 ) {
 	ledgerRepository := repository.NewLedgerQueries(db)
 	updateLedgerHandler := handler.NewUpdateLedgerHandler(ledgerRepository, ledgerUpdatedChan, logger)

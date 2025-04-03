@@ -16,7 +16,7 @@ type TransactionCreatedEvent struct {
 }
 
 // LedgerUpdateEvent is an event that is published when the ledger is updated.
-// This event contains a single transaction from the ledger.
+// This event contains a single item from the ledger.
 // The transaction will be between the creator and one of the members or one of the members and the creator.
 type LedgerUpdateEvent struct {
 	ID            string  `json:"id"`
@@ -25,19 +25,6 @@ type LedgerUpdateEvent struct {
 	UserID        string  `json:"user_id"`
 	ParticipantID string  `json:"participant_id"`
 	Amount        float64 `json:"amount"`
-}
-
-type LedgerUpdateCompleteMemberAmount struct {
-	UserID string  `json:"user_id"`
-	Amount float64 `json:"amount"`
-}
-
-type LedgerTransactionUpdatedEvent struct {
-	TransactionID string                             `json:"transaction_id"`
-	SessionID     string                             `json:"session_id"`
-	UserID        string                             `json:"user_id"`
-	Total         float64                            `json:"total"`
-	Amounts       []LedgerUpdateCompleteMemberAmount `json:"amounts"`
 }
 
 // UserTotalsEvent describes the total amounts of a specific user at the time the event was sent.

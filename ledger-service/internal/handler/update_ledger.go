@@ -16,13 +16,13 @@ import (
 
 type UpdateLedgerHandler struct {
 	ledgerRepository  *repository.LedgerQueriesWrapper
-	ledgerUpdatedChan chan<- []event.LedgerUpdateEvent
+	ledgerUpdatedChan chan<- LedgerTransaction
 	logger            *slog.Logger
 }
 
 func NewUpdateLedgerHandler(
 	ledgerRepository *repository.LedgerQueriesWrapper,
-	ledgerUpdatedChan chan<- []event.LedgerUpdateEvent,
+	ledgerUpdatedChan chan<- LedgerTransaction,
 	logger *slog.Logger,
 ) *UpdateLedgerHandler {
 	return &UpdateLedgerHandler{
@@ -30,6 +30,33 @@ func NewUpdateLedgerHandler(
 		ledgerUpdatedChan: ledgerUpdatedChan,
 		logger:            logger,
 	}
+}
+
+type LedgerTransaction struct {
+	CreatorID     string       `json:"creator_id"`
+	TransactionID string       `json:"transaction_id"`
+	SessionID     string       `json:"session_id"`
+	LedgerItems   []LedgerItem `json:"ledger_items"`
+}
+
+// GetAllMemberIDs returns a slice of all member IDs involved in the transaction, including the creator.
+func (lt LedgerTransaction) GetAllMemberIDs() []string {
+	memberIDs := make([]string, 0, len(lt.LedgerItems))
+
+	memberIDs = append(memberIDs, lt.CreatorID)
+	for _, item := range lt.LedgerItems {
+		if item.ParticipantID != lt.CreatorID {
+			memberIDs = append(memberIDs, item.ParticipantID)
+		}
+	}
+	return memberIDs
+}
+
+type LedgerItem struct {
+	UserID        string  `json:"user_id"`
+	ParticipantID string  `json:"participant_id"`
+	Amount        float64 `json:"amount"`
+	Type          string  `json:"type"`
 }
 
 // Handle processes the incoming Kafka message and updates the ledger.
@@ -46,47 +73,45 @@ func (h *UpdateLedgerHandler) Handle(ctx context.Context, msg kafka.Message) err
 		return fmt.Errorf("no member amounts provided for transactionID %q", ev.TransactionID)
 	}
 
-	transactions := h.getTransactionsFromEvent(ev)
-	err := h.updateLedger(ctx, transactions)
+	ledgerTransaction := h.buildLedgerTransactionFromTransactionCreatedEvent(ev)
+	err := h.updateLedger(ctx, ledgerTransaction)
 	if err != nil {
 		h.logger.Error("failed to update ledger", "transactionID", ev.TransactionID, "error", err)
 		return err
 	}
 
-	h.ledgerUpdatedChan <- transactions
+	h.ledgerUpdatedChan <- ledgerTransaction
 	return nil
 }
 
-// getTransactionsFromEvent generates a list of event.LedgerUpdateEvent from a given event.TransactionCreatedEvent.
-// An event.LedgerUpdateEvent is generated for each creator/member combination as well as the reverse.
-func (h *UpdateLedgerHandler) getTransactionsFromEvent(ev event.TransactionCreatedEvent) []event.LedgerUpdateEvent {
-	transactions := make([]event.LedgerUpdateEvent, 0, len(ev.MemberAmounts)*2)
+func (h *UpdateLedgerHandler) buildLedgerTransactionFromTransactionCreatedEvent(ev event.TransactionCreatedEvent) LedgerTransaction {
+	ledgerTransaction := LedgerTransaction{
+		CreatorID:     ev.CreatorID,
+		TransactionID: ev.TransactionID,
+		SessionID:     ev.SessionID,
+		LedgerItems:   make([]LedgerItem, 0, len(ev.MemberAmounts)*2),
+	}
+
 	for _, ma := range ev.MemberAmounts {
-		// Credit entries for the members
-		transactions = append(transactions, event.LedgerUpdateEvent{
-			ID:            uuid.NewString(),
-			TransactionID: ev.TransactionID,
-			SessionID:     ev.SessionID,
+		ledgerTransaction.LedgerItems = append(ledgerTransaction.LedgerItems, LedgerItem{
 			UserID:        ma.UserID,
-			Amount:        ma.Amount,
 			ParticipantID: ev.CreatorID,
+			Amount:        ma.Amount,
+			Type:          "credit",
 		})
 
-		// Debit entries for the creator
-		transactions = append(transactions, event.LedgerUpdateEvent{
-			ID:            uuid.NewString(),
-			TransactionID: ev.TransactionID,
-			SessionID:     ev.SessionID,
+		ledgerTransaction.LedgerItems = append(ledgerTransaction.LedgerItems, LedgerItem{
 			UserID:        ev.CreatorID,
-			Amount:        -ma.Amount,
 			ParticipantID: ma.UserID,
+			Amount:        -ma.Amount,
+			Type:          "debit",
 		})
 	}
 
-	return transactions
+	return ledgerTransaction
 }
 
-func (h *UpdateLedgerHandler) updateLedger(ctx context.Context, transactions []event.LedgerUpdateEvent) error {
+func (h *UpdateLedgerHandler) updateLedger(ctx context.Context, ledgerTransaction LedgerTransaction) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -103,16 +128,16 @@ func (h *UpdateLedgerHandler) updateLedger(ctx context.Context, transactions []e
 
 	qtx := h.ledgerRepository.WithTx(tx)
 
-	for _, mt := range transactions {
+	for _, li := range ledgerTransaction.LedgerItems {
 		params := ledger.InsertLedgerParams{
-			ID:            mt.ID,
-			TransactionID: mt.TransactionID,
-			SessionID:     mt.SessionID,
-			UserID:        mt.UserID,
-			Amount:        mt.Amount,
+			ID:            uuid.NewString(),
+			TransactionID: ledgerTransaction.TransactionID,
+			SessionID:     ledgerTransaction.SessionID,
+			UserID:        li.UserID,
+			Amount:        li.Amount,
 		}
 		if err = qtx.InsertLedger(ctx, params); err != nil {
-			return fmt.Errorf("failed to insert ledger for transactionID %q: %w", mt.TransactionID, err)
+			return fmt.Errorf("failed to insert ledger for transactionID %q: %w", ledgerTransaction.TransactionID, err)
 		}
 	}
 

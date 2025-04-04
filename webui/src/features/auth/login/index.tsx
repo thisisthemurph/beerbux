@@ -12,6 +12,7 @@ import {
 	LoginForm,
 	type LoginFormValues,
 } from "@/features/auth/login/login-form.tsx";
+import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -21,7 +22,7 @@ function LoginPage() {
 	const [searchParams] = useSearchParams();
 	const navigatedAfterSignup = searchParams.get("signup") === "true";
 	const hasShownToast = useRef(false);
-	const { fetchUser } = useUserStore();
+	const setUser = useUserStore((state) => state.setUser);
 	const navigate = useNavigate();
 	const { login } = useAuthClient();
 
@@ -33,13 +34,14 @@ function LoginPage() {
 	}, [navigatedAfterSignup]);
 
 	async function handleLogin({ username, password }: LoginFormValues) {
-		try {
-			await login(username, password);
-			await fetchUser();
-			navigate("/");
-		} catch (err) {
+		const { data: user, err } = await tryCatch(login(username, password));
+		if (err) {
 			handleLoginError(err);
+			return;
 		}
+
+		setUser(user);
+		navigate("/");
 	}
 
 	function handleLoginError(err: unknown) {

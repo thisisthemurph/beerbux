@@ -1,16 +1,9 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-
-type LoginResponse = {
-	id: string;
-	username: string;
-};
+import type { User } from "./types";
 
 function useAuthClient() {
-	const login = async (
-		username: string,
-		password: string,
-	): Promise<LoginResponse> => {
-		return apiFetch<LoginResponse>("/auth/login", {
+	const login = async (username: string, password: string): Promise<User> => {
+		return apiFetch<User>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ username, password }),
 		});
@@ -28,7 +21,11 @@ function useAuthClient() {
 		});
 	};
 
-	return { login, signup };
+	const getCurrentUser = async (): Promise<User> => {
+		return apiFetch<User>("/user");
+	};
+
+	return { login, signup, getCurrentUser };
 }
 
 export default useAuthClient;

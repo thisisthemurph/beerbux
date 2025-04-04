@@ -6,6 +6,7 @@ option go_package = "protos/userpb;userpb";
 service User {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserResponse);
+  rpc GetUserBalance(GetUserRequest) returns (UserBalanceResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
 }
 
@@ -23,6 +24,12 @@ message GetUserResponse {
   string username = 3;
   optional string bio = 4;
   double net_balance = 5;
+}
+
+message UserBalanceResponse {
+  double credit = 1;
+  double debit = 2;
+  double net = 3;
 }
 
 message UpdateUserRequest {

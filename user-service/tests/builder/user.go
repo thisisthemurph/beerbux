@@ -39,6 +39,13 @@ func (b *UserBuilder) WithBio(bio string) *UserBuilder {
 	return b
 }
 
+func (b *UserBuilder) WithBalance(c, d, n float64) *UserBuilder {
+	b.model.Credit = c
+	b.model.Debit = d
+	b.model.Net = n
+	return b
+}
+
 func (b *UserBuilder) Build(db *sql.DB) user.User {
 	if b.model.ID == "" {
 		b.model.ID = uuid.NewString()

@@ -39,13 +39,16 @@ func NewUserServer(
 
 func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*userpb.GetUserResponse, error) {
 	if err := validateGetUserRequest(r); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
 
 	u, err := s.userRepository.GetUser(ctx, r.UserId)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "user not found: %v", r.UserId)
+		}
 		s.logger.Error("failed to get user", "error", err)
-		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &userpb.GetUserResponse{
@@ -61,10 +64,10 @@ func (s *UserServer) GetUserByUsername(ctx context.Context, r *userpb.GetUserByU
 	u, err := s.userRepository.GetUserByUsername(ctx, r.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
+			return nil, status.Errorf(codes.NotFound, "user with username %s not found", r.Username)
 		}
 		s.logger.Error("failed to get user", "error", err)
-		return nil, status.Error(codes.Internal, "failed to get user")
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &userpb.GetUserResponse{
@@ -76,6 +79,23 @@ func (s *UserServer) GetUserByUsername(ctx context.Context, r *userpb.GetUserByU
 	}, nil
 }
 
+func (s *UserServer) GetUserBalance(ctx context.Context, r *userpb.GetUserRequest) (*userpb.UserBalanceResponse, error) {
+	balance, err := s.userRepository.GetUserBalances(ctx, r.UserId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "user not found: %s", r.UserId)
+		}
+		s.logger.Error("failed to get user balance", "error", err)
+		return nil, status.Error(codes.Internal, "failed to get user balance")
+	}
+
+	return &userpb.UserBalanceResponse{
+		Credit: balance.Credit,
+		Debit:  balance.Debit,
+		Net:    balance.Net,
+	}, nil
+}
+
 func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest) (*userpb.UserResponse, error) {
 	if err := validateUpdateUserRequest(r); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -83,7 +103,11 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 
 	originalUser, err := s.userRepository.GetUser(ctx, r.UserId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "user not found: %v", r.UserId)
+		}
+		s.logger.Error("failed to get user", "error", err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	u, err := s.userRepository.UpdateUser(ctx, user.UpdateUserParams{
@@ -95,7 +119,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 
 	if err != nil {
 		s.logger.Error("failed to update user", "error", err)
-		return nil, fmt.Errorf("failed to update user %v: %w", r.UserId, err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	result := &userpb.UserResponse{
@@ -107,7 +131,7 @@ func (s *UserServer) UpdateUser(ctx context.Context, r *userpb.UpdateUserRequest
 
 	if err := s.userUpdatedPublisher.Publish(originalUser, u); err != nil {
 		s.logger.Error("failed to publish user updated event", "error", err)
-		return result, err
+		return result, status.Errorf(codes.Internal, "failed to publish user updated event: %v", err)
 	}
 
 	return result, nil

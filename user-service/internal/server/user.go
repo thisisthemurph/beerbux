@@ -67,7 +67,7 @@ func (s *UserServer) GetUserByUsername(ctx context.Context, r *userpb.GetUserByU
 			return nil, status.Errorf(codes.NotFound, "user with username %s not found", r.Username)
 		}
 		s.logger.Error("failed to get user", "error", err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &userpb.GetUserResponse{

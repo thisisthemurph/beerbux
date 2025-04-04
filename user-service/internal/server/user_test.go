@@ -64,6 +64,27 @@ func TestGetUserByUsername_Success(t *testing.T) {
 	assert.Equal(t, usr.Username, res.Username)
 }
 
+func TestGetUserBalance_Success(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	userServer := setupUserServer(db)
+
+	usr := builder.NewUserBuilder(t).
+		WithName("Test User").
+		WithUsername("testuser").
+		WithBalance(2, 1.5, 0.5).
+		Build(db)
+
+	res, err := userServer.GetUserBalance(context.Background(), &userpb.GetUserRequest{UserId: usr.ID})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, usr.Credit, 2.0)
+	assert.Equal(t, usr.Debit, 1.5)
+	assert.Equal(t, usr.Net, 0.5)
+}
+
 func TestUpdateUser_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })

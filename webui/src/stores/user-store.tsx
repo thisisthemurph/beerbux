@@ -2,15 +2,19 @@ import type { User } from "@/api/types.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-type UserStore = {
+type UserStoreState = {
 	user: User | null;
 	isLoading: boolean;
 	isAuthenticated: boolean;
-	fetchUser: () => Promise<void>;
+};
+
+type UserStoreActions = {
+	setIsLoading: (isLoading: boolean) => void;
+	setUser: (user: User) => void;
 	logout: () => void;
 };
+
+type UserStore = UserStoreState & UserStoreActions;
 
 export const useUserStore = create<UserStore>()(
 	persist(
@@ -18,34 +22,9 @@ export const useUserStore = create<UserStore>()(
 			user: null,
 			isLoading: false,
 			isAuthenticated: false,
-			fetchUser: async () => {
-				set({ isLoading: true });
-
-				try {
-					const response = await fetch(`${API_BASE_URL}/user`, {
-						method: "GET",
-						credentials: "include",
-					});
-
-					if (!response.ok) {
-						set({
-							isLoading: false,
-							isAuthenticated: false,
-						});
-						return;
-					}
-
-					const data: User = await response.json();
-					set({ user: data, isLoading: false, isAuthenticated: true });
-				} catch (error) {
-					console.error("Error fetching current user", error);
-
-					set({
-						isLoading: false,
-						isAuthenticated: false,
-					});
-				}
-			},
+			setIsLoading: (isLoading) => set({ isLoading }),
+			setUser: (user: User) =>
+				set({ user, isAuthenticated: true, isLoading: false }),
 			logout: () => set({ user: null, isAuthenticated: false }),
 		}),
 		{

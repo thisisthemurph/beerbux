@@ -78,7 +78,7 @@ func buildServerMux(
 ) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("POST /api/auth/login", auth.NewLoginHandler(authClient))
+	mux.Handle("POST /api/auth/login", auth.NewLoginHandler(authClient, userClient))
 	mux.Handle("POST /api/auth/signup", auth.NewSignupHandler(authClient))
 	mux.Handle("POST /api/auth/refresh", auth.NewRefreshHandler(authClient))
 	mux.Handle("POST /api/auth/logout", auth.NewLogoutHandler(authClient))

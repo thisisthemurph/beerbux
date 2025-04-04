@@ -10,7 +10,6 @@ import (
 	"log/slog"
 
 	"github.com/thisisthemurph/beerbux/user-service/internal/publisher"
-	"github.com/thisisthemurph/beerbux/user-service/internal/repository/ledger"
 	"github.com/thisisthemurph/beerbux/user-service/internal/repository/user"
 	"github.com/thisisthemurph/beerbux/user-service/pkg/nullish"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
@@ -19,7 +18,6 @@ import (
 type UserServer struct {
 	userpb.UnimplementedUserServer
 	userRepository       *user.Queries
-	userLedgerRepository *ledger.Queries
 	userCreatedPublisher publisher.UserCreatedPublisher
 	userUpdatedPublisher publisher.UserUpdatedPublisher
 	logger               *slog.Logger
@@ -27,14 +25,12 @@ type UserServer struct {
 
 func NewUserServer(
 	userRepository *user.Queries,
-	userLedgerRepository *ledger.Queries,
 	userCreatedPublisher publisher.UserCreatedPublisher,
 	userUpdatedPublisher publisher.UserUpdatedPublisher,
 	logger *slog.Logger,
 ) *UserServer {
 	return &UserServer{
 		userRepository:       userRepository,
-		userLedgerRepository: userLedgerRepository,
 		userCreatedPublisher: userCreatedPublisher,
 		userUpdatedPublisher: userUpdatedPublisher,
 		logger:               logger,
@@ -52,17 +48,12 @@ func (s *UserServer) GetUser(ctx context.Context, r *userpb.GetUserRequest) (*us
 		return nil, fmt.Errorf("failed to get user %v: %w", r.UserId, err)
 	}
 
-	netBalance, err := s.userLedgerRepository.CalculateUserNetBalance(ctx, r.UserId)
-	if err != nil {
-		s.logger.Error("failed to calculate user net balance", "error", err)
-	}
-
 	return &userpb.GetUserResponse{
 		UserId:     u.ID,
 		Name:       u.Name,
 		Username:   u.Username,
 		Bio:        nullish.ParseNullString(u.Bio),
-		NetBalance: netBalance,
+		NetBalance: u.Net,
 	}, nil
 }
 
@@ -76,17 +67,12 @@ func (s *UserServer) GetUserByUsername(ctx context.Context, r *userpb.GetUserByU
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
-	netBalance, err := s.userLedgerRepository.CalculateUserNetBalance(ctx, u.ID)
-	if err != nil {
-		s.logger.Error("failed to calculate user net balance", "error", err)
-	}
-
 	return &userpb.GetUserResponse{
 		UserId:     u.ID,
 		Name:       u.Name,
 		Username:   u.Username,
 		Bio:        nullish.ParseNullString(u.Bio),
-		NetBalance: netBalance,
+		NetBalance: u.Net,
 	}, nil
 }
 

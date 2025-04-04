@@ -5,7 +5,9 @@ create table if not exists users (
     name text not null,
     username text not null unique,
     bio text,
-    balance real not null default 0,
+    credit real not null default 0,
+    debit real not null default 0,
+    net real not null default 0,
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp
 );

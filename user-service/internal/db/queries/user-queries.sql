@@ -12,3 +12,8 @@ returning *;
 update users
 set name = ?, username = ?, bio = ? where id = ?
 returning *;
+
+-- name: UpdateUserTotals :exec
+update users
+set credit = ?, debit = ?, net = ?
+where id = ?;

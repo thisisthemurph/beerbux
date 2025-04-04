@@ -17,3 +17,6 @@ returning *;
 update users
 set credit = ?, debit = ?, net = ?
 where id = ?;
+
+-- name: GetUserBalances :one
+select credit, debit, net from users where id = ? limit 1;

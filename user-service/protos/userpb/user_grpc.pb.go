@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	User_GetUser_FullMethodName           = "/user.service.User/GetUser"
 	User_GetUserByUsername_FullMethodName = "/user.service.User/GetUserByUsername"
+	User_GetUserBalance_FullMethodName    = "/user.service.User/GetUserBalance"
 	User_UpdateUser_FullMethodName        = "/user.service.User/UpdateUser"
 )
 
@@ -30,6 +31,7 @@ const (
 type UserClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	GetUserByUsername(ctx context.Context, in *GetUserByUsernameRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	GetUserBalance(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserBalanceResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
@@ -61,6 +63,16 @@ func (c *userClient) GetUserByUsername(ctx context.Context, in *GetUserByUsernam
 	return out, nil
 }
 
+func (c *userClient) GetUserBalance(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserBalanceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserBalanceResponse)
+	err := c.cc.Invoke(ctx, User_GetUserBalance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserResponse)
@@ -77,6 +89,7 @@ func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts
 type UserServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	GetUserByUsername(context.Context, *GetUserByUsernameRequest) (*GetUserResponse, error)
+	GetUserBalance(context.Context, *GetUserRequest) (*UserBalanceResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error)
 	mustEmbedUnimplementedUserServer()
 }
@@ -93,6 +106,9 @@ func (UnimplementedUserServer) GetUser(context.Context, *GetUserRequest) (*GetUs
 }
 func (UnimplementedUserServer) GetUserByUsername(context.Context, *GetUserByUsernameRequest) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUsername not implemented")
+}
+func (UnimplementedUserServer) GetUserBalance(context.Context, *GetUserRequest) (*UserBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserBalance not implemented")
 }
 func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
@@ -154,6 +170,24 @@ func _User_GetUserByUsername_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_GetUserBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUserBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: User_GetUserBalance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUserBalance(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _User_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
@@ -186,6 +220,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserByUsername",
 			Handler:    _User_GetUserByUsername_Handler,
+		},
+		{
+			MethodName: "GetUserBalance",
+			Handler:    _User_GetUserBalance_Handler,
 		},
 		{
 			MethodName: "UpdateUser",

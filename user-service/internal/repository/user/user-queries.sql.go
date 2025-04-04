@@ -65,6 +65,23 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
+const getUserBalances = `-- name: GetUserBalances :one
+select credit, debit, net from users where id = ? limit 1
+`
+
+type GetUserBalancesRow struct {
+	Credit float64
+	Debit  float64
+	Net    float64
+}
+
+func (q *Queries) GetUserBalances(ctx context.Context, id string) (GetUserBalancesRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserBalances, id)
+	var i GetUserBalancesRow
+	err := row.Scan(&i.Credit, &i.Debit, &i.Net)
+	return i, err
+}
+
 const getUserByUsername = `-- name: GetUserByUsername :one
 select id, name, username, bio, credit, debit, net, created_at, updated_at from users where username = ? limit 1
 `

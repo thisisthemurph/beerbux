@@ -7,8 +7,9 @@ import {
 } from "@/components/primary-action-card";
 import { SessionListing } from "@/components/session-listing.tsx";
 import { UserCard } from "@/features/home/authenticated/user-card.tsx";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { SquareChevronRight } from "lucide-react";
+import { Suspense } from "react";
 import { Link } from "react-router";
 
 type AuthenticatedViewProps = {
@@ -16,16 +17,23 @@ type AuthenticatedViewProps = {
 };
 
 export function AuthenticatedView({ user }: AuthenticatedViewProps) {
-	const { getSessions } = useUserClient();
+	const { getSessions, getBalance } = useUserClient();
 
-	const { data: sessions, isLoading: sessionsLoading } = useQuery({
+	const { data: sessions } = useSuspenseQuery({
 		queryKey: ["sessions"],
 		queryFn: () => getSessions(3),
 	});
 
+	const { data: balance } = useQuery({
+		queryKey: ["balance", user.id],
+		queryFn: () => getBalance(user.id),
+		placeholderData: { credit: 0, debit: 0, net: 0 },
+	});
+
 	return (
 		<div className="space-y-6">
-			<UserCard {...user} />
+			<UserCard {...user} netBalance={balance?.net ?? 0} />
+
 			<PrimaryActionCard>
 				<PrimaryActionCardContent>
 					<PrimaryActionCardLinkItem
@@ -35,13 +43,12 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 					/>
 				</PrimaryActionCardContent>
 			</PrimaryActionCard>
-			{sessionsLoading ? (
-				<SessionListing.Skeleton />
-			) : (
-				<SessionListing sessions={sessions ?? []}>
+
+			<Suspense fallback={<SessionListing.Skeleton />}>
+				<SessionListing sessions={sessions}>
 					{sessions && <AllSessionsLink />}
 				</SessionListing>
-			)}
+			</Suspense>
 		</div>
 	);
 }

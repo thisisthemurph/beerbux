@@ -66,10 +66,9 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cookie.SetRefreshTokenCookie(w, loginResp.RefreshToken)
 
 	send.JSON(w, dto.UserResponse{
-		ID:         user.UserId,
-		Name:       user.Name,
-		Username:   user.Username,
-		NetBalance: user.NetBalance,
+		ID:       user.UserId,
+		Name:     user.Name,
+		Username: user.Username,
 	}, http.StatusOK)
 }
 

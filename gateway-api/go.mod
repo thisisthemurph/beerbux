@@ -11,8 +11,8 @@ require (
 	github.com/thisisthemurph/beerbux/auth-service v1.1.0
 	github.com/thisisthemurph/beerbux/session-service v1.5.0
 	github.com/thisisthemurph/beerbux/transaction-service v1.0.0
-	github.com/thisisthemurph/beerbux/user-service v1.2.0
-	google.golang.org/grpc v1.71.0
+	github.com/thisisthemurph/beerbux/user-service v1.3.0
+	google.golang.org/grpc v1.71.1
 )
 
 require (

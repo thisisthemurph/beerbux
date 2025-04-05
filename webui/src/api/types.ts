@@ -2,7 +2,12 @@ export type User = {
 	id: string;
 	name: string;
 	username: string;
-	netBalance: number;
+};
+
+export type UserBalance = {
+	credit: number;
+	debit: number;
+	net: number;
 };
 
 export type Session = {

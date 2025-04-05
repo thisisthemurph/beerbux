@@ -85,6 +85,7 @@ func buildServerMux(
 
 	mux.Handle("GET /api/user", user.NewGetCurrentUserHandler(userClient))
 	mux.Handle("GET /api/user/sessions", session.NewListSessionsForUserHandler(sessionClient))
+	mux.Handle("GET /api/user/{userId}/balance", user.NewGetBalanceHandler(userClient))
 
 	mux.Handle("GET /api/session/{sessionId}", session.NewGetSessionByIdHandler(sessionClient))
 	mux.Handle("POST /api/session", session.NewCreateSessionHandler(sessionClient))

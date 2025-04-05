@@ -1,8 +1,9 @@
 package user
 
 import (
-	"encoding/json"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/dto"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/shared/send"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"net/http"
 )
@@ -32,10 +33,9 @@ func (h *GetCurrentUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	json.NewEncoder(w).Encode(UserResponse{
-		ID:         u.UserId,
-		Name:       u.Name,
-		Username:   u.Username,
-		NetBalance: u.NetBalance,
-	})
+	send.JSON(w, dto.UserResponse{
+		ID:       u.UserId,
+		Name:     u.Name,
+		Username: u.Username,
+	}, http.StatusOK)
 }

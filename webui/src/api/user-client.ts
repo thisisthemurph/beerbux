@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { Session } from "@/api/types.ts";
+import type { Session, UserBalance } from "@/api/types.ts";
 
 function useUserClient() {
 	const logout = async () => {
@@ -16,7 +16,11 @@ function useUserClient() {
 		return apiFetch<Session[]>(`/user/sessions?${params.toString()}`);
 	};
 
-	return { getSessions, logout };
+	const getBalance = async (userId: string) => {
+		return apiFetch<UserBalance>(`/user/${userId}/balance`);
+	};
+
+	return { getSessions, logout, getBalance };
 }
 
 export default useUserClient;

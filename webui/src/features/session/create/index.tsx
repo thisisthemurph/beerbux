@@ -5,6 +5,7 @@ import {
 	type NewSessionFormValues,
 } from "@/features/session/create/new-session-form.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
+import { tryCatch } from "@/lib/try-catch.ts";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -14,12 +15,13 @@ function CreateSessionPage() {
 	const { createSession } = useSessionClient();
 
 	async function handleCreateSession({ name }: NewSessionFormValues) {
-		try {
-			await createSession(name);
-			navigate("/");
-		} catch (err) {
+		const { err } = await tryCatch(createSession(name));
+		if (err) {
 			handleCreateSessionError(err);
+			return;
 		}
+
+		navigate("/");
 	}
 
 	function handleCreateSessionError(err: unknown) {

@@ -4,19 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"github.com/segmentio/kafka-go"
+	"github.com/thisisthemurph/beerbux/session-service/internal/events"
+	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
+	"github.com/thisisthemurph/fn"
 )
 
 type TransactionCreatedMessageHandler struct {
-	sessionRepository *repository.SessionQueriesWrapper
+	sessionRepository           *repository.SessionQueriesWrapper
+	transactionCreatedPublisher publisher.SessionTransactionCreatedPublisher
 }
 
-func NewTransactionCreatedMessageHandler(sessionRepository *repository.SessionQueriesWrapper) KafkaMessageHandler {
+func NewTransactionCreatedMessageHandler(
+	sessionRepository *repository.SessionQueriesWrapper,
+	p publisher.SessionTransactionCreatedPublisher) KafkaMessageHandler {
 	return &TransactionCreatedMessageHandler{
-		sessionRepository: sessionRepository,
+		sessionRepository:           sessionRepository,
+		transactionCreatedPublisher: p,
 	}
 }
 
@@ -25,7 +31,7 @@ type MemberAmount struct {
 	Amount   float64 `json:"amount"`
 }
 
-type LedgerTransactionUpdatedEvent struct {
+type TransactionCreatedEvent struct {
 	TransactionID string         `json:"transaction_id"`
 	SessionID     string         `json:"session_id"`
 	CreatorID     string         `json:"creator_id"`
@@ -33,7 +39,7 @@ type LedgerTransactionUpdatedEvent struct {
 }
 
 func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.Message) error {
-	var event LedgerTransactionUpdatedEvent
+	var event TransactionCreatedEvent
 	if err := json.Unmarshal(msg.Value, &event); err != nil {
 		return err
 	}
@@ -61,7 +67,11 @@ func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.
 		return fmt.Errorf("failed adding transaction: %w", err)
 	}
 
+	total := 0.0
 	for _, a := range event.Amounts {
+		if a.Amount > 0 {
+			total += a.Amount
+		}
 		_, err := qtx.AddTransactionLine(ctx, session.AddTransactionLineParams{
 			TransactionID: t.ID,
 			MemberID:      a.MemberID,
@@ -76,6 +86,18 @@ func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.
 	if err != nil {
 		return fmt.Errorf("failed committing transaction: %w", err)
 	}
+
+	_ = h.transactionCreatedPublisher.Publish(ctx, events.SessionTransactionCreatedEvent{
+		SessionID:     event.SessionID,
+		TransactionID: event.TransactionID,
+		CreatorID:     event.CreatorID,
+		Total:         total,
+		Members: fn.Map(event.Amounts, func(ma MemberAmount) events.SessionMember {
+			return events.SessionMember{
+				ID: ma.MemberID,
+			}
+		}),
+	})
 
 	return nil
 }

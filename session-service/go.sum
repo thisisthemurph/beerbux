@@ -51,6 +51,8 @@ github.com/thisisthemurph/beerbux/shared v1.0.0 h1:1WPijPGPo1qyLt5ZBxWwluaAzrIzt
 github.com/thisisthemurph/beerbux/shared v1.0.0/go.mod h1:y/GpHOayTXi4p4yOkhK9I3LOlv+pL04/EkqO5XlTl38=
 github.com/thisisthemurph/beerbux/user-service v1.0.0 h1:hZ3zfcg1egunR7D72516DOdzE/kMLefJux7sUsIL0zA=
 github.com/thisisthemurph/beerbux/user-service v1.0.0/go.mod h1:DxnQjtNM/P8RW3htzB9RBum8b3hcRlCHVgAOiESC2W4=
+github.com/thisisthemurph/fn v0.0.1 h1:Pj5l5Yw1D68iUJMG+40p1bKgY57xqPnQ5s5xftvcdCo=
+github.com/thisisthemurph/fn v0.0.1/go.mod h1:zn7i7T5z0I1wzBjbr/jRUbItv+P1xNsT0+VwKAV4qEQ=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.1.2 h1:FHX5I5B4i4hKRVRBCFRxq1iQRej7WO3hhBuJf+UUySY=

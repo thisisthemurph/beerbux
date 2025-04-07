@@ -11,7 +11,7 @@ import { TransactionForm } from "@/features/session/transaction/transaction-form
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -24,7 +24,6 @@ function TransactionPage() {
 	useBackNavigation(`/session/${sessionId}`);
 	const [total, setTotal] = useState(0);
 	const { createTransaction } = useTransactionClient();
-	const queryClient = useQueryClient();
 
 	async function handleNewTransaction(transaction: TransactionMemberAmounts) {
 		if (!sessionId) return;
@@ -49,7 +48,6 @@ function TransactionPage() {
 			),
 		});
 
-		await queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
 		navigate(`/session/${sessionId}`);
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository"
+	"github.com/thisisthemurph/beerbux/session-service/tests/fake"
 	"github.com/thisisthemurph/beerbux/session-service/tests/testinfra"
 )
 
@@ -17,9 +18,9 @@ func TestLedgerTransactionUpdatedMessageHandler_Success(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 
 	sessionRepo := repository.NewSessionQueries(db)
-	handler := NewTransactionCreatedMessageHandler(sessionRepo)
+	handler := NewTransactionCreatedMessageHandler(sessionRepo, fake.NewFakeSessionTransactionCreatedPublisher())
 
-	event := LedgerTransactionUpdatedEvent{
+	event := TransactionCreatedEvent{
 		TransactionID: uuid.NewString(),
 		SessionID:     uuid.NewString(),
 		CreatorID:     uuid.NewString(),

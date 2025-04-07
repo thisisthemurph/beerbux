@@ -6,26 +6,56 @@ import {
 	PrimaryActionCardSeparator,
 } from "@/components/primary-action-card";
 import { Badge } from "@/components/ui/badge.tsx";
+import { useSessionTransactionCreatedEventSource } from "@/features/session/detail/hooks/use-session-transaction-created-event-source.ts";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
 import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useUserAvatarData } from "@/hooks/user-avatar-data.ts";
-import { useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/stores/user-store.tsx";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Beer, SquarePlus } from "lucide-react";
 import { useParams } from "react-router";
+import { toast } from "sonner";
 
 export default function SessionDetailPage() {
+	const queryClient = useQueryClient();
+	const user = useUserStore((state) => state.user);
 	const { getSession } = useSessionClient();
 	const { sessionId } = useParams();
 	useBackNavigation("/");
 
+	if (!sessionId) throw Error("sessionId is required");
+
 	const { data: session, isPending: sessionIsPending } = useQuery({
 		queryKey: ["session", sessionId],
 		queryFn: () => {
-			if (!sessionId) {
-				return null;
-			}
 			return getSession(sessionId);
+		},
+	});
+
+	useSessionTransactionCreatedEventSource({
+		sessionId: sessionId,
+		userId: user?.id ?? "",
+		onEventReceived: async (msg) => {
+			await queryClient.invalidateQueries({
+				queryKey: ["session", msg.sessionId],
+			});
+
+			if (msg.creatorId === user?.id) return;
+
+			const creator = session?.members.find((m) => m.id === msg.creatorId);
+
+			toast.info("New round bought", {
+				description: (
+					<p>
+						{creator?.username ?? "Someone"} bought a{" "}
+						<span className="font-semibold">
+							${Math.round(msg.total * 100) / 100}
+						</span>{" "}
+						round.
+					</p>
+				),
+			});
 		},
 	});
 

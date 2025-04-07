@@ -19,7 +19,7 @@ func TestLedgerTransactionUpdatedMessageHandler_Success(t *testing.T) {
 	sessionRepo := repository.NewSessionQueries(db)
 	handler := NewTransactionCreatedMessageHandler(sessionRepo)
 
-	event := LedgerTransactionUpdatedEvent{
+	event := TransactionCreatedEvent{
 		TransactionID: uuid.NewString(),
 		SessionID:     uuid.NewString(),
 		CreatorID:     uuid.NewString(),

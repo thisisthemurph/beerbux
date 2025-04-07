@@ -9,12 +9,16 @@ import (
 )
 
 func EnsureKafkaTopics(brokers []string) error {
-	if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
-		Topic:             publisher.TopicSessionMemberAdded,
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	}); err != nil {
-		return fmt.Errorf("failed to ensure session.member.added Kafka topic: %w", err)
+	topics := []string{publisher.TopicSessionMemberAdded, publisher.TopicSessionTransactionCreated}
+
+	for _, topic := range topics {
+		if err := kafkatopic.EnsureTopicExists(brokers, kafka.TopicConfig{
+			Topic:             topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		}); err != nil {
+			return fmt.Errorf("failed to ensure %s Kafka topic: %w", topic, err)
+		}
 	}
 
 	return nil

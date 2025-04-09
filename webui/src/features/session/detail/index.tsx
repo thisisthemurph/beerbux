@@ -5,9 +5,10 @@ import {
 	PrimaryActionCardLinkItem,
 	PrimaryActionCardSeparator,
 } from "@/components/primary-action-card";
-import { Badge } from "@/components/ui/badge.tsx";
 import { useSessionTransactionCreatedEventSource } from "@/features/session/detail/hooks/use-session-transaction-created-event-source.ts";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
+import { OverviewCard } from "@/features/session/detail/overview-card.tsx";
+import { SessionMenu } from "@/features/session/detail/session-menu.tsx";
 import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useUserAvatarData } from "@/hooks/user-avatar-data.ts";
@@ -73,18 +74,11 @@ export default function SessionDetailPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-between m-0">
-				<h1>{session.name}</h1>
-				{session.total > 0 && (
-					<Badge
-						variant="secondary"
-						className="flex justify-between gap-4 mb-8 px-6 text-lg font-normal text-muted-foreground"
-					>
-						<span>total:</span>
-						<span className="font-semibold">${session.total}</span>
-					</Badge>
-				)}
+			<div className="flex justify-between items-center mb-8">
+				<h1 className="mb-0">{session.name}</h1>
+				<SessionMenu />
 			</div>
+			<OverviewCard total={session.total} />
 			{session.isActive && (
 				<PrimaryActionCard>
 					<PrimaryActionCardContent>

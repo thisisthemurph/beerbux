@@ -1,14 +1,21 @@
 import type { SessionMember, SessionTransaction } from "@/api/types.ts";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card.tsx";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { UserAvatar } from "@/components/user-avatar.tsx";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { format, isThisYear, isToday, isYesterday, parse } from "date-fns";
-import { Fragment } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 type TransactionListingProps = {
 	members: SessionMember[];
@@ -17,7 +24,7 @@ type TransactionListingProps = {
 };
 
 type GroupedTransactions = Record<string, SessionTransaction[]>;
-const DATE_FMT = "EEEE do MMMM, yyyy";
+const DATE_FMT_LONG = "EEEE do MMMM, yyyy";
 const DATE_FMT_SHORT = "EEEE do MMMM";
 
 export function TransactionListing({
@@ -26,50 +33,97 @@ export function TransactionListing({
 	avatarData,
 }: TransactionListingProps) {
 	const groupedTransactions = groupTransactionsByDate(transactions);
+	const [isOpen, setIsOpen] = useState(false);
 
 	const sortedDateKeys = Object.keys(groupedTransactions).sort((a, b) => {
 		return (
-			parse(b, DATE_FMT, new Date()).getTime() -
-			parse(a, DATE_FMT, new Date()).getTime()
+			parse(b, DATE_FMT_LONG, new Date()).getTime() -
+			parse(a, DATE_FMT_LONG, new Date()).getTime()
 		);
 	});
 
-	return (
-		<Card>
-			<CardHeader>
-				<section className="flex justify-between">
-					<CardTitle>Rounds</CardTitle>
-					<p>{transactions.length}</p>
-				</section>
-			</CardHeader>
-			<CardContent className="px-0">
-				{transactions.length === 0 && <NoTransactionsMessage />}
-				{sortedDateKeys.map((dateLabel) => (
-					<Fragment key={dateLabel}>
-						<DateLabel key={dateLabel} date={dateLabel} />
-						{groupedTransactions[dateLabel].map((t) => {
-							const creator = members.find((m) => m.id === t.creatorId);
-							const creatorUsername = creator?.username ?? "unknown";
-							const creatorAvatarData = avatarData[creatorUsername];
+	const firstDateLabel = sortedDateKeys[0];
+	const firstTransactionGroup = groupedTransactions[firstDateLabel];
+	const showCollapsibleTrigger =
+		sortedDateKeys.length > 1 || firstTransactionGroup.length > 5;
 
-							return (
-								<div
-									key={t.id}
-									className="flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors"
-								>
-									<UserAvatar data={creatorAvatarData} />
-									<TransactionText
-										creator={creator}
-										transaction={t}
-										members={members}
-									/>
-								</div>
-							);
-						})}
-					</Fragment>
-				))}
-			</CardContent>
-		</Card>
+	return (
+		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+			<Card>
+				<CardHeader>
+					<section className="flex justify-between items-center">
+						<CardTitle>Rounds</CardTitle>
+						{showCollapsibleTrigger && (
+							<CollapsibleTrigger asChild>
+								<Button variant="secondary">
+									<span>{isOpen ? "See less" : "See more"}</span>
+									{isOpen ? <ChevronUp /> : <ChevronDown />}
+								</Button>
+							</CollapsibleTrigger>
+						)}
+					</section>
+				</CardHeader>
+				<CardContent className="px-0">
+					{transactions.length === 0 && <NoTransactionsMessage />}
+					<TransactionGroup
+						transactions={
+							isOpen ? firstTransactionGroup : firstTransactionGroup.slice(0, 5)
+						}
+						dateLabel={firstDateLabel}
+						members={members}
+						avatarData={avatarData}
+					/>
+					<CollapsibleContent>
+						{sortedDateKeys.slice(1).map((dateLabel) => (
+							<TransactionGroup
+								key={dateLabel}
+								transactions={groupedTransactions[dateLabel]}
+								dateLabel={dateLabel}
+								members={members}
+								avatarData={avatarData}
+							/>
+						))}
+					</CollapsibleContent>
+				</CardContent>
+			</Card>
+		</Collapsible>
+	);
+}
+
+function TransactionGroup({
+	dateLabel,
+	transactions,
+	members,
+	avatarData,
+}: {
+	transactions: SessionTransaction[];
+	dateLabel: string;
+	members: SessionMember[];
+	avatarData: Record<string, AvatarData>;
+}) {
+	return (
+		<>
+			<GroupLabel date={dateLabel} />
+			{transactions.map((t) => {
+				const creator = members.find((m) => m.id === t.creatorId);
+				const creatorUsername = creator?.username ?? "unknown";
+				const creatorAvatarData = avatarData[creatorUsername];
+
+				return (
+					<div
+						key={t.id}
+						className="flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors"
+					>
+						<UserAvatar data={creatorAvatarData} />
+						<TransactionText
+							creator={creator}
+							transaction={t}
+							members={members}
+						/>
+					</div>
+				);
+			})}
+		</>
 	);
 }
 
@@ -124,13 +178,13 @@ function NoTransactionsMessage() {
 	);
 }
 
-function DateLabel({ date }: { date: string }) {
-	const d = parse(date, DATE_FMT, new Date());
+function GroupLabel({ date }: { date: string }) {
+	const d = parse(date, DATE_FMT_LONG, new Date());
 	const label = isToday(d)
 		? "Today"
 		: isYesterday(d)
 			? "Yesterday"
-			: format(d, isThisYear(d) ? DATE_FMT_SHORT : DATE_FMT);
+			: format(d, isThisYear(d) ? DATE_FMT_SHORT : DATE_FMT_LONG);
 
 	return (
 		<p className="px-6 py-4 text-muted-foreground font-semibold tracking-wide">
@@ -143,7 +197,10 @@ function groupTransactionsByDate(
 	transactions: SessionTransaction[],
 ): GroupedTransactions {
 	const groupedTransactions = transactions.reduce((acc, transaction) => {
-		const formattedDate = format(new Date(transaction.createdAt), DATE_FMT);
+		const formattedDate = format(
+			new Date(transaction.createdAt),
+			DATE_FMT_LONG,
+		);
 
 		if (!acc[formattedDate]) {
 			acc[formattedDate] = [];

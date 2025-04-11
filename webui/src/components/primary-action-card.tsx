@@ -10,7 +10,7 @@ import { Link } from "react-router";
 
 function PrimaryActionCard({ children }: { children: ReactNode }) {
 	return (
-		<Card className="p-0">
+		<Card className="py-0">
 			<CardHeader className="sr-only">
 				<CardTitle>Actions</CardTitle>
 			</CardHeader>
@@ -20,7 +20,7 @@ function PrimaryActionCard({ children }: { children: ReactNode }) {
 }
 
 function PrimaryActionCardContent({ children }: { children: ReactNode }) {
-	return <CardContent>{children}</CardContent>;
+	return <CardContent className="px-0">{children}</CardContent>;
 }
 
 function PrimaryActionContent({
@@ -28,9 +28,9 @@ function PrimaryActionContent({
 	icon,
 }: { text: string; icon: ReactNode }) {
 	return (
-		<div className="flex items-center gap-4 cursor-pointer">
+		<div className="flex items-center gap-4 px-6 cursor-pointer">
 			{icon}
-			<span className="py-6">{text}</span>
+			<span className="">{text}</span>
 		</div>
 	);
 }
@@ -47,7 +47,11 @@ function PrimaryActionCardLinkItem({
 	icon,
 }: PrimaryActionCardLinkItemProps) {
 	return (
-		<Link to={to} key={text} className="w-full">
+		<Link
+			to={to}
+			key={text}
+			className="block w-full pb-4 pt-4 hover:bg-muted first:rounded-t-lg last:rounded-b-lg transition-colors"
+		>
 			<PrimaryActionContent text={text} icon={icon} />
 		</Link>
 	);
@@ -65,7 +69,11 @@ function PrimaryActionCardButtonItem({
 	onClick,
 }: PrimaryActionCardButtonItemProps) {
 	return (
-		<button type="button" onClick={onClick} className="w-full">
+		<button
+			type="button"
+			onClick={onClick}
+			className="w-full pb-4 pt-4 hover:bg-muted first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer"
+		>
 			<PrimaryActionContent text={text} icon={icon} />
 		</button>
 	);

@@ -1,4 +1,4 @@
-import type { SessionMember, TransactionMemberAmounts } from "@/api/types";
+import type { SessionMember, TransactionMemberAmounts } from "@/api/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import {
 	Form,
@@ -28,7 +28,7 @@ type TransactionFormProps = {
 	onTotalChanged: (amount: number) => void;
 };
 
-export function TransactionForm({
+export function CreateTransactionForm({
 	members,
 	onTransactionCreate,
 	onTotalChanged,
@@ -66,70 +66,71 @@ export function TransactionForm({
 	}
 
 	return (
-		<div>
-			<Form {...form}>
-				<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-					{members.map((member) => (
-						<FormField
-							key={member.id}
-							name={member.id}
-							control={form.control}
-							render={({ field }) => (
-								<FormItem className="flex justify-between items-center">
-									<FormLabel htmlFor={field.name} className="w-full">
-										{member.name}
-									</FormLabel>
-									<Button
-										type="button"
-										size="icon"
-										variant="secondary"
-										className="rounded-full"
-										onClick={(e) => {
-											e.preventDefault();
-											form.setValue(member.id, updateValueBy(field.value, -1));
-											updateTotal();
-										}}
-									>
-										<Minus />
-									</Button>
-									<FormControl className="w-1/3">
-										<Input
-											{...field}
-											inputMode="numeric"
-											className="text-center font-semibold"
-											onChange={(e) => {
-												const value = Number(e.target.value);
-												form.setValue(
-													member.id,
-													Number.isNaN(value) ? 0 : value,
-													{ shouldValidate: true },
-												);
+		<Form {...form}>
+			<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+				{members.map((member) => (
+					<FormField
+						key={member.id}
+						name={member.id}
+						control={form.control}
+						render={({ field }) => (
+							<FormItem className="flex justify-between items-center">
+								<FormLabel
+									htmlFor={field.name}
+									className="w-full text-lg tracking-wide"
+								>
+									{member.username}
+								</FormLabel>
+								<Button
+									type="button"
+									size="icon"
+									variant="secondary"
+									className="rounded-full"
+									onClick={(e) => {
+										e.preventDefault();
+										form.setValue(member.id, updateValueBy(field.value, -1));
+										updateTotal();
+									}}
+								>
+									<Minus />
+								</Button>
+								<FormControl className="w-1/3">
+									<Input
+										{...field}
+										inputMode="numeric"
+										className="text-center font-semibold"
+										onChange={(e) => {
+											const value = Number(e.target.value);
+											form.setValue(
+												member.id,
+												Number.isNaN(value) ? 0 : value,
+												{ shouldValidate: true },
+											);
 
-												updateTotal();
-											}}
-										/>
-									</FormControl>
-									<Button
-										type="button"
-										size="icon"
-										variant="secondary"
-										className="rounded-full"
-										onClick={(e) => {
-											e.preventDefault();
-											form.setValue(member.id, updateValueBy(field.value, 1));
 											updateTotal();
 										}}
-									>
-										<Plus />
-									</Button>
-								</FormItem>
-							)}
-						/>
-					))}
-					<Button type="submit">Create transaction</Button>
-				</form>
-			</Form>
-		</div>
+									/>
+								</FormControl>
+								<Button
+									type="button"
+									size="icon"
+									variant="secondary"
+									className="rounded-full"
+									onClick={(e) => {
+										e.preventDefault();
+										form.setValue(member.id, updateValueBy(field.value, 1));
+										updateTotal();
+									}}
+								>
+									<Plus />
+								</Button>
+							</FormItem>
+						)}
+					/>
+				))}
+				<Button type="submit">Create transaction</Button>
+			</form>
+		</Form>
 	);
 }
 

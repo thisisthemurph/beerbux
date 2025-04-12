@@ -57,12 +57,12 @@ export function SessionDetailContent({
 						<PrimaryActionCardLinkItem
 							to={`/session/${session.id}/member`}
 							text="Add a member"
-							icon={<SquarePlus className="text-green-400 w-8 h-8" />}
+							icon={<SquarePlus className="text-primary w-8 h-8" />}
 						/>
 						{session.members.length > 1 && (
 							<PrimaryActionCardButtonItem
 								text="Buy a round"
-								icon={<Beer className="text-green-400 w-8 h-8" />}
+								icon={<Beer className="text-primary w-8 h-8" />}
 								onClick={() => setCreateDrawerOpen(true)}
 							/>
 						)}

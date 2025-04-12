@@ -7,7 +7,7 @@ type UserCardProps = {
 
 export function UserCard({ username, netBalance }: UserCardProps) {
 	return (
-		<Card className="bg-green-400 text-white min-h-36 shadow-xl">
+		<Card className="bg-primary text-white min-h-36 shadow-xl">
 			<CardContent className="flex flex-col justify-between">
 				<section className="flex justify-between font-semibold">
 					<div>

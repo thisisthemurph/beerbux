@@ -39,7 +39,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 					<PrimaryActionCardLinkItem
 						to="/session/create"
 						text="Start new session"
-						icon={<SquareChevronRight className="text-green-300 w-8 h-8" />}
+						icon={<SquareChevronRight className="text-primary w-8 h-8" />}
 					/>
 				</PrimaryActionCardContent>
 			</PrimaryActionCard>

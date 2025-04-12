@@ -7,7 +7,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card.tsx";
-import { Separator } from "@/components/ui/separator.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import {
 	Tooltip,
@@ -43,39 +42,55 @@ function SessionListing({
 					</p>
 				</section>
 			</CardHeader>
-			<CardContent>
+			<CardContent className="px-0">
 				<section className="flex flex-col">
 					{sessions.length === 0 && <NoSessionsIndicator />}
-					{sessions.map((session, i) => {
+					{sessions.map((session) => {
 						const url = withBackLinkOverride(
 							`/session/${session.id}`,
 							parentPath,
 						);
 
 						return (
-							<Link to={url} key={session.id}>
-								<div className="flex items-center gap-6 py-6">
-									<Avatar className="w-10 h-10">
-										<AvatarFallback>
-											{getAvatarText(session.name)}
-										</AvatarFallback>
-									</Avatar>
-									<div className="flex justify-between items-center w-full">
-										<p>{session.name}</p>
-										{!session.isActive && <InactiveIcon />}
-									</div>
-									<p className="text-xl text-muted-foreground font-semibold">
-										${session.total}
-									</p>
-								</div>
-								{i < sessions.length - 1 && <Separator />}
-							</Link>
+							<SessionListingItem
+								key={session.id}
+								session={session}
+								url={url}
+							/>
 						);
 					})}
 				</section>
 			</CardContent>
 			{children && <CardFooter>{children}</CardFooter>}
 		</Card>
+	);
+}
+
+function SessionListingItem({
+	session,
+	url,
+}: { session: Session; url: string }) {
+	return (
+		<Link
+			to={url}
+			key={session.id}
+			className="group hover:bg-muted transition-colors"
+		>
+			<div className="flex items-center gap-6 py-4 px-6">
+				<Avatar className="w-10 h-10">
+					<AvatarFallback className="group-hover:bg-card transition-colors">
+						{getAvatarText(session.name)}
+					</AvatarFallback>
+				</Avatar>
+				<div className="flex justify-between items-center w-full">
+					<p>{session.name}</p>
+					{!session.isActive && <InactiveIcon />}
+				</div>
+				<p className="text-xl text-muted-foreground font-semibold">
+					${session.total}
+				</p>
+			</div>
+		</Link>
 	);
 }
 

@@ -45,7 +45,8 @@ export function TransactionListing({
 	const firstDateLabel = sortedDateKeys[0];
 	const firstTransactionGroup = groupedTransactions[firstDateLabel];
 	const showCollapsibleTrigger =
-		sortedDateKeys.length > 1 || firstTransactionGroup.length > 5;
+		sortedDateKeys.length > 1 ||
+		(firstTransactionGroup && firstTransactionGroup.length > 5);
 
 	return (
 		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -64,15 +65,24 @@ export function TransactionListing({
 					</section>
 				</CardHeader>
 				<CardContent className="px-0">
-					{transactions.length === 0 && <NoTransactionsMessage />}
-					<TransactionGroup
-						transactions={
-							isOpen ? firstTransactionGroup : firstTransactionGroup.slice(0, 5)
-						}
-						dateLabel={firstDateLabel}
-						members={members}
-						avatarData={avatarData}
-					/>
+					{members.length <= 1 ? (
+						<NoMembers />
+					) : (
+						transactions.length === 0 && <NoTransactionsMessage />
+					)}
+
+					{firstTransactionGroup && firstTransactionGroup.length > 0 && (
+						<TransactionGroup
+							transactions={
+								isOpen
+									? firstTransactionGroup
+									: firstTransactionGroup.slice(0, 5)
+							}
+							dateLabel={firstDateLabel}
+							members={members}
+							avatarData={avatarData}
+						/>
+					)}
 					<CollapsibleContent>
 						{sortedDateKeys.slice(1).map((dateLabel) => (
 							<TransactionGroup
@@ -169,12 +179,24 @@ function TransactionText({
 	);
 }
 
+function NoMembers() {
+	return (
+		<div className="p-6 text-muted-foreground text-center  w-[90%] mx-auto tracking-wide">
+			<p className="pb-4 font-semibold">Hey, Billy no mates!</p>
+			<p>Add some friends to your session to get the ball rolling.</p>
+		</div>
+	);
+}
+
 function NoTransactionsMessage() {
 	return (
-		<p className="p-6 text-muted-foreground text-center font-semibold w-[90%] mx-auto">
-			You don't have any transactions in this session yet. Once you have some,
-			they will show up here.
-		</p>
+		<div className="p-6 text-muted-foreground text-center  w-[90%] mx-auto tracking-wide">
+			<p className="pb-4 font-semibold">Well this is a bit depressing!</p>
+			<p>
+				It looks like you haven't bought a round yet. Once you do, it will show
+				up here.
+			</p>
+		</div>
 	);
 }
 

@@ -1,6 +1,7 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
-import type { TransactionMemberAmounts } from "@/api/types.ts";
+import type { TransactionMemberAmounts, User } from "@/api/types.ts";
+import { PageError } from "@/components/page-error.tsx";
 import {
 	PrimaryActionCard,
 	PrimaryActionCardButtonItem,
@@ -12,6 +13,7 @@ import { useSessionTransactionCreatedEventSource } from "@/features/session/deta
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
 import { OverviewCard } from "@/features/session/detail/overview-card.tsx";
 import { SessionMenu } from "@/features/session/detail/session-menu.tsx";
+import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
 import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useUserAvatarData } from "@/hooks/user-avatar-data.ts";
@@ -19,25 +21,58 @@ import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Beer, SquarePlus } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import type * as React from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 
 export default function SessionDetailPage() {
-	const queryClient = useQueryClient();
 	const user = useUserStore((state) => state.user);
-	const { getSession } = useSessionClient();
 	const { sessionId } = useParams();
-	const { createTransaction } = useTransactionClient();
 	const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 	useBackNavigation("/");
 
-	if (!sessionId) throw Error("sessionId is required");
+	if (!sessionId) throw new Error("Session id not found");
+	if (!user) throw new Error("User not found");
 
-	const { data: session, isPending: sessionIsPending } = useQuery({
+	return (
+		<div className="space-y-6">
+			<Suspense fallback={<SessionDetailSkeleton />}>
+				<SessionDetailsContent
+					sessionId={sessionId}
+					user={user}
+					createDrawerOpen={createDrawerOpen}
+					setCreateDrawerOpen={setCreateDrawerOpen}
+				/>
+			</Suspense>
+		</div>
+	);
+}
+
+function SessionDetailsContent({
+	sessionId,
+	user,
+	createDrawerOpen,
+	setCreateDrawerOpen,
+}: {
+	sessionId: string;
+	user: User;
+	createDrawerOpen: boolean;
+	setCreateDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+	const queryClient = useQueryClient();
+	const { getSession } = useSessionClient();
+	const { createTransaction } = useTransactionClient();
+
+	const {
+		data: session,
+		isLoading,
+		error,
+	} = useQuery({
 		queryKey: ["session", sessionId],
-		queryFn: () => {
-			return getSession(sessionId);
+		queryFn: async () => {
+			console.log("fetching the session");
+			return await getSession(sessionId);
 		},
 	});
 
@@ -102,8 +137,20 @@ export default function SessionDetailPage() {
 		.filter((m) => m.id !== user?.id)
 		.sort((a, b) => a.name.localeCompare(b.name));
 
-	if (sessionIsPending) {
-		return <p>Loading</p>;
+	if (isLoading) {
+		return <SessionDetailSkeleton />;
+	}
+
+	if (error) {
+		return (
+			<PageError
+				message={
+					error.message.includes("not found")
+						? "The session could not be found, please ensure you have the correct session."
+						: error.message
+				}
+			/>
+		);
 	}
 
 	if (!session || !currentSessionMember) {
@@ -111,7 +158,7 @@ export default function SessionDetailPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<>
 			<div className="flex justify-between items-center mb-8">
 				<h1 className="mb-0">{session.name}</h1>
 				<SessionMenu />
@@ -155,6 +202,6 @@ export default function SessionDetailPage() {
 				open={createDrawerOpen}
 				onOpenChange={(open) => setCreateDrawerOpen(open)}
 			/>
-		</div>
+		</>
 	);
 }

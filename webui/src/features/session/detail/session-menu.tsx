@@ -92,3 +92,15 @@ export function SessionMenu() {
 		</>
 	);
 }
+
+SessionMenu.Skeleton = function SessionMenuSkeleton() {
+	return (
+		<Button
+			size="icon"
+			variant="secondary"
+			className="rounded-full animate-pulse"
+		>
+			<EllipsisVertical />
+		</Button>
+	);
+};

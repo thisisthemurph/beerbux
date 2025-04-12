@@ -3,6 +3,7 @@ import { AddMemberForm } from "@/features/session/add_member/add-member-form.tsx
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 function AddMemberPage() {
 	const { sessionId } = useParams();
@@ -29,7 +30,7 @@ function AddMemberPage() {
 
 	return (
 		<>
-			<h1>Add member</h1>
+			<PageHeading title="Add member" />
 			<AddMemberForm onAdd={handleAddMember} />
 		</>
 	);

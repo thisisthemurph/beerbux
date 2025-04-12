@@ -2,6 +2,7 @@ import useUserClient from "@/api/user-client.ts";
 import { SessionListing } from "@/components/session-listing.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useQuery } from "@tanstack/react-query";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 function SessionListingPage() {
 	useBackNavigation("/");
@@ -16,8 +17,9 @@ function SessionListingPage() {
 	const inactiveSessions = sessions?.filter((s) => !s.isActive) ?? [];
 
 	return (
-		<section className="space-y-6">
-			<h1>Your sessions</h1>
+		<>
+			<PageHeading title="Your sessions" />
+
 			{sessionsPending ? (
 				<SessionListing.Skeleton />
 			) : (
@@ -33,7 +35,7 @@ function SessionListingPage() {
 					sessions={inactiveSessions}
 				/>
 			)}
-		</section>
+		</>
 	);
 }
 

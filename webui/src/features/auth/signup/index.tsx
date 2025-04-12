@@ -14,6 +14,7 @@ import {
 } from "@/features/auth/signup/signup-form.tsx";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 function SignupPage() {
 	const navigate = useNavigate();
@@ -51,8 +52,8 @@ function SignupPage() {
 	}
 
 	return (
-		<div>
-			<h1>Signup</h1>
+		<>
+			<PageHeading title="Add member" />
 			<Card>
 				<CardHeader>
 					<CardTitle>Sign up</CardTitle>
@@ -67,7 +68,7 @@ function SignupPage() {
 					</Link>
 				</CardFooter>
 			</Card>
-		</div>
+		</>
 	);
 }
 

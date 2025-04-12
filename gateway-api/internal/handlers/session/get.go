@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"time"
 )
 
 type GetSessionByIdHandler struct {
@@ -27,6 +28,8 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	time.Sleep(3 * time.Second)
 
 	sessionId, err := uuid.Parse(r.PathValue("sessionId"))
 	if err != nil {

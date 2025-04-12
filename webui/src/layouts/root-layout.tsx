@@ -6,7 +6,7 @@ function RootLayout() {
 	return (
 		<div>
 			<Navigation />
-			<main className="p-4">
+			<main className="p-4 space-y-4">
 				<Outlet />
 				<Toaster />
 			</main>

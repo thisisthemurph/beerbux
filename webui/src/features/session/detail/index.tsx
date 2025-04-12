@@ -1,7 +1,6 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
-import type { Session, TransactionMemberAmounts, User } from "@/api/types.ts";
-import { Container } from "@/components/container.tsx";
+import type { TransactionMemberAmounts, User } from "@/api/types.ts";
 import { PageError } from "@/components/page-error.tsx";
 import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
@@ -78,28 +77,28 @@ export default function SessionDetailPage() {
 		toast.success("You bought a round!");
 	}
 
-	if (sessionQuery.error) {
+	if (sessionQuery.isError) {
 		return (
 			<PageError
 				message={
 					sessionQuery.error.message.includes("not found")
 						? "The session could not be found, please ensure you have the correct session."
-						: sessionQuery.error.message
+						: (sessionQuery.error?.message ??
+							"There has been an unexpected error fetching the session.")
 				}
 			/>
 		);
 	}
 
+	if (sessionQuery.isPending) {
+		return <SessionDetailSkeleton />;
+	}
+
 	return (
-		<Container
-			isPending={sessionQuery.isPending}
-			pendingComponent={<SessionDetailSkeleton />}
-		>
-			<SessionDetailContent
-				session={sessionQuery.data as Session}
-				user={user}
-				handleNewTransaction={handleNewTransaction}
-			/>
-		</Container>
+		<SessionDetailContent
+			session={sessionQuery.data}
+			user={user}
+			handleNewTransaction={handleNewTransaction}
+		/>
 	);
 }

@@ -8,6 +8,7 @@ import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { tryCatch } from "@/lib/try-catch.ts";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 function CreateSessionPage() {
 	useBackNavigation("/");
@@ -34,7 +35,7 @@ function CreateSessionPage() {
 
 	return (
 		<>
-			<h1>Start a session</h1>
+			<PageHeading title="Start a session" />
 			<NewSessionForm onCreate={handleCreateSession} />
 		</>
 	);

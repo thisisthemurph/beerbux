@@ -31,7 +31,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 	});
 
 	return (
-		<div className="space-y-6">
+		<>
 			<UserCard {...user} netBalance={balance?.net ?? 0} />
 
 			<PrimaryActionCard>
@@ -49,7 +49,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 					{sessions && <AllSessionsLink />}
 				</SessionListing>
 			</Suspense>
-		</div>
+		</>
 	);
 }
 

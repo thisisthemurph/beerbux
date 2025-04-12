@@ -14,6 +14,7 @@ import { MemberDetailsCard } from "@/features/session/detail/member-details-card
 import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
 import type { Session, TransactionMemberAmounts, User } from "@/api/types.ts";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 type SessionDetailContentProps = {
 	session: Session;
@@ -44,10 +45,9 @@ export function SessionDetailContent({
 
 	return (
 		<>
-			<div className="flex justify-between items-center mb-8">
-				<h1 className="mb-0">{session.name}</h1>
+			<PageHeading title={session.name}>
 				<SessionMenu />
-			</div>
+			</PageHeading>
 
 			<OverviewCard total={session.total} />
 

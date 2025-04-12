@@ -17,6 +17,7 @@ import { useUserStore } from "@/stores/user-store.tsx";
 import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
+import { PageHeading } from "@/components/page-heading.tsx";
 
 function LoginPage() {
 	const [searchParams] = useSearchParams();
@@ -62,8 +63,8 @@ function LoginPage() {
 	}
 
 	return (
-		<div>
-			<h1>Login</h1>
+		<>
+			<PageHeading title="Login" />
 			<Card>
 				<CardHeader>
 					<CardTitle>Login</CardTitle>
@@ -78,7 +79,7 @@ function LoginPage() {
 					</Link>
 				</CardFooter>
 			</Card>
-		</div>
+		</>
 	);
 }
 

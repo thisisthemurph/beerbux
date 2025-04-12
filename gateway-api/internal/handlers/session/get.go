@@ -47,7 +47,7 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 		switch st.Code() {
 		case codes.NotFound:
-			send.Error(w, "Session not found", http.StatusBadRequest)
+			send.Error(w, "Session not found", http.StatusNotFound)
 			return
 		default:
 			send.Error(w, "Could not fetch the session", http.StatusInternalServerError)

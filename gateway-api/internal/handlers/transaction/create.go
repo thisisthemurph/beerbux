@@ -40,6 +40,10 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	memberAmounts := make([]*transactionpb.MemberAmount, 0, len(transactions))
 	for userID, amount := range transactions {
+		if userID == c.Subject || amount <= 0 {
+			continue
+		}
+
 		memberAmounts = append(memberAmounts, &transactionpb.MemberAmount{
 			UserId: userID,
 			Amount: float64(amount),
@@ -51,7 +55,7 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		SessionId:     sessionID,
 		MemberAmounts: memberAmounts,
 	})
-	
+
 	if err != nil {
 		send.Error(w, "Failed to create transaction", http.StatusInternalServerError)
 		return

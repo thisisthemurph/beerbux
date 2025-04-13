@@ -443,32 +443,8 @@ func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 }
 
 func TestUpdateSessionMemberAdminState(t *testing.T) {
-	db := testinfra.SetupTestDB(t, "../db/migrations")
-	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
-
 	ownerID := uuid.NewString()
 	memberID := uuid.NewString()
-
-	ssn := builder.NewSessionBuilder(t).
-		WithID(uuid.New()).
-		WithName("Test Session").
-		WithMember(builder.SessionMemberParams{
-			ID:       ownerID,
-			Name:     "owner",
-			Username: "owner",
-			IsOwner:  true,
-			IsAdmin:  true,
-		}).
-		WithMember(builder.SessionMemberParams{
-			ID:       memberID,
-			Name:     "member",
-			Username: "member",
-		}).Build(db)
 
 	testCases := []struct {
 		name           string
@@ -493,8 +469,31 @@ func TestUpdateSessionMemberAdminState(t *testing.T) {
 	}
 
 	q := "select is_admin from session_members where member_id = ?;"
-
 	for _, tc := range testCases {
+		db := testinfra.SetupTestDB(t, "../db/migrations")
+
+		sessionRepo := session.New(db)
+		fakeUserClient := fake.NewFakeUserClient()
+		fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+		sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+		ssn := builder.NewSessionBuilder(t).
+			WithID(uuid.New()).
+			WithName("Test Session").
+			WithMember(builder.SessionMemberParams{
+				ID:       ownerID,
+				Name:     "owner",
+				Username: "owner",
+				IsOwner:  true,
+				IsAdmin:  true,
+			}).
+			WithMember(builder.SessionMemberParams{
+				ID:       memberID,
+				Name:     "member",
+				Username: "member",
+			}).
+			Build(db)
+
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := sessionServer.UpdateSessionMemberAdminState(context.Background(), &sessionpb.UpdateSessionMemberAdminStateRequest{
 				SessionId: ssn.ID,
@@ -513,6 +512,8 @@ func TestUpdateSessionMemberAdminState(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedAdmin, isAdmin)
 		})
+
+		db.Close()
 	}
 }
 

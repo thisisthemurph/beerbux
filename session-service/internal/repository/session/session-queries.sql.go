@@ -313,6 +313,17 @@ func (q *Queries) ListSessionsForUser(ctx context.Context, arg ListSessionsForUs
 	return items, nil
 }
 
+const setSessionUpdatedAtNow = `-- name: SetSessionUpdatedAtNow :exec
+update sessions
+set updated_at = current_timestamp
+where id = ?
+`
+
+func (q *Queries) SetSessionUpdatedAtNow(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, setSessionUpdatedAtNow, id)
+	return err
+}
+
 const updateMember = `-- name: UpdateMember :exec
 update members
 set name = ?,

@@ -18,25 +18,25 @@ values
     ('3c0327eb-b934-46be-a882-56195fab04d9', 'Random session', true),
     ('4c0327eb-b934-46be-a882-56195fab04d9', 'Lem War Crawl', true);
 
-insert into session_members (session_id, member_id, is_owner)
+insert into session_members (session_id, member_id, is_owner, is_admin)
 values
-    ('1c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', true),
-    ('1c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('1c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('1c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false),
+    ('1c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', true, true),
+    ('1c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', false, true),
+    ('1c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false, false),
+    ('1c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false, false),
 
-    ('2c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', true),
-    ('2c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('2c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false),
+    ('2c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', true, true),
+    ('2c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false, false),
+    ('2c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false, false),
 
-    ('3c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('3c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('3c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', true),
+    ('3c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', false, true),
+    ('3c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', false, false),
+    ('3c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', true, false),
 
-    ('4c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('4c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', true),
-    ('4c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false),
-    ('4c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false);
+    ('4c0327eb-b934-46be-a882-56195fab04d9', '10473635-01d4-4e2a-b809-8fce66031ace', false, true),
+    ('4c0327eb-b934-46be-a882-56195fab04d9', '20473635-01d4-4e2a-b809-8fce66031ace', true, false),
+    ('4c0327eb-b934-46be-a882-56195fab04d9', '30473635-01d4-4e2a-b809-8fce66031ace', false, false),
+    ('4c0327eb-b934-46be-a882-56195fab04d9', '40473635-01d4-4e2a-b809-8fce66031ace', false, false);
 
 insert into transactions (id, session_id, member_id)
 values

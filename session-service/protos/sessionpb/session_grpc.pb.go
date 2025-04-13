@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Session_CreateSession_FullMethodName       = "/session.service.Session/CreateSession"
-	Session_GetSession_FullMethodName          = "/session.service.Session/GetSession"
-	Session_ListSessionsForUser_FullMethodName = "/session.service.Session/ListSessionsForUser"
-	Session_AddMemberToSession_FullMethodName  = "/session.service.Session/AddMemberToSession"
+	Session_CreateSession_FullMethodName                 = "/session.service.Session/CreateSession"
+	Session_GetSession_FullMethodName                    = "/session.service.Session/GetSession"
+	Session_ListSessionsForUser_FullMethodName           = "/session.service.Session/ListSessionsForUser"
+	Session_AddMemberToSession_FullMethodName            = "/session.service.Session/AddMemberToSession"
+	Session_UpdateSessionMemberAdminState_FullMethodName = "/session.service.Session/UpdateSessionMemberAdminState"
 )
 
 // SessionClient is the client API for Session service.
@@ -33,6 +34,7 @@ type SessionClient interface {
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
 	ListSessionsForUser(ctx context.Context, in *ListSessionsForUserRequest, opts ...grpc.CallOption) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type sessionClient struct {
@@ -83,6 +85,16 @@ func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToS
 	return out, nil
 }
 
+func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, Session_UpdateSessionMemberAdminState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionServer is the server API for Session service.
 // All implementations must embed UnimplementedSessionServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type SessionServer interface {
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
+	UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error)
 	mustEmbedUnimplementedSessionServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedSessionServer) ListSessionsForUser(context.Context, *ListSess
 }
 func (UnimplementedSessionServer) AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMemberToSession not implemented")
+}
+func (UnimplementedSessionServer) UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionMemberAdminState not implemented")
 }
 func (UnimplementedSessionServer) mustEmbedUnimplementedSessionServer() {}
 func (UnimplementedSessionServer) testEmbeddedByValue()                 {}
@@ -206,6 +222,24 @@ func _Session_AddMemberToSession_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Session_UpdateSessionMemberAdminState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSessionMemberAdminStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).UpdateSessionMemberAdminState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Session_UpdateSessionMemberAdminState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).UpdateSessionMemberAdminState(ctx, req.(*UpdateSessionMemberAdminStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Session_ServiceDesc is the grpc.ServiceDesc for Session service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var Session_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMemberToSession",
 			Handler:    _Session_AddMemberToSession_Handler,
+		},
+		{
+			MethodName: "UpdateSessionMemberAdminState",
+			Handler:    _Session_UpdateSessionMemberAdminState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

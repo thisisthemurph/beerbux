@@ -11,8 +11,8 @@ import (
 )
 
 const addSessionMember = `-- name: AddSessionMember :exec
-insert into session_members (session_id, member_id, is_owner)
-values (?, ?, ?)
+insert into session_members (session_id, member_id, is_owner, is_admin)
+values (?, ?, ?, ?)
 on conflict do nothing
 `
 
@@ -20,10 +20,16 @@ type AddSessionMemberParams struct {
 	SessionID string
 	MemberID  string
 	IsOwner   bool
+	IsAdmin   bool
 }
 
 func (q *Queries) AddSessionMember(ctx context.Context, arg AddSessionMemberParams) error {
-	_, err := q.db.ExecContext(ctx, addSessionMember, arg.SessionID, arg.MemberID, arg.IsOwner)
+	_, err := q.db.ExecContext(ctx, addSessionMember,
+		arg.SessionID,
+		arg.MemberID,
+		arg.IsOwner,
+		arg.IsAdmin,
+	)
 	return err
 }
 
@@ -77,6 +83,18 @@ func (q *Queries) AddTransactionLine(ctx context.Context, arg AddTransactionLine
 	var i TransactionLine
 	err := row.Scan(&i.TransactionID, &i.MemberID, &i.Amount)
 	return i, err
+}
+
+const countSessionAdmins = `-- name: CountSessionAdmins :one
+select count(*) from session_members
+where session_id = ? and is_admin = true
+`
+
+func (q *Queries) CountSessionAdmins(ctx context.Context, sessionID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countSessionAdmins, sessionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createSession = `-- name: CreateSession :one
@@ -367,6 +385,25 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (S
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateSessionMemberAdmin = `-- name: UpdateSessionMemberAdmin :exec
+update session_members
+set is_admin = ?,
+    updated_at = current_timestamp
+where session_id = ?
+    and member_id = ?
+`
+
+type UpdateSessionMemberAdminParams struct {
+	IsAdmin   bool
+	SessionID string
+	MemberID  string
+}
+
+func (q *Queries) UpdateSessionMemberAdmin(ctx context.Context, arg UpdateSessionMemberAdminParams) error {
+	_, err := q.db.ExecContext(ctx, updateSessionMemberAdmin, arg.IsAdmin, arg.SessionID, arg.MemberID)
+	return err
 }
 
 const upsertMember = `-- name: UpsertMember :exec

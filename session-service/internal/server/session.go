@@ -19,8 +19,9 @@ import (
 )
 
 var (
-	ErrSessionNotFound = status.Error(codes.NotFound, "session not found")
-	ErrUserNotFound    = status.Error(codes.NotFound, "user not found")
+	ErrSessionNotFound                = status.Error(codes.NotFound, "session not found")
+	ErrUserNotFound                   = status.Error(codes.NotFound, "user not found")
+	ErrSessionMustHaveAtLeastOneAdmin = status.Error(codes.FailedPrecondition, "session must have at least one admin")
 )
 
 type SessionServer struct {
@@ -221,6 +222,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 		SessionID: ssn.ID,
 		MemberID:  user.UserId,
 		IsOwner:   true,
+		IsAdmin:   true,
 	})
 
 	if err := tx.Commit(); err != nil {
@@ -335,4 +337,28 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 	}
 
 	return &sessionpb.EmptyResponse{}, nil
+}
+
+func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *sessionpb.UpdateSessionMemberAdminStateRequest) (*sessionpb.EmptyResponse, error) {
+	count, err := s.sessionRepository.CountSessionAdmins(ctx, r.SessionId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to count session admins: %v", err)
+	}
+
+	// Prevent the last remaining admin being removed as admin.
+	if !r.IsAdmin && count == 1 {
+		return nil, ErrSessionMustHaveAtLeastOneAdmin
+	}
+
+	err = s.sessionRepository.UpdateSessionMemberAdmin(ctx, session.UpdateSessionMemberAdminParams{
+		IsAdmin:   r.IsAdmin,
+		SessionID: r.SessionId,
+		MemberID:  r.UserId,
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update session member admin state: %v", err)
+	}
+
+	return nil, nil
 }

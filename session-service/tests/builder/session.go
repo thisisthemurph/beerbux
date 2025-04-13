@@ -51,6 +51,7 @@ type SessionMemberParams struct {
 	Name     string
 	Username string
 	IsOwner  bool
+	IsAdmin  bool
 }
 
 func (b *SessionBuilder) WithMember(m SessionMemberParams) *SessionBuilder {
@@ -83,7 +84,7 @@ func (b *SessionBuilder) WithTransaction(t SessionTransactionParams) *SessionBui
 func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 	insertSession := "insert into sessions (id, name, is_active, updated_at) values (?, ?, ?, ?);"
 	insertMember := "insert into members (id, name, username) values (?, ?, ?);"
-	insertSessionMember := "insert into session_members (session_id, member_id, is_owner) values (?, ?, ?);"
+	insertSessionMember := "insert into session_members (session_id, member_id, is_owner, is_admin) values (?, ?, ?, ?);"
 	insertTrans := "insert into transactions (id, session_id, member_id) values (?, ?, ?);"
 	insertTransLine := "insert into transaction_lines (transaction_id, member_id, amount) values (?, ?, ?);"
 
@@ -102,12 +103,12 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 		_, err := db.Exec(insertMember, m.ID, m.Name, m.Username)
 		require.NoError(b.t, err)
 
-		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, m.IsOwner)
+		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, m.IsOwner, m.IsAdmin)
 		require.NoError(b.t, err)
 	}
 
 	for _, m := range b.existingMembers {
-		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, false)
+		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, false, false)
 		require.NoError(b.t, err)
 	}
 

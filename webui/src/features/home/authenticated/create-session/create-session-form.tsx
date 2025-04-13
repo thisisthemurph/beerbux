@@ -12,27 +12,28 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-	name: z.string(),
-	// .nonempty()
-	// .min(2, "The name must be at least 2 characters")
-	// .max(25, "The name cannot be more than 25 characters"),
+	name: z
+		.string()
+		.nonempty()
+		.min(2, "The name must be at least 2 characters")
+		.max(25, "The name cannot be more than 25 characters"),
 });
 
-export type NewSessionFormValues = z.infer<typeof formSchema>;
+export type CreateSessionFormValues = z.infer<typeof formSchema>;
 
 type NewSessionFormProps = {
-	onCreate: (values: NewSessionFormValues) => void;
+	onCreate: (values: CreateSessionFormValues) => void;
 };
 
-export function NewSessionForm({ onCreate }: NewSessionFormProps) {
-	const form = useForm<NewSessionFormValues>({
+export function CreateSessionForm({ onCreate }: NewSessionFormProps) {
+	const form = useForm<CreateSessionFormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: "",
 		},
 	});
 
-	function handleSubmit(values: NewSessionFormValues) {
+	function handleSubmit(values: CreateSessionFormValues) {
 		onCreate(values);
 	}
 
@@ -46,7 +47,11 @@ export function NewSessionForm({ onCreate }: NewSessionFormProps) {
 						<FormItem>
 							<FormLabel htmlFor={field.name}>Session name</FormLabel>
 							<FormControl>
-								<Input {...field} placeholder="Name of your session" />
+								<Input
+									type="text"
+									{...field}
+									placeholder="Name of your session"
+								/>
 							</FormControl>
 						</FormItem>
 					)}

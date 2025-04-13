@@ -8,6 +8,7 @@ service Session {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   rpc ListSessionsForUser(ListSessionsForUserRequest) returns (ListSessionsForUserResponse);
   rpc AddMemberToSession(AddMemberToSessionRequest) returns (EmptyResponse);
+  rpc UpdateSessionMemberAdminState(UpdateSessionMemberAdminStateRequest) returns (EmptyResponse);
 }
 
 message CreateSessionRequest {
@@ -69,6 +70,12 @@ message SessionResponse {
 message AddMemberToSessionRequest {
   string session_id = 1;
   string user_id = 2;
+}
+
+message UpdateSessionMemberAdminStateRequest {
+  string session_id = 1;
+  string user_id = 2;
+  bool is_admin = 3;
 }
 
 message EmptyResponse {}

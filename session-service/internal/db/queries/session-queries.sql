@@ -75,9 +75,16 @@ set name = ?,
 where id = ?;
 
 -- name: AddSessionMember :exec
-insert into session_members (session_id, member_id, is_owner)
-values (?, ?, ?)
+insert into session_members (session_id, member_id, is_owner, is_admin)
+values (?, ?, ?, ?)
 on conflict do nothing;
+
+-- name: UpdateSessionMemberAdmin :exec
+update session_members
+set is_admin = ?,
+    updated_at = current_timestamp
+where session_id = ?
+    and member_id = ?;
 
 -- name: UpdateSession :one
 update sessions
@@ -85,6 +92,10 @@ set name = ?,
     updated_at = current_timestamp
 where id = ?
 returning *;
+
+-- name: CountSessionAdmins :one
+select count(*) from session_members
+where session_id = ? and is_admin = true;
 
 -- name: AddTransaction :one
 insert into transactions (id, session_id, member_id, created_at)

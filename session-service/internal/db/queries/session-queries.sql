@@ -45,6 +45,11 @@ insert into sessions (id, name)
 values (?, ?)
 returning *;
 
+-- name: SetSessionUpdatedAtNow :exec
+update sessions
+set updated_at = current_timestamp
+where id = ?;
+
 -- name: GetMember :one
 select * from members where id = ? limit 1;
 

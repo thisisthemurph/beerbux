@@ -87,6 +87,8 @@ func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.
 		return fmt.Errorf("failed committing transaction: %w", err)
 	}
 
+	_ = h.sessionRepository.SetSessionUpdatedAtNow(ctx, event.SessionID)
+
 	_ = h.transactionCreatedPublisher.Publish(ctx, events.SessionTransactionCreatedEvent{
 		SessionID:     event.SessionID,
 		TransactionID: event.TransactionID,

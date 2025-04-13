@@ -244,17 +244,13 @@ const listSessionsForUser = `-- name: ListSessionsForUser :many
 with paged_sessions AS (
     select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total_amount
     from sessions s
-    join session_members sm_target
-        on s.id = sm_target.session_id
-    left join transactions t
-        on s.id = t.session_id
-    left join transaction_lines l
-        on t.id = l.transaction_id
+    join session_members sm_target on s.id = sm_target.session_id
+    left join transactions t on s.id = t.session_id
+    left join transaction_lines l on t.id = l.transaction_id
     where sm_target.member_id = ?1
-        and (cast(coalesce(?2, '') as text) = '' or ?2 < s.id)
     group by s.id, s.name, s.is_active, s.created_at, s.updated_at
     order by s.updated_at desc, s.id desc
-    limit case when ?3 = 0 then -1 else ?3 end
+    limit case when ?2 = 0 then -1 else ?2 end
 )
 select
     ps.id, ps.name, ps.is_active, ps.created_at, ps.updated_at, ps.total_amount,
@@ -268,9 +264,8 @@ order by ps.updated_at desc, ps.id desc
 `
 
 type ListSessionsForUserParams struct {
-	MemberID  string
-	PageToken string
-	PageSize  interface{}
+	MemberID string
+	PageSize interface{}
 }
 
 type ListSessionsForUserRow struct {
@@ -286,7 +281,7 @@ type ListSessionsForUserRow struct {
 }
 
 func (q *Queries) ListSessionsForUser(ctx context.Context, arg ListSessionsForUserParams) ([]ListSessionsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, listSessionsForUser, arg.MemberID, arg.PageToken, arg.PageSize)
+	rows, err := q.db.QueryContext(ctx, listSessionsForUser, arg.MemberID, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}

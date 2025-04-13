@@ -10,14 +10,10 @@ group by s.id, s.name, s.is_active, s.created_at, s.updated_at;
 with paged_sessions AS (
     select s.*, cast(coalesce(sum(l.amount), 0) as real) as total_amount
     from sessions s
-    join session_members sm_target
-        on s.id = sm_target.session_id
-    left join transactions t
-        on s.id = t.session_id
-    left join transaction_lines l
-        on t.id = l.transaction_id
+    join session_members sm_target on s.id = sm_target.session_id
+    left join transactions t on s.id = t.session_id
+    left join transaction_lines l on t.id = l.transaction_id
     where sm_target.member_id = :member_id
-        and (cast(coalesce(:page_token, '') as text) = '' or :page_token < s.id)
     group by s.id, s.name, s.is_active, s.created_at, s.updated_at
     order by s.updated_at desc, s.id desc
     limit case when :page_size = 0 then -1 else :page_size end

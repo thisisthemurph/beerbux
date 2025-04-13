@@ -3,11 +3,15 @@ package server_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
@@ -39,7 +43,7 @@ func TestGetSession_Success(t *testing.T) {
 	assert.True(t, resp.IsActive)
 }
 
-func TestGetSession_FetchesAllSessionData_Success(t *testing.T) {
+func TestGetSession_GetSession_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
@@ -123,7 +127,7 @@ func TestGetSession_FetchesAllSessionData_Success(t *testing.T) {
 	assert.Len(t, expectedMembers, 0, "Not all members were checked")
 }
 
-func TestGetSession_NotFound(t *testing.T) {
+func TestGetSession_When_SessionDoesNotExist_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
@@ -139,7 +143,7 @@ func TestGetSession_NotFound(t *testing.T) {
 	assert.Nil(t, resp)
 }
 
-func TestGetSession_InvalidRequest(t *testing.T) {
+func TestGetSession_With_InvalidRequest_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
 
@@ -151,6 +155,142 @@ func TestGetSession_InvalidRequest(t *testing.T) {
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: ""})
 	assertStatusHasCode(t, err, codes.InvalidArgument)
 	assert.Nil(t, resp)
+}
+
+func TestListSessionsForUser_ReturnsSessionsOrderedByUpdatedAt(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	member := builder.NewMemberBuilder(t).
+		WithName("Member 1").
+		WithUsername("member1").
+		Build(db)
+
+	type sessionData struct {
+		Name      string
+		UpdatedAt time.Time
+	}
+
+	var sessions []sessionData
+	baseTime := time.Now()
+
+	const SessionsToMake = 50
+	for i := 0; i < SessionsToMake; i++ {
+		sessions = append(sessions, sessionData{
+			Name:      fmt.Sprintf("session-%02d", i),
+			UpdatedAt: baseTime.Add(-time.Duration(i) * time.Hour),
+		})
+	}
+
+	rand.Shuffle(len(sessions), func(i, j int) {
+		sessions[i], sessions[j] = sessions[j], sessions[i]
+	})
+
+	for _, s := range sessions {
+		builder.NewSessionBuilder(t).
+			WithName(s.Name).
+			WithUpdatedAt(s.UpdatedAt).
+			WithExistingMember(member).
+			Build(db)
+	}
+
+	res, err := sessionServer.ListSessionsForUser(context.Background(), &sessionpb.ListSessionsForUserRequest{
+		UserId: member.ID,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Len(t, res.Sessions, SessionsToMake)
+
+	for i := 0; i < len(res.Sessions); i++ {
+		current := res.Sessions[i]
+		expectedName := fmt.Sprintf("session-%02d", i)
+		assert.Equal(t, expectedName, current.Name)
+	}
+}
+
+func TestListSessionsForUser_When_ProvidedWithPagingData_ReturnsPagedResults(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	member := builder.NewMemberBuilder(t).
+		WithName("Member 1").
+		WithUsername("member1").
+		Build(db)
+
+	sessionIdentifiers := make([]string, 50) // This slice should contain the ids of the items in the order returned.
+	const SessionsToMake = 50
+	for i := 0; i < SessionsToMake; i++ {
+		ssn := builder.NewSessionBuilder(t).
+			WithName(fmt.Sprintf("session-%02d", i)).
+			// Adding the following updated time should ensure they are returned in
+			// the order they are inserted; most recently updated first.
+			WithUpdatedAt(time.Now().Add(time.Duration(SessionsToMake-i) * time.Hour)).
+			WithExistingMember(member).
+			Build(db)
+		sessionIdentifiers[i] = ssn.ID
+	}
+
+	testCases := []struct {
+		name            string
+		size            int32
+		token           string
+		expectedCount   int
+		expectedFirstID string
+	}{
+		{
+			name:          "size of 0 returns all items",
+			size:          0,
+			expectedCount: SessionsToMake,
+		},
+		{
+			name:          "size of < 0 returns all items",
+			size:          -1,
+			expectedCount: SessionsToMake,
+		},
+		{
+			name:          "size over 0 returns n items",
+			size:          4,
+			expectedCount: 4,
+		},
+		{
+			name:          "size of 1 returns single item",
+			size:          1,
+			expectedCount: 1,
+		},
+		{
+			name:          "size over total items returns all items",
+			size:          51,
+			expectedCount: SessionsToMake,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := sessionServer.ListSessionsForUser(context.Background(), &sessionpb.ListSessionsForUserRequest{
+				UserId:    member.ID,
+				PageSize:  tc.size,
+				PageToken: tc.token,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, res)
+			require.Len(t, res.Sessions, tc.expectedCount)
+			require.Len(t, sessionIdentifiers, 50)
+
+			if tc.expectedFirstID != "" {
+				assert.Equal(t, tc.expectedFirstID, res.Sessions[0].SessionId)
+			}
+		})
+	}
 }
 
 func TestCreateSession_Success(t *testing.T) {

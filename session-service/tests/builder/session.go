@@ -3,8 +3,10 @@ package builder
 import (
 	"database/sql"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"testing"
+	"time"
 )
 
 type SessionBuilder struct {
@@ -12,6 +14,7 @@ type SessionBuilder struct {
 	model               session.Session
 	isActiveSetManually bool
 	members             []SessionMemberParams
+	existingMembers     []session.Member
 	transactions        []SessionTransactionParams
 }
 
@@ -38,6 +41,11 @@ func (b *SessionBuilder) WithIsActive(isActive bool) *SessionBuilder {
 	return b
 }
 
+func (b *SessionBuilder) WithUpdatedAt(t time.Time) *SessionBuilder {
+	b.model.UpdatedAt = t
+	return b
+}
+
 type SessionMemberParams struct {
 	ID       string
 	Name     string
@@ -47,6 +55,11 @@ type SessionMemberParams struct {
 
 func (b *SessionBuilder) WithMember(m SessionMemberParams) *SessionBuilder {
 	b.members = append(b.members, m)
+	return b
+}
+
+func (b *SessionBuilder) WithExistingMember(m session.Member) *SessionBuilder {
+	b.existingMembers = append(b.existingMembers, m)
 	return b
 }
 
@@ -68,6 +81,12 @@ func (b *SessionBuilder) WithTransaction(t SessionTransactionParams) *SessionBui
 }
 
 func (b *SessionBuilder) Build(db *sql.DB) session.Session {
+	insertSession := "insert into sessions (id, name, is_active, updated_at) values (?, ?, ?, ?);"
+	insertMember := "insert into members (id, name, username) values (?, ?, ?);"
+	insertSessionMember := "insert into session_members (session_id, member_id, is_owner) values (?, ?, ?);"
+	insertTrans := "insert into transactions (id, session_id, member_id) values (?, ?, ?);"
+	insertTransLine := "insert into transaction_lines (transaction_id, member_id, amount) values (?, ?, ?);"
+
 	if !b.isActiveSetManually {
 		b.model.IsActive = true
 	}
@@ -76,47 +95,29 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 		b.model.ID = uuid.New().String()
 	}
 
-	_, err := db.Exec(`
-		insert into sessions (id, name, is_active) 
-		values (?, ?, ?);`,
-		b.model.ID, b.model.Name, b.model.IsActive)
-
-	if err != nil {
-		b.t.Fatalf("failed to insert session: %v", err)
-	}
+	_, err := db.Exec(insertSession, b.model.ID, b.model.Name, b.model.IsActive, b.model.UpdatedAt)
+	require.NoError(b.t, err)
 
 	for _, m := range b.members {
-		_, err := db.Exec(`
-			insert into members (id, name, username) 
-			values (?, ?, ?);`,
-			m.ID, m.Name, m.Username)
+		_, err := db.Exec(insertMember, m.ID, m.Name, m.Username)
+		require.NoError(b.t, err)
 
-		if err != nil {
-			b.t.Fatalf("failed to insert member: %v", err)
-		}
-
-		_, err = db.Exec(`
-			insert into session_members (session_id, member_id, is_owner) 
-			values (?, ?, ?);`,
-			b.model.ID, m.ID, m.IsOwner)
-
-		if err != nil {
-			b.t.Fatalf("failed to insert session member: %v", err)
-		}
+		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, m.IsOwner)
+		require.NoError(b.t, err)
 	}
 
-	insertTransaction := "insert into transactions (id, session_id, member_id) values (?, ?, ?);"
-	insertTransactionLine := "insert into transaction_lines (transaction_id, member_id, amount) values (?, ?, ?);"
+	for _, m := range b.existingMembers {
+		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, false)
+		require.NoError(b.t, err)
+	}
+
 	for _, t := range b.transactions {
-		_, err := db.Exec(insertTransaction, t.ID, t.SessionID, t.CreatorID)
-		if err != nil {
-			b.t.Fatalf("failed to insert transaction: %v", err)
-		}
+		_, err := db.Exec(insertTrans, t.ID, t.SessionID, t.CreatorID)
+		require.NoError(b.t, err)
+
 		for _, line := range t.Lines {
-			_, err := db.Exec(insertTransactionLine, t.ID, line.MemberID, line.Amount)
-			if err != nil {
-				b.t.Fatalf("failed to insert transaction line: %v", err)
-			}
+			_, err := db.Exec(insertTransLine, t.ID, line.MemberID, line.Amount)
+			require.NoError(b.t, err)
 		}
 	}
 

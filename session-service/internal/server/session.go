@@ -125,17 +125,17 @@ func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.Li
 		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
 
-	// Fetch sessions with members from the database.
 	rows, err := s.sessionRepository.ListSessionsForUser(ctx, session.ListSessionsForUserParams{
-		MemberID:  r.UserId,
-		PageToken: r.PageToken,
-		PageSize:  r.PageSize,
+		MemberID: r.UserId,
+		PageSize: r.PageSize,
 	})
 	if err != nil {
 		s.logger.Error("failed to list sessions", "user_id", r.UserId, "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to list sessions: %v", err)
 	}
 
+	// Maintain order using a slice
+	var sessions []*sessionpb.SessionResponse
 	sessionsMap := make(map[string]*sessionpb.SessionResponse, len(rows))
 
 	for _, row := range rows {
@@ -149,20 +149,14 @@ func (s *SessionServer) ListSessionsForUser(ctx context.Context, r *sessionpb.Li
 				Total:     row.TotalAmount,
 			}
 			sessionsMap[row.ID] = ssn
+			sessions = append(sessions, ssn)
 		}
 
-		if row.MemberID != "" {
-			ssn.Members = append(ssn.Members, &sessionpb.SessionMember{
-				UserId:   row.MemberID,
-				Name:     row.MemberName,
-				Username: row.MemberUsername,
-			})
-		}
-	}
-
-	sessions := make([]*sessionpb.SessionResponse, 0, len(sessionsMap))
-	for _, ssn := range sessionsMap {
-		sessions = append(sessions, ssn)
+		ssn.Members = append(ssn.Members, &sessionpb.SessionMember{
+			UserId:   row.MemberID,
+			Name:     row.MemberName,
+			Username: row.MemberUsername,
+		})
 	}
 
 	pageToken := ""

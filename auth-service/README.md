@@ -7,7 +7,7 @@
 A user can be registered by providing the name, username, password, and verification password.
 
 ```shell
-grpcurl -plaintext -d '{"name": "Mike", "username": "thisisthemurph", "password": "password", "verification_password": "password"}' localhost:50054 Auth.Signup
+grpcurl -plaintext -d '{"name": "Mike", "username": "thisisthemurph", "password": "password", "verification_password": "password"}' localhost:50054 auth.service.Auth.Signup
 ```
 
 - Creates a new user in the `users` table

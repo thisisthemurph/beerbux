@@ -258,6 +258,54 @@ func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, 
 	return items, nil
 }
 
+const listSessionMembers = `-- name: ListSessionMembers :many
+select m.id, m.name, m.username, m.created_at, m.updated_at, sm.is_owner, sm.is_admin
+from members m
+join session_members sm on m.id = sm.member_id
+where sm.session_id = ?
+`
+
+type ListSessionMembersRow struct {
+	ID        string
+	Name      string
+	Username  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	IsOwner   bool
+	IsAdmin   bool
+}
+
+func (q *Queries) ListSessionMembers(ctx context.Context, sessionID string) ([]ListSessionMembersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSessionMembers, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSessionMembersRow
+	for rows.Next() {
+		var i ListSessionMembersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsOwner,
+			&i.IsAdmin,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSessionsForUser = `-- name: ListSessionsForUser :many
 with paged_sessions AS (
     select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total_amount

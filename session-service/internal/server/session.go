@@ -70,7 +70,7 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 		return nil, status.Errorf(codes.Internal, "failed to get session transaction lines: %v", err)
 	}
 
-	members, err := s.sessionRepository.ListMembers(ctx, r.SessionId)
+	members, err := s.sessionRepository.ListSessionMembers(ctx, r.SessionId)
 	if err != nil {
 		s.logger.Error("failed to list members", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to list members: %v", err)
@@ -82,6 +82,8 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 			UserId:   m.ID,
 			Name:     m.Name,
 			Username: m.Username,
+			IsOwner:  m.IsOwner,
+			IsAdmin:  m.IsAdmin,
 		})
 	}
 

@@ -46,6 +46,8 @@ message SessionMember {
   string user_id = 1;
   string name = 2;
   string username = 3;
+  bool is_owner = 4;
+  bool is_admin = 5;
 }
 
 message ListSessionsForUserRequest {

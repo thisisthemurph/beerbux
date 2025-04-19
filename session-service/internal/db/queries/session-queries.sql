@@ -59,6 +59,12 @@ from members m
 join session_members sm on m.id = sm.member_id
 where sm.session_id = ?;
 
+-- name: ListSessionMembers :many
+select m.*, sm.is_owner, sm.is_admin
+from members m
+join session_members sm on m.id = sm.member_id
+where sm.session_id = ?;
+
 -- name: UpsertMember :exec
 insert into members (id, name, username)
 values (?, ?, ?)

@@ -53,37 +53,41 @@ func TestGetSession_GetSession_Success(t *testing.T) {
 	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	sessionID := uuid.New()
-	member1ID := uuid.NewString()
-	member2ID := uuid.NewString()
-	member3ID := uuid.NewString()
 	transactionID := uuid.NewString()
+
+	member1Params := builder.SessionMemberParams{
+		ID:       uuid.NewString(),
+		Name:     "member1",
+		Username: "username1",
+		IsOwner:  true,
+		IsAdmin:  true,
+	}
+
+	member2Params := builder.SessionMemberParams{
+		ID:       uuid.NewString(),
+		Name:     "member2",
+		Username: "username2",
+	}
+
+	member3Params := builder.SessionMemberParams{
+		ID:       uuid.NewString(),
+		Name:     "member3",
+		Username: "username3",
+	}
 
 	ssn := builder.NewSessionBuilder(t).
 		WithID(sessionID).
 		WithName("Test Session").
-		WithMember(builder.SessionMemberParams{
-			ID:       member1ID,
-			Name:     "member1",
-			Username: "username1",
-			IsOwner:  true,
-		}).
-		WithMember(builder.SessionMemberParams{
-			ID:       member2ID,
-			Name:     "member2",
-			Username: "username2",
-		}).
-		WithMember(builder.SessionMemberParams{
-			ID:       member3ID,
-			Name:     "member3",
-			Username: "username3",
-		}).
+		WithMember(member1Params).
+		WithMember(member2Params).
+		WithMember(member3Params).
 		WithTransaction(builder.SessionTransactionParams{
 			ID:        transactionID,
 			SessionID: sessionID.String(),
-			CreatorID: member1ID,
+			CreatorID: member1Params.ID,
 			Lines: []builder.SessionTransactionLine{
-				{MemberID: member2ID, Amount: 1},
-				{MemberID: member3ID, Amount: 1},
+				{MemberID: member2Params.ID, Amount: 1},
+				{MemberID: member3Params.ID, Amount: 1},
 			},
 		}).
 		Build(db)
@@ -100,26 +104,28 @@ func TestGetSession_GetSession_Success(t *testing.T) {
 
 	assert.Len(t, resp.Transactions, 1)
 	assert.Equal(t, transactionID, transaction.TransactionId)
-	assert.Equal(t, member1ID, transaction.UserId)
+	assert.Equal(t, member1Params.ID, transaction.UserId)
 	assert.NotEmpty(t, transaction.CreatedAt)
 	assert.Len(t, transaction.Lines, 2)
 	// Hack because we don't know the order of the transaction lines
-	assert.True(t, transaction.Lines[0].UserId == member2ID || transaction.Lines[0].UserId == member3ID)
-	assert.True(t, transaction.Lines[1].UserId == member2ID || transaction.Lines[1].UserId == member3ID)
+	assert.True(t, transaction.Lines[0].UserId == member2Params.ID || transaction.Lines[0].UserId == member3Params.ID)
+	assert.True(t, transaction.Lines[1].UserId == member2Params.ID || transaction.Lines[1].UserId == member3Params.ID)
 	assert.NotEqual(t, transaction.Lines[0].UserId, transaction.Lines[1].UserId)
 
 	// Check the members
 
-	expectedMembers := map[string]string{
-		"member1": "username1",
-		"member2": "username2",
-		"member3": "username3",
+	expectedMembers := map[string]builder.SessionMemberParams{
+		"member1": member1Params,
+		"member2": member2Params,
+		"member3": member3Params,
 	}
 
 	for _, m := range resp.Members {
-		expectedUsername, exists := expectedMembers[m.Name]
+		expectedMember, exists := expectedMembers[m.Name]
 		assert.True(t, exists)
-		assert.Equal(t, expectedUsername, m.Username)
+		assert.Equal(t, expectedMember.Username, m.Username)
+		assert.Equal(t, expectedMember.IsOwner, m.IsOwner)
+		assert.Equal(t, expectedMember.IsAdmin, m.IsAdmin)
 		delete(expectedMembers, m.Name)
 	}
 

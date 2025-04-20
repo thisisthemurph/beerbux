@@ -7,7 +7,6 @@ import {
 	PrimaryActionCard,
 	PrimaryActionCardButtonItem,
 	PrimaryActionCardContent,
-	PrimaryActionCardLinkItem,
 } from "@/components/primary-action-card.tsx";
 import { Beer, SquarePlus } from "lucide-react";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
@@ -15,6 +14,7 @@ import { TransactionListing } from "@/features/session/detail/transaction-listin
 import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
 import type { Session, TransactionMemberAmounts, User } from "@/api/types.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
+import {AddMemberDrawer} from "@/features/session/detail/add-member/add-member-drawer.tsx";
 
 type SessionDetailContentProps = {
 	session: Session;
@@ -27,6 +27,7 @@ type SessionDetailContentProps = {
 	handleNewTransaction: (
 		transaction: TransactionMemberAmounts,
 	) => Promise<void>;
+	handleAddMember: (username: string) => Promise<void>;
 };
 
 export function SessionDetailContent({
@@ -34,8 +35,10 @@ export function SessionDetailContent({
 	user,
 	onMemberAdminStateUpdate,
 	handleNewTransaction,
+	handleAddMember,
 }: SessionDetailContentProps) {
 	const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+	const [addMemberDrawerOpen, setAddMemberDrawerOpen] = useState(false);
 	const currentMember = session?.members.find((m) => m.id === user?.id);
 	const otherSessionMembers = (session?.members ?? [])
 		.filter((m) => m.id !== user.id)
@@ -61,10 +64,10 @@ export function SessionDetailContent({
 				<PrimaryActionCard>
 					<PrimaryActionCardContent>
 						{currentMember.isAdmin && (
-							<PrimaryActionCardLinkItem
-								to={`/session/${session.id}/member`}
+							<PrimaryActionCardButtonItem
 								text="Add a member"
 								icon={<SquarePlus className="text-primary w-8 h-8" />}
+								onClick={() => setAddMemberDrawerOpen(true)}
 							/>
 						)}
 						{session.members.length > 1 && (
@@ -101,6 +104,15 @@ export function SessionDetailContent({
 				}}
 				open={createDrawerOpen}
 				onOpenChange={(open) => setCreateDrawerOpen(open)}
+			/>
+
+			<AddMemberDrawer
+				onMemberAdd={async (username) => {
+					await handleAddMember(username);
+					setAddMemberDrawerOpen(false);
+				}}
+				open={addMemberDrawerOpen}
+				onOpenChange={(open) => setAddMemberDrawerOpen(open)}
 			/>
 		</>
 	);

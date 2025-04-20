@@ -24,6 +24,7 @@ export default function SessionDetailPage() {
 	const queryClient = useQueryClient();
 	const { getSession, updateSessionMemberAdmin } = useSessionClient();
 	const { createTransaction } = useTransactionClient();
+	const { addMemberToSession } = useSessionClient();
 	useBackNavigation("/");
 
 	const url = `${SSE_BASE_URL}/session?session_id=${sessionId}&user_id=${user.id}`;
@@ -108,6 +109,20 @@ export default function SessionDetailPage() {
 		toast.success("You bought a round!");
 	}
 
+	async function handleAddMember(username: string) {
+		if (!sessionId) return;
+		const {err} = await tryCatch(addMemberToSession(sessionId, username));
+		if (err) {
+			toast.error("There was an issue adding the member.", {
+				description: err.message,
+			});
+			return;
+		}
+
+		await queryClient.invalidateQueries({queryKey: ["session", sessionId]});
+		toast.success(`${username} has been added to the session.`);
+	}
+
 	if (sessionQuery.isError) {
 		return (
 			<PageError
@@ -134,6 +149,7 @@ export default function SessionDetailPage() {
 			session={sessionQuery.data}
 			user={user}
 			handleNewTransaction={handleNewTransaction}
+			handleAddMember={handleAddMember}
 			onMemberAdminStateUpdate={(sessionId, memberId, newAdminState) =>
 				updateMemberAdminStateMutation.mutate({
 					sessionId,

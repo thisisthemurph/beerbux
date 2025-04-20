@@ -37,7 +37,7 @@ function InnerUserAvatar({
 	return (
 		<Avatar className={cn(
 			"size-10 transition-all duration-300 ease-in-out",
-			variant === "prominent" && "ring-4 ring-offset-4 ring-primary/40 hover:ring-8 hover:ring-offset-0")}
+			variant === "prominent" && "ring-4 ring-offset-4 dark:ring-offset-0 ring-primary/75 dark:ring-primary hover:ring-8 hover:ring-offset-0")}
 		>
 			<AvatarFallback
 				style={{

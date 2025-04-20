@@ -5,6 +5,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
+import {cn} from "@/lib/utils.ts";
 
 type UserAvatarVariant = "default" | "prominent";
 
@@ -34,34 +35,17 @@ function InnerUserAvatar({
 	variant,
 }: { data: AvatarData; variant: UserAvatarVariant }) {
 	return (
-		<Avatar className="size-10">
+		<Avatar className={cn(
+			"size-10 transition-all duration-300 ease-in-out",
+			variant === "prominent" && "ring-4 ring-offset-4 ring-primary/40 hover:ring-8 hover:ring-offset-0")}
+		>
 			<AvatarFallback
-				className="border-2 border-dotted"
 				style={{
 					backgroundColor: data.color,
-					borderColor:
-						data.color && variant === "prominent"
-							? darkenHex(data.color, 40)
-							: data.color,
 				}}
 			>
 				{data.initial ?? "?"}
 			</AvatarFallback>
 		</Avatar>
 	);
-}
-
-function darkenHex(hex: string, percent: number) {
-	const hexValue = hex.replace(/^#/, "");
-
-	let r = Number.parseInt(hexValue.substring(0, 2), 16);
-	let g = Number.parseInt(hexValue.substring(2, 4), 16);
-	let b = Number.parseInt(hexValue.substring(4, 6), 16);
-
-	r = Math.max(0, Math.floor(r * (1 - percent / 100)));
-	g = Math.max(0, Math.floor(g * (1 - percent / 100)));
-	b = Math.max(0, Math.floor(b * (1 - percent / 100)));
-
-	const toHex = (c: number) => c.toString(16).padStart(2, "0");
-	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }

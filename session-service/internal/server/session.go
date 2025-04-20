@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	ErrSessionNotFound                = status.Error(codes.NotFound, "session not found")
-	ErrUserNotFound                   = status.Error(codes.NotFound, "user not found")
-	ErrSessionMustHaveAtLeastOneAdmin = status.Error(codes.FailedPrecondition, "session must have at least one admin")
+	ErrSessionNotFound                   = status.Error(codes.NotFound, "session not found")
+	ErrUserNotFound                      = status.Error(codes.NotFound, "user not found")
+	ErrSessionMustHaveAtLeastOneAdmin    = status.Error(codes.FailedPrecondition, "session must have at least one admin")
+	ErrorSessionMustHaveAtLeastOneMember = status.Error(codes.FailedPrecondition, "session must have at least one member")
 )
 
 type SessionServer struct {
@@ -339,6 +340,47 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 	}
 
 	return &sessionpb.EmptyResponse{}, nil
+}
+
+func (s *SessionServer) RemoveMemberFromSession(ctx context.Context, r *sessionpb.RemoveMemberFromSessionRequest) (*sessionpb.EmptyResponse, error) {
+	memberCount, err := s.sessionRepository.CountSessionMembers(ctx, r.SessionId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to count session members: %v", err)
+	}
+	if memberCount <= 1 {
+		return nil, ErrorSessionMustHaveAtLeastOneMember
+	}
+
+	memberToRemove, err := s.sessionRepository.GetSessionMember(ctx, session.GetSessionMemberParams{
+		ID:        r.UserId,
+		SessionID: r.SessionId,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, status.Errorf(codes.Internal, "failed to fetch member from session: %v", err)
+	}
+
+	if memberToRemove.IsAdmin {
+		// Ensure the member is not the only admin.
+		count, err := s.sessionRepository.CountSessionAdmins(ctx, r.SessionId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to fetch members: %v", err)
+		}
+		if count <= 1 {
+			return nil, ErrSessionMustHaveAtLeastOneAdmin
+		}
+	}
+
+	err = s.sessionRepository.DeleteSessionMember(ctx, session.DeleteSessionMemberParams{
+		SessionID: r.SessionId,
+		MemberID:  r.UserId,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to remove member from session: %v", err)
+	}
+	return nil, nil
 }
 
 func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *sessionpb.UpdateSessionMemberAdminStateRequest) (*sessionpb.EmptyResponse, error) {

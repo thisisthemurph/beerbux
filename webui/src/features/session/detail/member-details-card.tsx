@@ -33,6 +33,7 @@ type MemberDetailsCardProps = {
 	avatarData: Record<string, AvatarData>;
 	showMemberDropdownMenu: boolean;
 	onChangeMemberAdminState: (memberId: string, newAdminState: boolean) => void;
+	onRemoveMember: (memberId: string) => void;
 };
 
 export function MemberDetailsCard({
@@ -40,6 +41,7 @@ export function MemberDetailsCard({
 	avatarData,
 	showMemberDropdownMenu,
 	onChangeMemberAdminState,
+	onRemoveMember,
 }: MemberDetailsCardProps) {
 	const [openInformationDialog, InformationDialog] = useInformationDialog();
 	const user = useUserStore((state) => state.user);
@@ -94,6 +96,7 @@ export function MemberDetailsCard({
 											onChangeAdminState={() =>
 												onChangeMemberAdminState(m.id, !m.isAdmin)
 											}
+											onRemoveMember={() => onRemoveMember(m.id)}
 										/>
 									)}
 								</div>
@@ -110,12 +113,14 @@ type MemberDropdownMenuProps = {
 	username: string;
 	isAdmin: boolean;
 	onChangeAdminState: () => void;
+	onRemoveMember: () => void;
 };
 
 function MemberDropdownMenu({
 	username,
 	isAdmin,
 	onChangeAdminState,
+	onRemoveMember,
 }: MemberDropdownMenuProps) {
 	return (
 		<DropdownMenu>
@@ -127,10 +132,7 @@ function MemberDropdownMenu({
 					<EllipsisVertical className="size-6 text-muted-foreground group-hover:text-primary" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent
-				className="min-w-46 mx-4"
-				onClick={onChangeAdminState}
-			>
+			<DropdownMenuContent className="min-w-46 mx-4">
 				<DropdownMenuLabel className="flex items-center justify-between font-semibold text-lg">
 					<span>{username}</span>
 					{isAdmin && (
@@ -140,22 +142,21 @@ function MemberDropdownMenu({
 					)}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				{!isAdmin && (
-					<DropdownMenuItem
-						className="text-lg gap-4 cursor-pointer"
-						onClick={onChangeAdminState}
-					>
-						<ShieldUser className="size-6" />
-						<span>Promote to admin</span>
-					</DropdownMenuItem>
-				)}
-				{isAdmin && (
-					<DropdownMenuItem className="text-lg gap-4 cursor-pointer">
+				<DropdownMenuItem
+					className="text-lg gap-4 cursor-pointer"
+					onClick={onChangeAdminState}
+				>
+					{isAdmin ? (
 						<ShieldMinus className="size-6" />
-						<span>Remove admin</span>
-					</DropdownMenuItem>
-				)}
-				<DropdownMenuItem className="text-lg gap-4 cursor-pointer">
+					) : (
+						<ShieldUser className="size-6" />
+					)}
+					<span>{isAdmin ? "Remove admin" : "Promote to admin"}</span>
+				</DropdownMenuItem>
+				<DropdownMenuItem
+					className="text-lg gap-4 cursor-pointer"
+					onClick={onRemoveMember}
+				>
 					<UserMinus className="size-6" />
 					<span>Remove from session</span>
 				</DropdownMenuItem>

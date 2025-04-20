@@ -16,9 +16,12 @@ import {
 	PauseCircle,
 } from "lucide-react";
 
-export function SessionMenu({
-	showAdminActions,
-}: { showAdminActions: boolean }) {
+type SessionMenuProps = {
+	showAdminActions: boolean;
+	onLeave: () => void;
+};
+
+export function SessionMenu({ showAdminActions, onLeave }: SessionMenuProps) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
 
 	const handleCloseSession = () => {
@@ -55,9 +58,7 @@ export function SessionMenu({
 				"After leaving the session, if you would like to rejoin, you will need to be invited again.",
 			confirmText: "Leave session",
 			cancelText: "Stay",
-			onConfirm: () => {
-				console.log("leave session not implemented");
-			},
+			onConfirm: onLeave,
 		});
 	};
 

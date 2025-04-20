@@ -14,7 +14,7 @@ import { TransactionListing } from "@/features/session/detail/transaction-listin
 import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
 import type { Session, TransactionMemberAmounts, User } from "@/api/types.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
-import {AddMemberDrawer} from "@/features/session/detail/add-member/add-member-drawer.tsx";
+import { AddMemberDrawer } from "@/features/session/detail/add-member/add-member-drawer.tsx";
 
 type SessionDetailContentProps = {
 	session: Session;
@@ -28,6 +28,8 @@ type SessionDetailContentProps = {
 		transaction: TransactionMemberAmounts,
 	) => Promise<void>;
 	handleAddMember: (username: string) => Promise<void>;
+	onLeaveSession: () => void;
+	onRemoveMember: (memberId: string) => void;
 };
 
 export function SessionDetailContent({
@@ -36,6 +38,8 @@ export function SessionDetailContent({
 	onMemberAdminStateUpdate,
 	handleNewTransaction,
 	handleAddMember,
+	onLeaveSession,
+	onRemoveMember,
 }: SessionDetailContentProps) {
 	const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 	const [addMemberDrawerOpen, setAddMemberDrawerOpen] = useState(false);
@@ -55,7 +59,10 @@ export function SessionDetailContent({
 	return (
 		<>
 			<PageHeading title={session.name}>
-				<SessionMenu showAdminActions={currentMember.isAdmin} />
+				<SessionMenu
+					showAdminActions={currentMember.isAdmin}
+					onLeave={onLeaveSession}
+				/>
 			</PageHeading>
 
 			<OverviewCard total={session.total} />
@@ -88,6 +95,7 @@ export function SessionDetailContent({
 				onChangeMemberAdminState={(memberId, newAdminState) =>
 					onMemberAdminStateUpdate(session.id, memberId, newAdminState)
 				}
+				onRemoveMember={onRemoveMember}
 			/>
 
 			<TransactionListing

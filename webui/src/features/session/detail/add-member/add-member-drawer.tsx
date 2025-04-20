@@ -16,7 +16,10 @@ interface AddMemberDrawerProps extends DrawerToggleProps {
 	onMemberAdd: (username: string) => void;
 }
 
-export function AddMemberDrawer({ onMemberAdd, ...drawerToggleProps }: AddMemberDrawerProps) {
+export function AddMemberDrawer({
+	onMemberAdd,
+	...drawerToggleProps
+}: AddMemberDrawerProps) {
 	return (
 		<Drawer {...drawerToggleProps}>
 			<DrawerContent>

@@ -8,7 +8,7 @@ import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import {
 	type SessionTransactionCreatedMessage,
@@ -24,7 +24,9 @@ export default function SessionDetailPage() {
 	const queryClient = useQueryClient();
 	const { getSession, updateSessionMemberAdmin } = useSessionClient();
 	const { createTransaction } = useTransactionClient();
-	const { addMemberToSession } = useSessionClient();
+	const { addMemberToSession, leaveSession, removeMemberFromSession } =
+		useSessionClient();
+	const navigate = useNavigate();
 	useBackNavigation("/");
 
 	const url = `${SSE_BASE_URL}/session?session_id=${sessionId}&user_id=${user.id}`;
@@ -39,6 +41,53 @@ export default function SessionDetailPage() {
 	const currentMember = sessionQuery.data?.members.find(
 		(m) => m.id === user.id,
 	);
+
+	async function handleLeaveSession() {
+		if (!sessionId) {
+			toast.error("Could not determine the ID of the current session.");
+			return;
+		}
+
+		const { err } = await tryCatch(leaveSession(sessionId));
+		if (err) {
+			toast.error("There was an issue leaving the session.", {
+				description: err.message,
+			});
+			return;
+		}
+
+		toast.success("You have left the session.");
+		navigate("/");
+	}
+
+	async function handleRemoveMemberFromSession(memberId: string) {
+		if (!sessionId) {
+			toast.error("Could not determine the ID of the current session.");
+			return;
+		}
+
+		const { err } = await tryCatch(
+			removeMemberFromSession(sessionId, memberId),
+		);
+		const member = sessionQuery.data?.members.find((m) => m.id === memberId);
+
+		if (err) {
+			toast.error(
+				`There was an issue removing ${member?.username ?? "the member"} from the session.`,
+				{
+					description: err.message,
+				},
+			);
+			return;
+		}
+
+		toast.success(
+			`${member?.username ?? "The member"} has been removed from the session.`,
+		);
+		await queryClient.invalidateQueries({
+			queryKey: ["session", sessionId],
+		});
+	}
 
 	const updateMemberAdminStateMutation = useMutation({
 		mutationFn: async (data: {
@@ -111,7 +160,7 @@ export default function SessionDetailPage() {
 
 	async function handleAddMember(username: string) {
 		if (!sessionId) return;
-		const {err} = await tryCatch(addMemberToSession(sessionId, username));
+		const { err } = await tryCatch(addMemberToSession(sessionId, username));
 		if (err) {
 			toast.error("There was an issue adding the member.", {
 				description: err.message,
@@ -119,7 +168,7 @@ export default function SessionDetailPage() {
 			return;
 		}
 
-		await queryClient.invalidateQueries({queryKey: ["session", sessionId]});
+		await queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
 		toast.success(`${username} has been added to the session.`);
 	}
 
@@ -157,6 +206,8 @@ export default function SessionDetailPage() {
 					newAdminState,
 				})
 			}
+			onLeaveSession={handleLeaveSession}
+			onRemoveMember={handleRemoveMemberFromSession}
 		/>
 	);
 }

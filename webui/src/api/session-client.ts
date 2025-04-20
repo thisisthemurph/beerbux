@@ -36,11 +36,28 @@ function useSessionClient() {
 		});
 	};
 
+	const leaveSession = async (sessionId: string) => {
+		return apiFetch<void>(`/session/${sessionId}/leave`, {
+			method: "DELETE",
+		});
+	};
+
+	const removeMemberFromSession = async (
+		sessionId: string,
+		memberId: string,
+	) => {
+		return apiFetch<void>(`/session/${sessionId}/member/${memberId}`, {
+			method: "DELETE",
+		});
+	};
+
 	return {
 		getSession,
 		createSession,
 		addMemberToSession,
 		updateSessionMemberAdmin,
+		leaveSession,
+		removeMemberFromSession,
 	};
 }
 

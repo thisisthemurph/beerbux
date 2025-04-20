@@ -96,13 +96,19 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 }
 
 func connectToDatabase(dbCfg config.DBConfig) (*sql.DB, error) {
-	db, err := sql.Open(dbCfg.Driver, dbCfg.URI)
+	connectionString := fmt.Sprintf("file:%s?_busy_timeout=3000&cache=shared&_fk=true", dbCfg.URI)
+	db, err := sql.Open(dbCfg.Driver, connectionString)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := db.Ping(); err != nil {
 		return nil, err
+	}
+
+	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	if err != nil {
+		return nil, fmt.Errorf("failed to set WAL mode: %w", err)
 	}
 
 	if err := migrateDatabase(db, dbCfg.Driver); err != nil {

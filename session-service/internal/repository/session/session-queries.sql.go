@@ -97,6 +97,18 @@ func (q *Queries) CountSessionAdmins(ctx context.Context, sessionID string) (int
 	return count, err
 }
 
+const countSessionMembers = `-- name: CountSessionMembers :one
+select count(*) from session_members
+where session_id = ?
+`
+
+func (q *Queries) CountSessionMembers(ctx context.Context, sessionID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countSessionMembers, sessionID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createSession = `-- name: CreateSession :one
 insert into sessions (id, name)
 values (?, ?)
@@ -119,6 +131,20 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteSessionMember = `-- name: DeleteSessionMember :exec
+delete from session_members where session_id = ? and member_id = ?
+`
+
+type DeleteSessionMemberParams struct {
+	SessionID string
+	MemberID  string
+}
+
+func (q *Queries) DeleteSessionMember(ctx context.Context, arg DeleteSessionMemberParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionMember, arg.SessionID, arg.MemberID)
+	return err
 }
 
 const getMember = `-- name: GetMember :one
@@ -170,6 +196,43 @@ func (q *Queries) GetSession(ctx context.Context, id string) (GetSessionRow, err
 	return i, err
 }
 
+const getSessionMember = `-- name: GetSessionMember :one
+select m.id, m.name, m.username, m.created_at, m.updated_at, sm.is_owner, sm.is_admin
+from members m
+join session_members sm on m.id = sm.member_id
+where m.id = ? and sm.session_id = ?
+`
+
+type GetSessionMemberParams struct {
+	ID        string
+	SessionID string
+}
+
+type GetSessionMemberRow struct {
+	ID        string
+	Name      string
+	Username  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	IsOwner   bool
+	IsAdmin   bool
+}
+
+func (q *Queries) GetSessionMember(ctx context.Context, arg GetSessionMemberParams) (GetSessionMemberRow, error) {
+	row := q.db.QueryRowContext(ctx, getSessionMember, arg.ID, arg.SessionID)
+	var i GetSessionMemberRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsOwner,
+		&i.IsAdmin,
+	)
+	return i, err
+}
+
 const getSessionTransactionLines = `-- name: GetSessionTransactionLines :many
 select
     t.id as transaction_id,
@@ -208,42 +271,6 @@ func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID stri
 			&i.CreatedAt,
 			&i.MemberID,
 			&i.Amount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listMembers = `-- name: ListMembers :many
-select m.id, m.name, m.username, m.created_at, m.updated_at
-from members m
-join session_members sm on m.id = sm.member_id
-where sm.session_id = ?
-`
-
-func (q *Queries) ListMembers(ctx context.Context, sessionID string) ([]Member, error) {
-	rows, err := q.db.QueryContext(ctx, listMembers, sessionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Member
-	for rows.Next() {
-		var i Member
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Username,
-			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -407,32 +434,6 @@ type UpdateMemberParams struct {
 func (q *Queries) UpdateMember(ctx context.Context, arg UpdateMemberParams) error {
 	_, err := q.db.ExecContext(ctx, updateMember, arg.Name, arg.Username, arg.ID)
 	return err
-}
-
-const updateSession = `-- name: UpdateSession :one
-update sessions
-set name = ?,
-    updated_at = current_timestamp
-where id = ?
-returning id, name, is_active, created_at, updated_at
-`
-
-type UpdateSessionParams struct {
-	Name string
-	ID   string
-}
-
-func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, updateSession, arg.Name, arg.ID)
-	var i Session
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.IsActive,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }
 
 const updateSessionMemberAdmin = `-- name: UpdateSessionMemberAdmin :exec

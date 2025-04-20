@@ -53,11 +53,11 @@ where id = ?;
 -- name: GetMember :one
 select * from members where id = ? limit 1;
 
--- name: ListMembers :many
-select m.*
+-- name: GetSessionMember :one
+select m.*, sm.is_owner, sm.is_admin
 from members m
 join session_members sm on m.id = sm.member_id
-where sm.session_id = ?;
+where m.id = ? and sm.session_id = ?;
 
 -- name: ListSessionMembers :many
 select m.*, sm.is_owner, sm.is_admin
@@ -85,6 +85,9 @@ insert into session_members (session_id, member_id, is_owner, is_admin)
 values (?, ?, ?, ?)
 on conflict do nothing;
 
+-- name: DeleteSessionMember :exec
+delete from session_members where session_id = ? and member_id = ?;
+
 -- name: UpdateSessionMemberAdmin :exec
 update session_members
 set is_admin = ?,
@@ -92,12 +95,9 @@ set is_admin = ?,
 where session_id = ?
     and member_id = ?;
 
--- name: UpdateSession :one
-update sessions
-set name = ?,
-    updated_at = current_timestamp
-where id = ?
-returning *;
+-- name: CountSessionMembers :one
+select count(*) from session_members
+where session_id = ?;
 
 -- name: CountSessionAdmins :one
 select count(*) from session_members

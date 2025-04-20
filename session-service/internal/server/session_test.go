@@ -448,6 +448,113 @@ func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 	assert.ErrorIs(t, err, server.ErrUserNotFound)
 }
 
+func TestRemoveMemberFromSession(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	existingMember1 := builder.NewMemberBuilder(t).
+		WithName("user 1").
+		WithUsername("username1").
+		Build(db)
+
+	existingMember2 := builder.NewMemberBuilder(t).
+		WithName("user 2").
+		WithUsername("username2").
+		Build(db)
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		WithExistingMember(existingMember1).
+		WithExistingMember(existingMember2).
+		Build(db)
+
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    existingMember2.ID,
+	})
+
+	assert.NoError(t, err)
+
+	count := 0
+	countQuery := "select count(*) from session_members where session_id = ?;"
+	err = db.QueryRow(countQuery, ssn.ID).Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+
+	var memberID string
+	query := "select member_id from session_members where session_id = ?;"
+	err = db.QueryRow(query, ssn.ID).Scan(&memberID)
+	require.NoError(t, err)
+	assert.Equal(t, existingMember1.ID, memberID)
+}
+
+func TestRemoveMemberFromSession_When_DeletingOnlyAdmin_ReturnsError(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	adminMember := builder.NewMemberBuilder(t).
+		WithName("user 1").
+		WithUsername("username1").
+		Build(db)
+
+	normalMember := builder.NewMemberBuilder(t).
+		WithName("user 2").
+		WithUsername("username2").
+		Build(db)
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		WithExistingAdminMember(adminMember).
+		WithExistingMember(normalMember).
+		Build(db)
+
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    adminMember.ID,
+	})
+
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, server.ErrSessionMustHaveAtLeastOneAdmin)
+}
+
+func TestRemoveMemberFromSession_When_DeletingTheLastMember_ReturnsError(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+	sessionRepo := session.New(db)
+
+	onlyMember := builder.NewMemberBuilder(t).
+		WithName("user").
+		WithUsername("username").
+		Build(db)
+
+	ssn := builder.NewSessionBuilder(t).
+		WithName("Test Session").
+		WithExistingAdminMember(onlyMember).
+		Build(db)
+
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
+		SessionId: ssn.ID,
+		UserId:    onlyMember.ID,
+	})
+
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, server.ErrorSessionMustHaveAtLeastOneMember)
+}
+
 func TestUpdateSessionMemberAdminState(t *testing.T) {
 	ownerID := uuid.NewString()
 	memberID := uuid.NewString()

@@ -10,12 +10,13 @@ import (
 )
 
 type SessionBuilder struct {
-	t                   *testing.T
-	model               session.Session
-	isActiveSetManually bool
-	members             []SessionMemberParams
-	existingMembers     []session.Member
-	transactions        []SessionTransactionParams
+	t                    *testing.T
+	model                session.Session
+	isActiveSetManually  bool
+	members              []SessionMemberParams
+	existingMembers      []session.Member
+	existingAdminMembers []session.Member
+	transactions         []SessionTransactionParams
 }
 
 func NewSessionBuilder(t *testing.T) *SessionBuilder {
@@ -64,6 +65,11 @@ func (b *SessionBuilder) WithExistingMember(m session.Member) *SessionBuilder {
 	return b
 }
 
+func (b *SessionBuilder) WithExistingAdminMember(m session.Member) *SessionBuilder {
+	b.existingAdminMembers = append(b.existingAdminMembers, m)
+	return b
+}
+
 type SessionTransactionLine struct {
 	MemberID string
 	Amount   float64
@@ -109,6 +115,11 @@ func (b *SessionBuilder) Build(db *sql.DB) session.Session {
 
 	for _, m := range b.existingMembers {
 		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, false, false)
+		require.NoError(b.t, err)
+	}
+
+	for _, m := range b.existingAdminMembers {
+		_, err = db.Exec(insertSessionMember, b.model.ID, m.ID, false, true)
 		require.NoError(b.t, err)
 	}
 

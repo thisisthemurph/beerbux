@@ -23,6 +23,7 @@ const (
 	Session_GetSession_FullMethodName                    = "/session.service.Session/GetSession"
 	Session_ListSessionsForUser_FullMethodName           = "/session.service.Session/ListSessionsForUser"
 	Session_AddMemberToSession_FullMethodName            = "/session.service.Session/AddMemberToSession"
+	Session_RemoveMemberFromSession_FullMethodName       = "/session.service.Session/RemoveMemberFromSession"
 	Session_UpdateSessionMemberAdminState_FullMethodName = "/session.service.Session/UpdateSessionMemberAdminState"
 )
 
@@ -34,6 +35,7 @@ type SessionClient interface {
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
 	ListSessionsForUser(ctx context.Context, in *ListSessionsForUserRequest, opts ...grpc.CallOption) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -85,6 +87,16 @@ func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToS
 	return out, nil
 }
 
+func (c *sessionClient) RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, Session_RemoveMemberFromSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EmptyResponse)
@@ -103,6 +115,7 @@ type SessionServer interface {
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
+	RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*EmptyResponse, error)
 	UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error)
 	mustEmbedUnimplementedSessionServer()
 }
@@ -125,6 +138,9 @@ func (UnimplementedSessionServer) ListSessionsForUser(context.Context, *ListSess
 }
 func (UnimplementedSessionServer) AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMemberToSession not implemented")
+}
+func (UnimplementedSessionServer) RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMemberFromSession not implemented")
 }
 func (UnimplementedSessionServer) UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionMemberAdminState not implemented")
@@ -222,6 +238,24 @@ func _Session_AddMemberToSession_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Session_RemoveMemberFromSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveMemberFromSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).RemoveMemberFromSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Session_RemoveMemberFromSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).RemoveMemberFromSession(ctx, req.(*RemoveMemberFromSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Session_UpdateSessionMemberAdminState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateSessionMemberAdminStateRequest)
 	if err := dec(in); err != nil {
@@ -262,6 +296,10 @@ var Session_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMemberToSession",
 			Handler:    _Session_AddMemberToSession_Handler,
+		},
+		{
+			MethodName: "RemoveMemberFromSession",
+			Handler:    _Session_RemoveMemberFromSession_Handler,
 		},
 		{
 			MethodName: "UpdateSessionMemberAdminState",

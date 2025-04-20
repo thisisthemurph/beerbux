@@ -63,14 +63,14 @@ func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	// Ensure the current user is a member of the session.
-	currentUserIsMember := false
+	var currentMember *sessionpb.SessionMember
 	for _, m := range ssn.Members {
 		if m.UserId == c.Subject {
-			currentUserIsMember = true
+			currentMember = m
 			break
 		}
 	}
-	if !currentUserIsMember {
+	if currentMember == nil || !currentMember.IsAdmin {
 		send.Error(w, "You do not have permission to add members to this session", http.StatusUnauthorized)
 		return
 	}

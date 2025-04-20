@@ -6,7 +6,7 @@ import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ export default function SessionDetailPage() {
 	const user = useUserStore((state) => state.user) as User;
 	const { sessionId } = useParams() as { sessionId: string };
 	const queryClient = useQueryClient();
-	const { getSession } = useSessionClient();
+	const { getSession, updateSessionMemberAdmin } = useSessionClient();
 	const { createTransaction } = useTransactionClient();
 	useBackNavigation("/");
 
@@ -32,6 +32,38 @@ export default function SessionDetailPage() {
 		queryKey: ["session", sessionId],
 		queryFn: async () => {
 			return await getSession(sessionId);
+		},
+	});
+
+	const currentMember = sessionQuery.data?.members.find(
+		(m) => m.id === user.id,
+	);
+
+	const updateMemberAdminStateMutation = useMutation({
+		mutationFn: async (data: {
+			sessionId: string;
+			memberId: string;
+			newAdminState: boolean;
+		}) => {
+			const { err } = await tryCatch(
+				updateSessionMemberAdmin(
+					data.sessionId,
+					data.memberId,
+					data.newAdminState,
+				),
+			);
+			if (err) {
+				toast.error(
+					data.newAdminState
+						? "There has been an issue setting the member as an admin."
+						: "There has been an issue removing the member's admin status.",
+				);
+				return;
+			}
+
+			await queryClient.invalidateQueries({
+				queryKey: ["session", data.sessionId],
+			});
 		},
 	});
 
@@ -69,7 +101,6 @@ export default function SessionDetailPage() {
 		if (!sessionId) return;
 		const { err } = await tryCatch(createTransaction(sessionId, transaction));
 		if (err) {
-			console.error(err);
 			toast.error("There was an issue creating the transaction.");
 			return;
 		}
@@ -94,11 +125,22 @@ export default function SessionDetailPage() {
 		return <SessionDetailSkeleton />;
 	}
 
+	if (!currentMember) {
+		return <PageError message="You are not a member of this session." />;
+	}
+
 	return (
 		<SessionDetailContent
 			session={sessionQuery.data}
 			user={user}
 			handleNewTransaction={handleNewTransaction}
+			onMemberAdminStateUpdate={(sessionId, memberId, newAdminState) =>
+				updateMemberAdminStateMutation.mutate({
+					sessionId,
+					memberId,
+					newAdminState,
+				})
+			}
 		/>
 	);
 }

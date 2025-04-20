@@ -23,6 +23,8 @@ export type SessionMember = {
 	id: string;
 	name: string;
 	username: string;
+	isCreator: boolean;
+	isAdmin: boolean;
 	transactionSummary: {
 		credit: number;
 		debit: number;

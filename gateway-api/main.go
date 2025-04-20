@@ -60,7 +60,7 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	transactionClient := transactionpb.NewTransactionClient(transactionConn)
 
-	mux := buildServerMux(cfg, authClient, userClient, sessionClient, transactionClient)
+	mux := buildServerMux(cfg, logger, authClient, userClient, sessionClient, transactionClient)
 	logger.Debug("Starting server", "add", cfg.GatewayAPIAddress)
 	if err := http.ListenAndServe(cfg.GatewayAPIAddress, mux); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -71,6 +71,7 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 
 func buildServerMux(
 	cfg *config.Config,
+	logger *slog.Logger,
 	authClient authpb.AuthClient,
 	userClient userpb.UserClient,
 	sessionClient sessionpb.SessionClient,
@@ -90,6 +91,7 @@ func buildServerMux(
 	mux.Handle("GET /api/session/{sessionId}", session.NewGetSessionByIdHandler(sessionClient))
 	mux.Handle("POST /api/session", session.NewCreateSessionHandler(sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/member", session.NewAddMemberToSessionHandler(userClient, sessionClient))
+	mux.Handle("POST /api/session/{sessionId}/member/{memberId}/admin", session.NewUpdateSessionMemberAdmin(logger, sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/transaction", transaction.NewCreateTransactionHandler(transactionClient))
 
 	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)

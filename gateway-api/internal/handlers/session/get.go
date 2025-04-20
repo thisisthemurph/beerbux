@@ -1,6 +1,8 @@
 package session
 
 import (
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/dto"
@@ -8,7 +10,6 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
 )
 
 type GetSessionByIdHandler struct {
@@ -67,16 +68,20 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	memberMap := make(map[string]dto.SessionMember, len(s.Members))
 	for _, m := range s.Members {
 		memberMap[m.UserId] = dto.SessionMember{
-			ID:       m.UserId,
-			Name:     m.Name,
-			Username: m.Username,
+			ID:        m.UserId,
+			Name:      m.Name,
+			Username:  m.Username,
+			IsCreator: m.IsOwner,
+			IsAdmin:   m.IsAdmin,
 		}
 
 		credit, debit := calculateCreditAndDebitForMember(m.UserId, s.Transactions)
 		ssn.Members = append(ssn.Members, dto.SessionMember{
-			ID:       m.UserId,
-			Name:     m.Name,
-			Username: m.Username,
+			ID:        m.UserId,
+			Name:      m.Name,
+			Username:  m.Username,
+			IsCreator: m.IsOwner,
+			IsAdmin:   m.IsAdmin,
 			TransactionSummary: dto.TransactionSummary{
 				Credit: credit,
 				Debit:  debit,

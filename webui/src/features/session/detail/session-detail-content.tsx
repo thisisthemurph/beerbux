@@ -19,6 +19,11 @@ import { PageHeading } from "@/components/page-heading.tsx";
 type SessionDetailContentProps = {
 	session: Session;
 	user: User;
+	onMemberAdminStateUpdate: (
+		sessionId: string,
+		memberId: string,
+		newAdminState: boolean,
+	) => void;
 	handleNewTransaction: (
 		transaction: TransactionMemberAmounts,
 	) => Promise<void>;
@@ -27,10 +32,11 @@ type SessionDetailContentProps = {
 export function SessionDetailContent({
 	session,
 	user,
+	onMemberAdminStateUpdate,
 	handleNewTransaction,
 }: SessionDetailContentProps) {
 	const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
-	const currentSessionMember = session?.members.find((m) => m.id === user?.id);
+	const currentMember = session?.members.find((m) => m.id === user?.id);
 	const otherSessionMembers = (session?.members ?? [])
 		.filter((m) => m.id !== user.id)
 		.sort((a, b) => a.name.localeCompare(b.name));
@@ -39,14 +45,14 @@ export function SessionDetailContent({
 		session?.members.map((m) => m.username) ?? [],
 	);
 
-	if (!currentSessionMember) {
+	if (!currentMember) {
 		return <PageError message="You are not a member of this session." />;
 	}
 
 	return (
 		<>
 			<PageHeading title={session.name}>
-				<SessionMenu />
+				<SessionMenu showAdminActions={currentMember.isAdmin} />
 			</PageHeading>
 
 			<OverviewCard total={session.total} />
@@ -54,11 +60,13 @@ export function SessionDetailContent({
 			{session.isActive && (
 				<PrimaryActionCard>
 					<PrimaryActionCardContent>
-						<PrimaryActionCardLinkItem
-							to={`/session/${session.id}/member`}
-							text="Add a member"
-							icon={<SquarePlus className="text-primary w-8 h-8" />}
-						/>
+						{currentMember.isAdmin && (
+							<PrimaryActionCardLinkItem
+								to={`/session/${session.id}/member`}
+								text="Add a member"
+								icon={<SquarePlus className="text-primary w-8 h-8" />}
+							/>
+						)}
 						{session.members.length > 1 && (
 							<PrimaryActionCardButtonItem
 								text="Buy a round"
@@ -71,8 +79,12 @@ export function SessionDetailContent({
 			)}
 
 			<MemberDetailsCard
-				members={[currentSessionMember, ...otherSessionMembers]}
+				showMemberDropdownMenu={currentMember.isAdmin}
+				members={[currentMember, ...otherSessionMembers]}
 				avatarData={avatarData}
+				onChangeMemberAdminState={(memberId, newAdminState) =>
+					onMemberAdminStateUpdate(session.id, memberId, newAdminState)
+				}
 			/>
 
 			<TransactionListing

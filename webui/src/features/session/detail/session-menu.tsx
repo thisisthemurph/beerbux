@@ -16,7 +16,9 @@ import {
 	PauseCircle,
 } from "lucide-react";
 
-export function SessionMenu() {
+export function SessionMenu({
+	showAdminActions,
+}: { showAdminActions: boolean }) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
 
 	const handleCloseSession = () => {
@@ -68,22 +70,38 @@ export function SessionMenu() {
 						<EllipsisVertical />
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent className="min-w-48 mx-4">
+				<DropdownMenuContent className="min-w-64 mx-4">
+					{showAdminActions && (
+						<>
+							<DropdownMenuGroup>
+								<DropdownMenuLabel className="text-lg font-semibold">
+									Admin actions
+								</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									className="group text-lg gap-4 cursor-pointer"
+									onClick={handleCloseSession}
+								>
+									<CircleX className="size-6 group-hover:text-destructive/75 transition-colors" />
+									<span>Close session</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									className="group text-lg gap-4 cursor-pointer"
+									onClick={handlePauseSession}
+								>
+									<PauseCircle className="size-6 group-hover:text-destructive/75 transition-colors" />
+									<span>Pause session</span>
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+						</>
+					)}
 					<DropdownMenuGroup>
-						<DropdownMenuLabel>Admin actions</DropdownMenuLabel>
-						<DropdownMenuItem onClick={handleCloseSession}>
-							<CircleX />
-							<span>Close session</span>
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={handlePauseSession}>
-							<PauseCircle />
-							<span>Pause session</span>
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem onClick={handleLeaveSession}>
-							<ArrowLeftFromLine />
+						<DropdownMenuItem
+							className="group text-lg gap-4 cursor-pointer"
+							onClick={handleLeaveSession}
+						>
+							<ArrowLeftFromLine className="size-6 text-muted-foreground group-hover:text-primary/75 transition-colors" />
 							<span>Leave session</span>
 						</DropdownMenuItem>
 					</DropdownMenuGroup>

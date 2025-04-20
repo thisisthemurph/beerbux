@@ -92,6 +92,8 @@ func buildServerMux(
 	mux.Handle("POST /api/session", session.NewCreateSessionHandler(sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/member", session.NewAddMemberToSessionHandler(userClient, sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/member/{memberId}/admin", session.NewUpdateSessionMemberAdmin(logger, sessionClient))
+	mux.Handle("DELETE /api/session/{sessionId}/member/{memberId}", session.NewRemoveMemberFromSession(sessionClient))
+	mux.Handle("DELETE /api/session/{sessionId}/leave", session.NewLeaveSessionHandler(sessionClient))
 	mux.Handle("POST /api/session/{sessionId}/transaction", transaction.NewCreateTransactionHandler(transactionClient))
 
 	authMiddleware := middleware.NewAuthMiddleware(authClient, cfg.Secrets.JWTSecret)

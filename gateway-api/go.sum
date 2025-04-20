@@ -27,8 +27,8 @@ github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOf
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/thisisthemurph/beerbux/auth-service v1.1.0 h1:DKfGdsqrmfwg05dIoDiTgEBYjtMKrJxxKOVHNeBqhNc=
 github.com/thisisthemurph/beerbux/auth-service v1.1.0/go.mod h1:CzIUV4cOWNvigezd1YkfLWPLd9xa0fqsGS1N4X7IJRM=
-github.com/thisisthemurph/beerbux/session-service v1.7.0 h1:RALgm7uWs8BPGHRKKK2OexLZRqZbHAW2yx3RorlRhLM=
-github.com/thisisthemurph/beerbux/session-service v1.7.0/go.mod h1:uJbAlzxoWWCXmENsCuyIzLsgJ7VbLJSDK0VqPJDaIu8=
+github.com/thisisthemurph/beerbux/session-service v1.8.0 h1:VJ+NAA8G43LqvCbuOTxDv3yGGXa8/YEPS6le7+PAJP4=
+github.com/thisisthemurph/beerbux/session-service v1.8.0/go.mod h1:uJbAlzxoWWCXmENsCuyIzLsgJ7VbLJSDK0VqPJDaIu8=
 github.com/thisisthemurph/beerbux/transaction-service v1.0.0 h1:iYq/gkKIKJENN/0cxulvwWjbSNMg6NUhytXjvgU0Zq4=
 github.com/thisisthemurph/beerbux/transaction-service v1.0.0/go.mod h1:hEgopQMkkBP0JiS5Lny+ANP/ibDQJ3SNx7ls73BqgX0=
 github.com/thisisthemurph/beerbux/user-service v1.3.0 h1:chy/10TOQRXVvGyEC+D/LKgcAf9qBb0gNoZmTPeHis8=

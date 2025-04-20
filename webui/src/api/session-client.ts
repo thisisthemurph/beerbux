@@ -25,14 +25,23 @@ function useSessionClient() {
 		});
 	};
 
-	const updateSessionMemberAdmin = async (sessionId: string, memberId: string, newAdminState: boolean) => {
+	const updateSessionMemberAdmin = async (
+		sessionId: string,
+		memberId: string,
+		newAdminState: boolean,
+	) => {
 		return apiFetch<void>(`/session/${sessionId}/member/${memberId}/admin`, {
 			method: "POST",
 			body: JSON.stringify({ newAdminState }),
 		});
-	}
+	};
 
-	return { getSession, createSession, addMemberToSession, updateSessionMemberAdmin };
+	return {
+		getSession,
+		createSession,
+		addMemberToSession,
+		updateSessionMemberAdmin,
+	};
 }
 
 export default useSessionClient;

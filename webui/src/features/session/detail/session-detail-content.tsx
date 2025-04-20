@@ -19,7 +19,11 @@ import { PageHeading } from "@/components/page-heading.tsx";
 type SessionDetailContentProps = {
 	session: Session;
 	user: User;
-	onMemberAdminStateUpdate: (sessionId: string, memberId: string, newAdminState: boolean) => void;
+	onMemberAdminStateUpdate: (
+		sessionId: string,
+		memberId: string,
+		newAdminState: boolean,
+	) => void;
 	handleNewTransaction: (
 		transaction: TransactionMemberAmounts,
 	) => Promise<void>;
@@ -60,7 +64,7 @@ export function SessionDetailContent({
 							<PrimaryActionCardLinkItem
 								to={`/session/${session.id}/member`}
 								text="Add a member"
-								icon={<SquarePlus className="text-primary w-8 h-8"/>}
+								icon={<SquarePlus className="text-primary w-8 h-8" />}
 							/>
 						)}
 						{session.members.length > 1 && (
@@ -78,7 +82,9 @@ export function SessionDetailContent({
 				showMemberDropdownMenu={currentMember.isAdmin}
 				members={[currentMember, ...otherSessionMembers]}
 				avatarData={avatarData}
-				onChangeMemberAdminState={(memberId, newAdminState) => onMemberAdminStateUpdate(session.id, memberId, newAdminState)}
+				onChangeMemberAdminState={(memberId, newAdminState) =>
+					onMemberAdminStateUpdate(session.id, memberId, newAdminState)
+				}
 			/>
 
 			<TransactionListing

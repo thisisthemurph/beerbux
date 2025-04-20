@@ -16,7 +16,9 @@ import {
 	PauseCircle,
 } from "lucide-react";
 
-export function SessionMenu({ showAdminActions }: { showAdminActions: boolean }) {
+export function SessionMenu({
+	showAdminActions,
+}: { showAdminActions: boolean }) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
 
 	const handleCloseSession = () => {
@@ -72,13 +74,21 @@ export function SessionMenu({ showAdminActions }: { showAdminActions: boolean })
 					{showAdminActions && (
 						<>
 							<DropdownMenuGroup>
-								<DropdownMenuLabel className="text-lg font-semibold">Admin actions</DropdownMenuLabel>
+								<DropdownMenuLabel className="text-lg font-semibold">
+									Admin actions
+								</DropdownMenuLabel>
 								<DropdownMenuSeparator />
-								<DropdownMenuItem className="group text-lg gap-4 cursor-pointer" onClick={handleCloseSession}>
+								<DropdownMenuItem
+									className="group text-lg gap-4 cursor-pointer"
+									onClick={handleCloseSession}
+								>
 									<CircleX className="size-6 group-hover:text-destructive/75 transition-colors" />
 									<span>Close session</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem className="group text-lg gap-4 cursor-pointer" onClick={handlePauseSession}>
+								<DropdownMenuItem
+									className="group text-lg gap-4 cursor-pointer"
+									onClick={handlePauseSession}
+								>
 									<PauseCircle className="size-6 group-hover:text-destructive/75 transition-colors" />
 									<span>Pause session</span>
 								</DropdownMenuItem>
@@ -87,7 +97,10 @@ export function SessionMenu({ showAdminActions }: { showAdminActions: boolean })
 						</>
 					)}
 					<DropdownMenuGroup>
-						<DropdownMenuItem className="group text-lg gap-4 cursor-pointer" onClick={handleLeaveSession}>
+						<DropdownMenuItem
+							className="group text-lg gap-4 cursor-pointer"
+							onClick={handleLeaveSession}
+						>
 							<ArrowLeftFromLine className="size-6 text-muted-foreground group-hover:text-primary/75 transition-colors" />
 							<span>Leave session</span>
 						</DropdownMenuItem>

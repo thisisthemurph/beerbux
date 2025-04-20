@@ -18,9 +18,15 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {Crown, EllipsisVertical, ShieldMinus, ShieldUser, UserMinus} from "lucide-react";
-import {Button} from "@/components/ui/button.tsx";
-import {useUserStore} from "@/stores/user-store.tsx";
+import {
+	Crown,
+	EllipsisVertical,
+	ShieldMinus,
+	ShieldUser,
+	UserMinus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { useUserStore } from "@/stores/user-store.tsx";
 
 type MemberDetailsCardProps = {
 	members: SessionMember[];
@@ -58,19 +64,36 @@ export function MemberDetailsCard({
 				</CardHeader>
 				<CardContent className="px-0">
 					{members.map((m) => (
-						<div key={m.id} className="group flex items-center gap-4 px-6 hover:bg-muted">
-							<UserAvatar data={avatarData[m.username]} tooltip={m.name} variant={m.isAdmin ? "prominent" : "default"} />
+						<div
+							key={m.id}
+							className="group flex items-center gap-4 px-6 hover:bg-muted"
+						>
+							<UserAvatar
+								data={avatarData[m.username]}
+								tooltip={m.name}
+								variant={m.isAdmin ? "prominent" : "default"}
+							/>
 							<div className="flex justify-between items-center w-full">
-								<button type="button" className="flex items-center gap-2 py-6 font-semibold">
+								<button
+									type="button"
+									className="flex items-center gap-2 py-6 font-semibold"
+								>
 									<span>{m.username}</span>
 								</button>
-								<div className={cn("", showMemberDropdownMenu && "w-16 text-left grid grid-cols-2")}>
+								<div
+									className={cn(
+										"",
+										showMemberDropdownMenu && "w-16 text-left grid grid-cols-2",
+									)}
+								>
 									<Balance {...m.transactionSummary} />
-									{(m.id !== user?.id && showMemberDropdownMenu) && (
+									{m.id !== user?.id && showMemberDropdownMenu && (
 										<MemberDropdownMenu
 											username={m.username}
 											isAdmin={m.isAdmin}
-											onChangeAdminState={() => onChangeMemberAdminState(m.id, !m.isAdmin)}
+											onChangeAdminState={() =>
+												onChangeMemberAdminState(m.id, !m.isAdmin)
+											}
 										/>
 									)}
 								</div>
@@ -87,25 +110,42 @@ type MemberDropdownMenuProps = {
 	username: string;
 	isAdmin: boolean;
 	onChangeAdminState: () => void;
-}
+};
 
-function MemberDropdownMenu({ username, isAdmin, onChangeAdminState }: MemberDropdownMenuProps) {
+function MemberDropdownMenu({
+	username,
+	isAdmin,
+	onChangeAdminState,
+}: MemberDropdownMenuProps) {
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="py-6 font-semibold w-full text-left" asChild>
+			<DropdownMenuTrigger
+				className="py-6 font-semibold w-full text-left"
+				asChild
+			>
 				<Button variant="ghost" size="icon" className="rounded-full">
 					<EllipsisVertical className="size-6 text-muted-foreground group-hover:text-primary" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent className="min-w-46 mx-4" onClick={onChangeAdminState}>
+			<DropdownMenuContent
+				className="min-w-46 mx-4"
+				onClick={onChangeAdminState}
+			>
 				<DropdownMenuLabel className="flex items-center justify-between font-semibold text-lg">
 					<span>{username}</span>
-					{isAdmin && <span><Crown className="size-4" /></span>}
+					{isAdmin && (
+						<span>
+							<Crown className="size-4" />
+						</span>
+					)}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				{!isAdmin && (
-					<DropdownMenuItem className="text-lg gap-4 cursor-pointer" onClick={onChangeAdminState}>
-						<ShieldUser className="size-6"/>
+					<DropdownMenuItem
+						className="text-lg gap-4 cursor-pointer"
+						onClick={onChangeAdminState}
+					>
+						<ShieldUser className="size-6" />
 						<span>Promote to admin</span>
 					</DropdownMenuItem>
 				)}
@@ -121,7 +161,7 @@ function MemberDropdownMenu({ username, isAdmin, onChangeAdminState }: MemberDro
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
-	)
+	);
 }
 
 function Balance({ credit, debit }: { credit: number; debit: number }) {

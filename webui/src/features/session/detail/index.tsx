@@ -35,7 +35,9 @@ export default function SessionDetailPage() {
 		},
 	});
 
-	const currentMember = sessionQuery.data?.members.find((m) => m.id === user.id);
+	const currentMember = sessionQuery.data?.members.find(
+		(m) => m.id === user.id,
+	);
 
 	const updateMemberAdminStateMutation = useMutation({
 		mutationFn: async (data: {
@@ -43,12 +45,19 @@ export default function SessionDetailPage() {
 			memberId: string;
 			newAdminState: boolean;
 		}) => {
-			const { err } = await tryCatch(updateSessionMemberAdmin(data.sessionId, data.memberId, data.newAdminState));
+			const { err } = await tryCatch(
+				updateSessionMemberAdmin(
+					data.sessionId,
+					data.memberId,
+					data.newAdminState,
+				),
+			);
 			if (err) {
 				toast.error(
 					data.newAdminState
 						? "There has been an issue setting the member as an admin."
-						: "There has been an issue removing the member's admin status.");
+						: "There has been an issue removing the member's admin status.",
+				);
 				return;
 			}
 
@@ -56,7 +65,7 @@ export default function SessionDetailPage() {
 				queryKey: ["session", data.sessionId],
 			});
 		},
-	})
+	});
 
 	const handleTransactionCreatedMessage = useCallback(
 		async (msg: SessionTransactionCreatedMessage) => {
@@ -125,9 +134,13 @@ export default function SessionDetailPage() {
 			session={sessionQuery.data}
 			user={user}
 			handleNewTransaction={handleNewTransaction}
-			onMemberAdminStateUpdate={(sessionId, memberId, newAdminState) => updateMemberAdminStateMutation.mutate({
-				sessionId, memberId, newAdminState
-			})}
+			onMemberAdminStateUpdate={(sessionId, memberId, newAdminState) =>
+				updateMemberAdminStateMutation.mutate({
+					sessionId,
+					memberId,
+					newAdminState,
+				})
+			}
 		/>
 	);
 }

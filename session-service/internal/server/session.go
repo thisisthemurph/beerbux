@@ -344,6 +344,7 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *sessionpb.UpdateSessionMemberAdminStateRequest) (*sessionpb.EmptyResponse, error) {
 	count, err := s.sessionRepository.CountSessionAdmins(ctx, r.SessionId)
 	if err != nil {
+		s.logger.Error("failed to count session admins", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to count session admins: %v", err)
 	}
 
@@ -359,6 +360,7 @@ func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *se
 	})
 
 	if err != nil {
+		s.logger.Error("failed to update session member admin state", "NewState", r.IsAdmin, "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to update session member admin state: %v", err)
 	}
 

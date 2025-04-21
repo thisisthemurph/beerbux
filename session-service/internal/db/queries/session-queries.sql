@@ -13,7 +13,7 @@ with paged_sessions AS (
     join session_members sm_target on s.id = sm_target.session_id
     left join transactions t on s.id = t.session_id
     left join transaction_lines l on t.id = l.transaction_id
-    where sm_target.member_id = :member_id
+    where sm_target.member_id = :member_id and sm_target.is_deleted = false
     group by s.id, s.name, s.is_active, s.created_at, s.updated_at
     order by s.updated_at desc, s.id desc
     limit case when :page_size = 0 then -1 else :page_size end
@@ -83,11 +83,13 @@ where id = ?;
 -- name: AddSessionMember :exec
 insert into session_members (session_id, member_id, is_owner, is_admin)
 values (?, ?, ?, ?)
-on conflict do nothing;
+on conflict(session_id, member_id) do update
+set is_deleted = false, updated_at = current_timestamp;
 
 -- name: DeleteSessionMember :exec
 update session_members
-set is_deleted = true
+set is_deleted = true,
+    is_admin = false
 where session_id = ? and member_id = ?;
 
 -- name: UpdateSessionMemberAdmin :exec

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Session_CreateSession_FullMethodName                 = "/session.service.Session/CreateSession"
 	Session_GetSession_FullMethodName                    = "/session.service.Session/GetSession"
+	Session_UpdateSessionActiveState_FullMethodName      = "/session.service.Session/UpdateSessionActiveState"
 	Session_ListSessionsForUser_FullMethodName           = "/session.service.Session/ListSessionsForUser"
 	Session_AddMemberToSession_FullMethodName            = "/session.service.Session/AddMemberToSession"
 	Session_RemoveMemberFromSession_FullMethodName       = "/session.service.Session/RemoveMemberFromSession"
@@ -33,6 +34,7 @@ const (
 type SessionClient interface {
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
+	UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	ListSessionsForUser(ctx context.Context, in *ListSessionsForUserRequest, opts ...grpc.CallOption) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
@@ -61,6 +63,16 @@ func (c *sessionClient) GetSession(ctx context.Context, in *GetSessionRequest, o
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetSessionResponse)
 	err := c.cc.Invoke(ctx, Session_GetSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sessionClient) UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, Session_UpdateSessionActiveState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +125,7 @@ func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *U
 type SessionServer interface {
 	CreateSession(context.Context, *CreateSessionRequest) (*SessionResponse, error)
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
+	UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*EmptyResponse, error)
 	ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error)
 	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
 	RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*EmptyResponse, error)
@@ -132,6 +145,9 @@ func (UnimplementedSessionServer) CreateSession(context.Context, *CreateSessionR
 }
 func (UnimplementedSessionServer) GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
+}
+func (UnimplementedSessionServer) UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionActiveState not implemented")
 }
 func (UnimplementedSessionServer) ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSessionsForUser not implemented")
@@ -198,6 +214,24 @@ func _Session_GetSession_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SessionServer).GetSession(ctx, req.(*GetSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Session_UpdateSessionActiveState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSessionActiveStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServer).UpdateSessionActiveState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Session_UpdateSessionActiveState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServer).UpdateSessionActiveState(ctx, req.(*UpdateSessionActiveStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -288,6 +322,10 @@ var Session_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSession",
 			Handler:    _Session_GetSession_Handler,
+		},
+		{
+			MethodName: "UpdateSessionActiveState",
+			Handler:    _Session_UpdateSessionActiveState_Handler,
 		},
 		{
 			MethodName: "ListSessionsForUser",

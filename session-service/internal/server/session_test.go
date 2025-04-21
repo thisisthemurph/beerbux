@@ -640,6 +640,89 @@ func TestUpdateSessionMemberAdminState(t *testing.T) {
 	}
 }
 
+func TestUpdateSessionActiveState_When_SessionExists_Updates(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	testCases := []struct {
+		name                string
+		initialActiveState  bool
+		updatedActiveState  bool
+		expectedActiveState bool
+	}{
+		{
+			"deactivate active session",
+			true,
+			false,
+			false,
+		},
+		{
+			"activate inactive session",
+			false,
+			true,
+			true,
+		},
+		{
+			"activate already active session",
+			true,
+			true,
+			true,
+		},
+		{
+			"deactivate already inactive session",
+			true,
+			true,
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		ssn := builder.NewSessionBuilder(t).
+			WithID(uuid.New()).
+			WithName("Test Session").
+			WithIsActive(tc.initialActiveState).
+			Build(db)
+
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := sessionServer.UpdateSessionActiveState(context.Background(), &sessionpb.UpdateSessionActiveStateRequest{
+				SessionId: ssn.ID,
+				IsActive:  tc.updatedActiveState,
+			})
+
+			assert.NoError(t, err)
+
+			q := "select is_active from sessions where id = ?;"
+
+			var isActive bool
+			err = db.QueryRow(q, ssn.ID).Scan(&isActive)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedActiveState, isActive)
+		})
+	}
+}
+
+func TestUpdateSessionActiveState_When_SessionNotFound_ReturnsError(t *testing.T) {
+	db := testinfra.SetupTestDB(t, "../db/migrations")
+	t.Cleanup(func() { db.Close() })
+
+	sessionRepo := session.New(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+
+	_, err := sessionServer.UpdateSessionActiveState(context.Background(), &sessionpb.UpdateSessionActiveStateRequest{
+		SessionId: uuid.NewString(),
+		IsActive:  true,
+	})
+
+	assert.ErrorIs(t, err, server.ErrSessionNotFound)
+}
+
 func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, expectedName, expectedUsername string, expectedOwner bool) {
 	t.Helper()
 

@@ -412,6 +412,17 @@ func (q *Queries) ListSessionsForUser(ctx context.Context, arg ListSessionsForUs
 	return items, nil
 }
 
+const sessionExists = `-- name: SessionExists :one
+select cast(exists(select 1 from sessions where id = ?) as boolean)
+`
+
+func (q *Queries) SessionExists(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, sessionExists, id)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const setSessionUpdatedAtNow = `-- name: SetSessionUpdatedAtNow :exec
 update sessions
 set updated_at = current_timestamp
@@ -439,6 +450,22 @@ type UpdateMemberParams struct {
 
 func (q *Queries) UpdateMember(ctx context.Context, arg UpdateMemberParams) error {
 	_, err := q.db.ExecContext(ctx, updateMember, arg.Name, arg.Username, arg.ID)
+	return err
+}
+
+const updateSessionActiveState = `-- name: UpdateSessionActiveState :exec
+update sessions
+set is_active = ?
+where id = ?
+`
+
+type UpdateSessionActiveStateParams struct {
+	IsActive bool
+	ID       string
+}
+
+func (q *Queries) UpdateSessionActiveState(ctx context.Context, arg UpdateSessionActiveStateParams) error {
+	_, err := q.db.ExecContext(ctx, updateSessionActiveState, arg.IsActive, arg.ID)
 	return err
 }
 

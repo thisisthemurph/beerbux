@@ -6,6 +6,7 @@ option go_package = "protos/sessionpb;sessionpb";
 service Session {
   rpc CreateSession(CreateSessionRequest) returns (SessionResponse);
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+  rpc UpdateSessionActiveState(UpdateSessionActiveStateRequest) returns (EmptyResponse);
   rpc ListSessionsForUser(ListSessionsForUserRequest) returns (ListSessionsForUserResponse);
   rpc AddMemberToSession(AddMemberToSessionRequest) returns (EmptyResponse);
   rpc RemoveMemberFromSession(RemoveMemberFromSessionRequest) returns (EmptyResponse);
@@ -28,6 +29,11 @@ message GetSessionResponse {
   repeated SessionMember members = 4;
   double total = 5;
   repeated SessionTransaction transactions = 6;
+}
+
+message UpdateSessionActiveStateRequest {
+  string session_id = 1;
+  bool is_active = 2;
 }
 
 message SessionTransactionLine {

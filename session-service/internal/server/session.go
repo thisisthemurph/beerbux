@@ -240,6 +240,23 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 	}, nil
 }
 
+func (s *SessionServer) UpdateSessionActiveState(ctx context.Context, r *sessionpb.UpdateSessionActiveStateRequest) (*sessionpb.EmptyResponse, error) {
+	if exists, err := s.sessionRepository.SessionExists(ctx, r.SessionId); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to determine if the session exists: %v", err)
+	} else if !exists {
+		return nil, ErrSessionNotFound
+	}
+
+	if err := s.sessionRepository.UpdateSessionActiveState(ctx, session.UpdateSessionActiveStateParams{
+		ID:       r.SessionId,
+		IsActive: r.IsActive,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update the session: %v", err)
+	}
+
+	return nil, nil
+}
+
 // AddMemberToSession adds a user to a session.
 func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.AddMemberToSessionRequest) (*sessionpb.EmptyResponse, error) {
 	tx, err := s.BeginTx(ctx, nil)

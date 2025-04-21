@@ -1,3 +1,6 @@
+-- name: SessionExists :one
+select cast(exists(select 1 from sessions where id = ?) as boolean);
+
 -- name: GetSession :one
 select s.id, s.name, s.is_active, s.created_at, s.updated_at, cast(coalesce(sum(l.amount), 0) as real) as total
 from sessions s
@@ -44,6 +47,11 @@ where t.session_id = ?;
 insert into sessions (id, name)
 values (?, ?)
 returning *;
+
+-- name: UpdateSessionActiveState :exec
+update sessions
+set is_active = ?
+where id = ?;
 
 -- name: SetSessionUpdatedAtNow :exec
 update sessions

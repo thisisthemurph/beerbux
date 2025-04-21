@@ -2,19 +2,23 @@ package transaction
 
 import (
 	"encoding/json"
+	"log/slog"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/claims"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/shared/send"
 	"github.com/thisisthemurph/beerbux/transaction-service/protos/transactionpb"
-	"net/http"
 )
 
 type CreateTransactionHandler struct {
+	logger            *slog.Logger
 	transactionClient transactionpb.TransactionClient
 }
 
-func NewCreateTransactionHandler(transactionClient transactionpb.TransactionClient) *CreateTransactionHandler {
+func NewCreateTransactionHandler(logger *slog.Logger, transactionClient transactionpb.TransactionClient) *CreateTransactionHandler {
 	return &CreateTransactionHandler{
+		logger:            logger,
 		transactionClient: transactionClient,
 	}
 }
@@ -57,6 +61,7 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
+		h.logger.Error("Failed to create transaction", "error", err)
 		send.Error(w, "Failed to create transaction", http.StatusInternalServerError)
 		return
 	}

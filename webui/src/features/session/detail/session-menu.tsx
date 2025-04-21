@@ -11,43 +11,37 @@ import {
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog";
 import {
 	ArrowLeftFromLine,
+	CircleCheck,
 	CircleX,
 	EllipsisVertical,
-	PauseCircle,
 } from "lucide-react";
 
 type SessionMenuProps = {
+	isActive: boolean;
 	showAdminActions: boolean;
 	onLeave: () => void;
+	onChangeActiveState: () => void;
 };
 
-export function SessionMenu({ showAdminActions, onLeave }: SessionMenuProps) {
+export function SessionMenu({
+	isActive,
+	showAdminActions,
+	onLeave,
+	onChangeActiveState,
+}: SessionMenuProps) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
+
+	const closeSessionDescription =
+		"Are you sure you want to close this session? Once closed, members will be able to see the session, but will never be able to interact with it again. Once closed, the session cannot be reopened.";
+	const openSessionDescription =
+		"Are you sure you want to re-open this session? Once re-opened, members will be able to interact with it again.";
 
 	const handleCloseSession = () => {
 		openConfirmationDialog({
-			title: "Are you sure you want to close this session?",
-			description:
-				"Are you sure you want to close this session? Once closed, members will be able to see the session, but will never be able to interact with it again. Once closed, the session cannot be reopened.",
-			confirmText: "Close session",
-			cancelText: "Cancel",
-			onConfirm: () => {
-				console.log("close session not implemented");
-			},
-		});
-	};
-
-	const handlePauseSession = () => {
-		openConfirmationDialog({
-			title: "Are you sure you want to pause this session?",
-			description:
-				"Pausing the session will prevent anyone from tracking any new rounds being purchased until the session is unpaused. " +
-				"Any admin user can unpause the session at any time.",
-			confirmText: "Pause session",
-			cancelText: "Cancel",
-			onConfirm: () => {
-				console.log("pause session not implemented");
-			},
+			title: `Are you sure you want to ${isActive ? "close" : "re-open"} this session?`,
+			description: isActive ? closeSessionDescription : openSessionDescription,
+			confirmText: `${isActive ? "Close" : "Open"} session`,
+			onConfirm: onChangeActiveState,
 		});
 	};
 
@@ -72,30 +66,24 @@ export function SessionMenu({ showAdminActions, onLeave }: SessionMenuProps) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="min-w-64 mx-4">
+					<DropdownMenuLabel className="text-lg font-semibold">
+						Session actions
+					</DropdownMenuLabel>
 					{showAdminActions && (
-						<>
-							<DropdownMenuGroup>
-								<DropdownMenuLabel className="text-lg font-semibold">
-									Admin actions
-								</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									className="group text-lg gap-4 cursor-pointer"
-									onClick={handleCloseSession}
-								>
-									<CircleX className="size-6 group-hover:text-destructive/75 transition-colors" />
-									<span>Close session</span>
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									className="group text-lg gap-4 cursor-pointer"
-									onClick={handlePauseSession}
-								>
-									<PauseCircle className="size-6 group-hover:text-destructive/75 transition-colors" />
-									<span>Pause session</span>
-								</DropdownMenuItem>
-							</DropdownMenuGroup>
+						<DropdownMenuGroup>
 							<DropdownMenuSeparator />
-						</>
+							<DropdownMenuItem
+								className="group text-lg gap-4 cursor-pointer"
+								onClick={handleCloseSession}
+							>
+								{isActive ? (
+									<CircleX className="size-6 group-hover:text-destructive/75 transition-colors" />
+								) : (
+									<CircleCheck className="size-6 group-hover:text-green-500 transition-colors" />
+								)}
+								<span>{isActive ? "Close" : "Reopen"} session</span>
+							</DropdownMenuItem>
+						</DropdownMenuGroup>
 					)}
 					<DropdownMenuGroup>
 						<DropdownMenuItem

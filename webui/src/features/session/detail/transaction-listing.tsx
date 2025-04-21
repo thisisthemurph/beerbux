@@ -199,7 +199,8 @@ function NoTransactionsMessage() {
 		<div className="p-6 text-muted-foreground text-center  w-[90%] mx-auto tracking-wide">
 			<p className="pb-4 font-semibold">Well this is a bit depressing!</p>
 			<p>
-				It looks like nobody's bought a round yet. Once someone gets one in, it will be shown here.
+				It looks like nobody's bought a round yet. Once someone gets one in, it
+				will be shown here.
 			</p>
 		</div>
 	);

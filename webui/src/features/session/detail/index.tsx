@@ -22,7 +22,8 @@ export default function SessionDetailPage() {
 	const user = useUserStore((state) => state.user) as User;
 	const { sessionId } = useParams() as { sessionId: string };
 	const queryClient = useQueryClient();
-	const { getSession, updateSessionMemberAdmin } = useSessionClient();
+	const { getSession, updateSessionMemberAdmin, updateSessionActiveState } =
+		useSessionClient();
 	const { createTransaction } = useTransactionClient();
 	const { addMemberToSession, leaveSession, removeMemberFromSession } =
 		useSessionClient();
@@ -83,6 +84,32 @@ export default function SessionDetailPage() {
 
 		toast.success(
 			`${member?.username ?? "The member"} has been removed from the session.`,
+		);
+		await queryClient.invalidateQueries({
+			queryKey: ["session", sessionId],
+		});
+	}
+
+	async function handleUpdateSessionActiveState(
+		sessionId: string,
+		newActiveState: boolean,
+	) {
+		const { err } = await tryCatch(
+			updateSessionActiveState(sessionId, newActiveState),
+		);
+		if (err) {
+			toast.error(
+				newActiveState
+					? "There was an issue re-opening the session."
+					: "There was an issue closing the session.",
+			);
+			return;
+		}
+
+		toast.success(
+			newActiveState
+				? "The session has been re-opened."
+				: "The session has been closed.",
 		);
 		await queryClient.invalidateQueries({
 			queryKey: ["session", sessionId],
@@ -207,6 +234,12 @@ export default function SessionDetailPage() {
 				})
 			}
 			onLeaveSession={handleLeaveSession}
+			onChangeSessionActiveState={() =>
+				handleUpdateSessionActiveState(
+					sessionQuery.data.id,
+					!sessionQuery.data.isActive,
+				)
+			}
 			onRemoveMember={handleRemoveMemberFromSession}
 		/>
 	);

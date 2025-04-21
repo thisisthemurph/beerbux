@@ -51,6 +51,16 @@ function useSessionClient() {
 		});
 	};
 
+	const updateSessionActiveState = async (
+		sessionId: string,
+		newActiveState: boolean,
+	) => {
+		const command = newActiveState ? "activate" : "deactivate";
+		return apiFetch<void>(`/session/${sessionId}/state/${command}`, {
+			method: "PUT",
+		});
+	};
+
 	return {
 		getSession,
 		createSession,
@@ -58,6 +68,7 @@ function useSessionClient() {
 		updateSessionMemberAdmin,
 		leaveSession,
 		removeMemberFromSession,
+		updateSessionActiveState,
 	};
 }
 

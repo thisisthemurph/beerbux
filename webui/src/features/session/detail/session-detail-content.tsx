@@ -12,7 +12,12 @@ import { Beer, SquarePlus } from "lucide-react";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
 import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
-import type { Session, TransactionMemberAmounts, User } from "@/api/types.ts";
+import type {
+	Session,
+	SessionTransaction,
+	TransactionMemberAmounts,
+	User,
+} from "@/api/types.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
 import { AddMemberDrawer } from "@/features/session/detail/add-member/add-member-drawer.tsx";
 
@@ -29,8 +34,18 @@ type SessionDetailContentProps = {
 	) => Promise<void>;
 	handleAddMember: (username: string) => Promise<void>;
 	onLeaveSession: () => void;
+	onChangeSessionActiveState: () => void;
 	onRemoveMember: (memberId: string) => void;
 };
+
+function calculateAverage(transactions: SessionTransaction[]) {
+	if (transactions.length === 0) return 0;
+	const total = transactions.reduce((acc, transaction) => {
+		return acc + transaction.total;
+	}, 0);
+
+	return total / transactions.length;
+}
 
 export function SessionDetailContent({
 	session,
@@ -39,6 +54,7 @@ export function SessionDetailContent({
 	handleNewTransaction,
 	handleAddMember,
 	onLeaveSession,
+	onChangeSessionActiveState,
 	onRemoveMember,
 }: SessionDetailContentProps) {
 	const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
@@ -60,12 +76,17 @@ export function SessionDetailContent({
 		<>
 			<PageHeading title={session.name}>
 				<SessionMenu
+					{...session}
 					showAdminActions={currentMember.isAdmin}
 					onLeave={onLeaveSession}
+					onChangeActiveState={onChangeSessionActiveState}
 				/>
 			</PageHeading>
 
-			<OverviewCard total={session.total} />
+			<OverviewCard
+				{...session}
+				average={calculateAverage(session.transactions)}
+			/>
 
 			{session.isActive && (
 				<PrimaryActionCard>

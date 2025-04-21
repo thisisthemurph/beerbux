@@ -18,3 +18,13 @@ func GetIDFromPath(w http.ResponseWriter, r *http.Request, key string) (string, 
 
 	return id.String(), true
 }
+
+func GetTextFromPath(w http.ResponseWriter, r *http.Request, key string) (string, bool) {
+	value := r.PathValue(key)
+	if value == "" {
+		send.Error(w, fmt.Sprintf("unable to parse text from path value: %s", key), http.StatusBadRequest)
+		return "", false
+	}
+
+	return value, value != ""
+}

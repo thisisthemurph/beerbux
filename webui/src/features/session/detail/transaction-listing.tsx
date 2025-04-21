@@ -16,6 +16,7 @@ import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { format, isThisYear, isToday, isYesterday, parse } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils.ts";
 
 type TransactionListingProps = {
 	members: SessionMember[];
@@ -166,7 +167,12 @@ function TransactionText({
 
 	return (
 		<div className="grid grid-cols-5 grid-rows-2 w-full">
-			<p className="col-span-4 font-semibold tracking-wider">
+			<p
+				className={cn(
+					"col-span-4 font-semibold tracking-wider",
+					creator?.isDeleted && "line-through",
+				)}
+			>
 				{creator?.username ?? "unknown"}
 			</p>
 			<div className="row-span-2 flex items-center justify-end">
@@ -193,8 +199,7 @@ function NoTransactionsMessage() {
 		<div className="p-6 text-muted-foreground text-center  w-[90%] mx-auto tracking-wide">
 			<p className="pb-4 font-semibold">Well this is a bit depressing!</p>
 			<p>
-				It looks like you haven't bought a round yet. Once you do, it will show
-				up here.
+				It looks like nobody's bought a round yet. Once someone gets one in, it will be shown here.
 			</p>
 		</div>
 	);

@@ -90,7 +90,10 @@ export function SessionDetailContent({
 
 			<MemberDetailsCard
 				showMemberDropdownMenu={currentMember.isAdmin}
-				members={[currentMember, ...otherSessionMembers]}
+				members={[
+					currentMember,
+					...otherSessionMembers.filter((m) => !m.isDeleted),
+				]}
 				avatarData={avatarData}
 				onChangeMemberAdminState={(memberId, newAdminState) =>
 					onMemberAdminStateUpdate(session.id, memberId, newAdminState)

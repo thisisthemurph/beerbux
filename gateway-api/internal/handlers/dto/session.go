@@ -15,6 +15,7 @@ type SessionMember struct {
 	Username           string             `json:"username"`
 	IsCreator          bool               `json:"isCreator"`
 	IsAdmin            bool               `json:"isAdmin"`
+	IsDeleted          bool               `json:"isDeleted"`
 	TransactionSummary TransactionSummary `json:"transactionSummary"`
 }
 

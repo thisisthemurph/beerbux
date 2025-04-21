@@ -25,6 +25,7 @@ export type SessionMember = {
 	username: string;
 	isCreator: boolean;
 	isAdmin: boolean;
+	isDeleted: boolean;
 	transactionSummary: {
 		credit: number;
 		debit: number;

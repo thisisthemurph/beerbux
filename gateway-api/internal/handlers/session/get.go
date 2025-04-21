@@ -56,6 +56,17 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	// If the current member is deleted, they should not have access to the session.
+	for _, m := range s.Members {
+		if m.UserId == c.Subject {
+			if m.IsDeleted {
+				send.Error(w, "You do not have permission to access this session", http.StatusUnauthorized)
+				return
+			}
+			break
+		}
+	}
+
 	ssn := dto.SessionResponse{
 		ID:           s.SessionId,
 		Name:         s.Name,
@@ -73,6 +84,7 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			Username:  m.Username,
 			IsCreator: m.IsOwner,
 			IsAdmin:   m.IsAdmin,
+			IsDeleted: m.IsDeleted,
 		}
 
 		credit, debit := calculateCreditAndDebitForMember(m.UserId, s.Transactions)
@@ -82,6 +94,7 @@ func (h *GetSessionByIdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			Username:  m.Username,
 			IsCreator: m.IsOwner,
 			IsAdmin:   m.IsAdmin,
+			IsDeleted: m.IsDeleted,
 			TransactionSummary: dto.TransactionSummary{
 				Credit: credit,
 				Debit:  debit,

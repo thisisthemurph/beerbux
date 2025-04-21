@@ -14,7 +14,7 @@ import {
 	ShieldUser,
 	UserMinus,
 } from "lucide-react";
-import {useConfirmationDialog} from "@/hooks/use-confirmation-dialog.tsx";
+import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog.tsx";
 
 type MemberDropdownMenuProps = {
 	username: string;

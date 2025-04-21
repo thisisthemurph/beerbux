@@ -29,6 +29,7 @@ type SessionMember struct {
 	MemberID  string
 	IsOwner   bool
 	IsAdmin   bool
+	IsDeleted bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

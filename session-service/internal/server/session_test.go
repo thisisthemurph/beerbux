@@ -481,16 +481,26 @@ func TestRemoveMemberFromSession(t *testing.T) {
 	assert.NoError(t, err)
 
 	count := 0
-	countQuery := "select count(*) from session_members where session_id = ?;"
-	err = db.QueryRow(countQuery, ssn.ID).Scan(&count)
+	countQuery := "select count(*) from session_members where session_id = ? and is_deleted = ?;"
+
+	err = db.QueryRow(countQuery, ssn.ID, false).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
-	var memberID string
-	query := "select member_id from session_members where session_id = ?;"
-	err = db.QueryRow(query, ssn.ID).Scan(&memberID)
+	err = db.QueryRow(countQuery, ssn.ID, true).Scan(&count)
 	require.NoError(t, err)
-	assert.Equal(t, existingMember1.ID, memberID)
+	assert.Equal(t, 1, count)
+
+	var isDeleted bool
+	query := "select is_deleted from session_members where session_id = ? and member_id = ?;"
+
+	err = db.QueryRow(query, ssn.ID, existingMember1.ID).Scan(&isDeleted)
+	require.NoError(t, err)
+	assert.False(t, isDeleted)
+
+	err = db.QueryRow(query, ssn.ID, existingMember2.ID).Scan(&isDeleted)
+	require.NoError(t, err)
+	assert.True(t, isDeleted)
 }
 
 func TestRemoveMemberFromSession_When_DeletingOnlyAdmin_ReturnsError(t *testing.T) {

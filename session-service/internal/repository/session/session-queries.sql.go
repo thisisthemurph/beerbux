@@ -134,7 +134,9 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 }
 
 const deleteSessionMember = `-- name: DeleteSessionMember :exec
-delete from session_members where session_id = ? and member_id = ?
+update session_members
+set is_deleted = true
+where session_id = ? and member_id = ?
 `
 
 type DeleteSessionMemberParams struct {
@@ -286,7 +288,7 @@ func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID stri
 }
 
 const listSessionMembers = `-- name: ListSessionMembers :many
-select m.id, m.name, m.username, m.created_at, m.updated_at, sm.is_owner, sm.is_admin
+select m.id, m.name, m.username, m.created_at, m.updated_at, sm.is_owner, sm.is_admin, sm.is_deleted
 from members m
 join session_members sm on m.id = sm.member_id
 where sm.session_id = ?
@@ -300,6 +302,7 @@ type ListSessionMembersRow struct {
 	UpdatedAt time.Time
 	IsOwner   bool
 	IsAdmin   bool
+	IsDeleted bool
 }
 
 func (q *Queries) ListSessionMembers(ctx context.Context, sessionID string) ([]ListSessionMembersRow, error) {
@@ -319,6 +322,7 @@ func (q *Queries) ListSessionMembers(ctx context.Context, sessionID string) ([]L
 			&i.UpdatedAt,
 			&i.IsOwner,
 			&i.IsAdmin,
+			&i.IsDeleted,
 		); err != nil {
 			return nil, err
 		}

@@ -80,11 +80,12 @@ func (s *SessionServer) GetSession(ctx context.Context, r *sessionpb.GetSessionR
 	sessionMembers := make([]*sessionpb.SessionMember, 0, len(members))
 	for _, m := range members {
 		sessionMembers = append(sessionMembers, &sessionpb.SessionMember{
-			UserId:   m.ID,
-			Name:     m.Name,
-			Username: m.Username,
-			IsOwner:  m.IsOwner,
-			IsAdmin:  m.IsAdmin,
+			UserId:    m.ID,
+			Name:      m.Name,
+			Username:  m.Username,
+			IsOwner:   m.IsOwner,
+			IsAdmin:   m.IsAdmin,
+			IsDeleted: m.IsDeleted,
 		})
 	}
 

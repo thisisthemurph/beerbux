@@ -49,6 +49,7 @@ message SessionMember {
   string username = 3;
   bool is_owner = 4;
   bool is_admin = 5;
+  bool is_deleted = 6;
 }
 
 message ListSessionsForUserRequest {

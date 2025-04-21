@@ -5,6 +5,7 @@ create table if not exists session_members (
     member_id text not null,
     is_owner boolean not null default false,
     is_admin boolean not null default false,
+    is_deleted boolean not null default false,
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp,
     primary key (session_id, member_id),

@@ -16,6 +16,7 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/kafka"
 	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository"
+	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
@@ -153,10 +154,11 @@ func setupAndRunKafkaConsumers(
 	}
 
 	sessionRepositoryWithTransactions := repository.NewSessionQueries(db)
+	historyRepository := history.NewHistoryRepository(db)
 	sessionTransactionCreatedPublisher := publisher.NewSessionTransactionCreatedKafkaPublisher(cfg.Kafka.Brokers)
 	consumerHandlerMap := map[kafka.ConsumerListener]handler.KafkaMessageHandler{
 		newConsumer("user.updated"):        handler.NewUserUpdatedEventHandler(sessionRepository),
-		newConsumer("transaction.created"): handler.NewTransactionCreatedMessageHandler(sessionRepositoryWithTransactions, sessionTransactionCreatedPublisher),
+		newConsumer("transaction.created"): handler.NewTransactionCreatedMessageHandler(sessionRepositoryWithTransactions, historyRepository, sessionTransactionCreatedPublisher),
 	}
 
 	for consumer, h := range consumerHandlerMap {

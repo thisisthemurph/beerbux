@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"testing"
 
 	"github.com/google/uuid"
@@ -18,7 +19,8 @@ func TestLedgerTransactionUpdatedMessageHandler_Success(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 
 	sessionRepo := repository.NewSessionQueries(db)
-	handler := NewTransactionCreatedMessageHandler(sessionRepo, fake.NewFakeSessionTransactionCreatedPublisher())
+	historyRepo := history.NewHistoryRepository(db)
+	handler := NewTransactionCreatedMessageHandler(sessionRepo, historyRepo, fake.NewFakeSessionTransactionCreatedPublisher())
 
 	event := TransactionCreatedEvent{
 		TransactionID: uuid.NewString(),

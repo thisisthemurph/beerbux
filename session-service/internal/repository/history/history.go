@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/thisisthemurph/fn"
 	"time"
+
+	"github.com/thisisthemurph/beerbux/session-service/protos/historypb"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type EventType string
@@ -30,7 +32,7 @@ func (et EventType) String() string {
 }
 
 type HistoryRepository interface {
-	GetBySessionID(ctx context.Context, sessionID string) ([]SessionHistoryResult, error)
+	GetBySessionID(ctx context.Context, sessionID string) (*historypb.SessionHistoryResponse, error)
 	CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event TransactionCreatedEvent) error
 }
 
@@ -44,33 +46,51 @@ func NewHistoryRepository(db *sql.DB) HistoryRepository {
 	}
 }
 
-type SessionHistoryResult struct {
-	ID        int64     `json:"id"`
-	SessionID string    `json:"sessionId"`
-	MemberID  string    `json:"memberId"`
-	EventType EventType `json:"eventType"`
-	EventData []byte    `json:"eventData"`
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-func (r *SQLiteHistoryRepository) GetBySessionID(ctx context.Context, sessionID string) ([]SessionHistoryResult, error) {
+func (r *SQLiteHistoryRepository) GetBySessionID(ctx context.Context, sessionID string) (*historypb.SessionHistoryResponse, error) {
 	events, err := r.queries.GetSessionHistory(ctx, sessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	results := fn.Map(events, func(s SessionHistory) SessionHistoryResult {
-		return SessionHistoryResult{
-			ID:        s.ID,
-			SessionID: s.SessionID,
-			MemberID:  s.MemberID,
-			EventType: NewEventType(s.EventType),
-			EventData: s.EventData,
-			CreatedAt: s.CreatedAt,
-		}
-	})
+	response := &historypb.SessionHistoryResponse{
+		SessionId: sessionID,
+		Events:    make([]*historypb.SessionHistoryEvent, 0, len(events)),
+	}
 
-	return results, nil
+	for _, e := range events {
+		eventType := NewEventType(e.EventType)
+		data, err := parseEvent(eventType, e.EventData)
+		if err != nil {
+			return nil, err
+		}
+
+		response.Events = append(response.Events, &historypb.SessionHistoryEvent{
+			Id:        e.ID,
+			MemberId:  e.MemberID,
+			EventType: e.EventType,
+			EventData: data,
+			CreatedAt: e.CreatedAt.Format(time.RFC3339),
+		})
+	}
+
+	return response, nil
+}
+
+func parseEvent(eventType EventType, b []byte) (*anypb.Any, error) {
+	switch eventType {
+	case EventTransactionCreated:
+		var transactionCreatedEvent *historypb.TransactionCreatedEventData
+		if err := json.Unmarshal(b, &transactionCreatedEvent); err != nil {
+			return nil, err
+		}
+		a, err := anypb.New(transactionCreatedEvent)
+		if err != nil {
+			return nil, err
+		}
+		return a, err
+	default:
+		return nil, fmt.Errorf("unknown event type: %s", eventType)
+	}
 }
 
 type TransactionCreatedEventTransactionLine struct {

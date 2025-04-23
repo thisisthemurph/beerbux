@@ -33,7 +33,7 @@ func (et EventType) String() string {
 
 type HistoryRepository interface {
 	GetBySessionID(ctx context.Context, sessionID string) (*historypb.SessionHistoryResponse, error)
-	CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event TransactionCreatedEvent) error
+	CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event *historypb.TransactionCreatedEventData) error
 }
 
 type SQLiteHistoryRepository struct {
@@ -93,17 +93,7 @@ func parseEvent(eventType EventType, b []byte) (*anypb.Any, error) {
 	}
 }
 
-type TransactionCreatedEventTransactionLine struct {
-	MemberID string  `json:"memberId"`
-	Amount   float64 `json:"amount"`
-}
-
-type TransactionCreatedEvent struct {
-	TransactionID string                                   `json:"transactionId"`
-	Lines         []TransactionCreatedEventTransactionLine `json:"transactionLines"`
-}
-
-func (r *SQLiteHistoryRepository) CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event TransactionCreatedEvent) error {
+func (r *SQLiteHistoryRepository) CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event *historypb.TransactionCreatedEventData) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal transaction created event: %w", err)

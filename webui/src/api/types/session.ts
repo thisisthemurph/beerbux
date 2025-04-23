@@ -1,15 +1,3 @@
-export type User = {
-	id: string;
-	name: string;
-	username: string;
-};
-
-export type UserBalance = {
-	credit: number;
-	debit: number;
-	net: number;
-};
-
 export type Session = {
 	id: string;
 	name: string;
@@ -46,6 +34,3 @@ export type SessionTransactionMember = {
 	username: string;
 	amount: number;
 };
-
-// TransactionMemberAmounts is a Record where the key is the member ID and the value is the amount in the transaction.
-export type TransactionMemberAmounts = Record<string, number>;

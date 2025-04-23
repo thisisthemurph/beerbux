@@ -1,4 +1,4 @@
-import type { SessionMember } from "@/api/types.ts";
+import type { SessionMember } from "@/api/types/session.ts";
 import { InformationButton } from "@/components/information-button.tsx";
 import {
 	Card,

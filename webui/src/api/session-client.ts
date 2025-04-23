@@ -1,5 +1,6 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { Session } from "@/api/types.ts";
+import type { Session } from "@/api/types/session.ts";
+import type { SessionHistory } from "@/api/types/session-history.ts";
 
 type SessionCreatedResponse = {
 	id: string;
@@ -9,6 +10,10 @@ type SessionCreatedResponse = {
 function useSessionClient() {
 	const getSession = async (sessionId: string) => {
 		return apiFetch<Session>(`/session/${sessionId}`);
+	};
+
+	const getSessionHistory = async (sessionId: string) => {
+		return apiFetch<SessionHistory>(`/session/${sessionId}/history`);
 	};
 
 	const createSession = async (name: string) => {
@@ -63,6 +68,7 @@ function useSessionClient() {
 
 	return {
 		getSession,
+		getSessionHistory,
 		createSession,
 		addMemberToSession,
 		updateSessionMemberAdmin,

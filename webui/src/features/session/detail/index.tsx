@@ -1,6 +1,7 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
-import type { TransactionMemberAmounts, User } from "@/api/types.ts";
+import type { User } from "@/api/types/user.ts";
+import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
 import { PageError } from "@/components/page-error.tsx";
 import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
@@ -22,11 +23,16 @@ export default function SessionDetailPage() {
 	const user = useUserStore((state) => state.user) as User;
 	const { sessionId } = useParams() as { sessionId: string };
 	const queryClient = useQueryClient();
-	const { getSession, updateSessionMemberAdmin, updateSessionActiveState } =
-		useSessionClient();
+	const {
+		getSession,
+		updateSessionMemberAdmin,
+		updateSessionActiveState,
+		addMemberToSession,
+		leaveSession,
+		removeMemberFromSession,
+		getSessionHistory,
+	} = useSessionClient();
 	const { createTransaction } = useTransactionClient();
-	const { addMemberToSession, leaveSession, removeMemberFromSession } =
-		useSessionClient();
 	const navigate = useNavigate();
 	useBackNavigation("/");
 
@@ -36,6 +42,13 @@ export default function SessionDetailPage() {
 		queryKey: ["session", sessionId],
 		queryFn: async () => {
 			return await getSession(sessionId);
+		},
+	});
+
+	const sessionHistoryQuery = useQuery({
+		queryKey: ["session-history", sessionId],
+		queryFn: async () => {
+			return await getSessionHistory(sessionId);
 		},
 	});
 
@@ -223,6 +236,7 @@ export default function SessionDetailPage() {
 	return (
 		<SessionDetailContent
 			session={sessionQuery.data}
+			history={sessionHistoryQuery.data}
 			user={user}
 			handleNewTransaction={handleNewTransaction}
 			handleAddMember={handleAddMember}

@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { User } from "./types";
+import type { User } from "./types/user.ts";
 
 function useAuthClient() {
 	const login = async (username: string, password: string): Promise<User> => {

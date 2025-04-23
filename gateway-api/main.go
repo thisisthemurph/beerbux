@@ -2,10 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/session"
-	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/transaction"
-	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
-	"github.com/thisisthemurph/beerbux/transaction-service/protos/transactionpb"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,8 +9,13 @@ import (
 	"github.com/thisisthemurph/beerbux/auth-service/protos/authpb"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/config"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/auth"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/session"
+	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/transaction"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/handlers/user"
 	"github.com/thisisthemurph/beerbux/gateway-api/internal/middleware"
+	"github.com/thisisthemurph/beerbux/session-service/protos/historypb"
+	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
+	"github.com/thisisthemurph/beerbux/transaction-service/protos/transactionpb"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -48,11 +49,12 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	userClient := userpb.NewUserClient(userClientConn)
 
-	sessionClientConn, err := grpc.NewClient(cfg.SessionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	sessionServiceClientConn, err := grpc.NewClient(cfg.SessionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("error connecting to session server: %w", err)
 	}
-	sessionClient := sessionpb.NewSessionClient(sessionClientConn)
+	sessionClient := sessionpb.NewSessionClient(sessionServiceClientConn)
+	sessionHistoryClient := historypb.NewHistoryClient(sessionServiceClientConn)
 
 	transactionConn, err := grpc.NewClient(cfg.TransactionServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -60,7 +62,7 @@ func run(logger *slog.Logger, cfg *config.Config) error {
 	}
 	transactionClient := transactionpb.NewTransactionClient(transactionConn)
 
-	mux := buildServerMux(cfg, logger, authClient, userClient, sessionClient, transactionClient)
+	mux := buildServerMux(cfg, logger, authClient, userClient, sessionClient, sessionHistoryClient, transactionClient)
 	logger.Debug("Starting server", "add", cfg.GatewayAPIAddress)
 	if err := http.ListenAndServe(cfg.GatewayAPIAddress, mux); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -75,6 +77,7 @@ func buildServerMux(
 	authClient authpb.AuthClient,
 	userClient userpb.UserClient,
 	sessionClient sessionpb.SessionClient,
+	sessionHistoryClient historypb.HistoryClient,
 	transactionClient transactionpb.TransactionClient,
 ) http.Handler {
 	mux := http.NewServeMux()
@@ -95,6 +98,8 @@ func buildServerMux(
 	mux.Handle("DELETE /api/session/{sessionId}/member/{memberId}", session.NewRemoveMemberFromSession(sessionClient))
 	mux.Handle("DELETE /api/session/{sessionId}/leave", session.NewLeaveSessionHandler(sessionClient))
 	mux.Handle("PUT /api/session/{sessionId}/state/{command}", session.NewUpdateSessionActiveStateHandler(logger, sessionClient))
+
+	mux.Handle("GET /api/session/{sessionId}/history", session.NewGetSessionHistoryHandler(logger, sessionHistoryClient))
 
 	mux.Handle("POST /api/session/{sessionId}/transaction", transaction.NewCreateTransactionHandler(logger, transactionClient))
 

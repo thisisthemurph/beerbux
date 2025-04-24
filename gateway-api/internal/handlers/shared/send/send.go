@@ -25,6 +25,14 @@ func Error(w http.ResponseWriter, err string, code int) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": err})
 }
 
+func BadRequest(w http.ResponseWriter, err string) {
+	Error(w, err, http.StatusBadRequest)
+}
+
+func InternalServerError(w http.ResponseWriter, err string) {
+	Error(w, err, http.StatusInternalServerError)
+}
+
 // ValidationError sends a JSON payload detailing ozzo-validation validation errors.
 // The JSON payload contains an errors map detailing the fields and their errors.
 //

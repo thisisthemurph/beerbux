@@ -11,6 +11,7 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
+	"github.com/thisisthemurph/beerbux/session-service/protos/historypb"
 	"github.com/thisisthemurph/fn"
 )
 
@@ -94,11 +95,11 @@ func (h TransactionCreatedMessageHandler) Handle(ctx context.Context, msg kafka.
 
 	_ = h.sessionRepository.SetSessionUpdatedAtNow(ctx, event.SessionID)
 
-	_ = h.historyRepository.CreateTransactionCreatedEvent(ctx, event.SessionID, event.CreatorID, history.TransactionCreatedEvent{
-		TransactionID: event.TransactionID,
-		Lines: fn.Map(event.Amounts, func(a MemberAmount) history.TransactionCreatedEventTransactionLine {
-			return history.TransactionCreatedEventTransactionLine{
-				MemberID: a.MemberID,
+	_ = h.historyRepository.CreateTransactionCreatedEvent(ctx, event.SessionID, event.CreatorID, &historypb.TransactionCreatedEventData{
+		TransactionId: event.TransactionID,
+		Lines: fn.Map(event.Amounts, func(a MemberAmount) *historypb.TransactionLine {
+			return &historypb.TransactionLine{
+				MemberId: a.MemberID,
 				Amount:   a.Amount,
 			}
 		}),

@@ -19,6 +19,7 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
+	"github.com/thisisthemurph/beerbux/session-service/protos/historypb"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc"
@@ -63,6 +64,7 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 	defer cancel()
 
 	sessionRepository := session.New(db)
+	historyRepository := history.NewHistoryRepository(db)
 
 	// Setup and run Kafka consumers.
 	setupAndRunKafkaConsumers(ctx, cfg, logger, db, sessionRepository)
@@ -73,6 +75,7 @@ func run(cfg *config.Config, logger *slog.Logger) error {
 		logger,
 		db,
 		sessionRepository,
+		historyRepository,
 		userClientConn)
 	if err != nil {
 		return err
@@ -171,6 +174,7 @@ func setupSessionGRPCServer(
 	logger *slog.Logger,
 	db *sql.DB,
 	sessionRepository *session.Queries,
+	historyRepository history.HistoryRepository,
 	userClientConn *grpc.ClientConn,
 ) (net.Listener, *grpc.Server, error) {
 	listener, err := net.Listen("tcp", cfg.SessionServerAddress)
@@ -186,7 +190,10 @@ func setupSessionGRPCServer(
 		publisher.NewSessionMemberAddedKafkaPublisher(cfg.Kafka.Brokers),
 		logger)
 
+	hs := server.NewHistoryServer(historyRepository)
+
 	sessionpb.RegisterSessionServer(grpcServer, ss)
+	historypb.RegisterHistoryServer(grpcServer, hs)
 
 	if cfg.Environment.IsDevelopment() {
 		reflection.Register(grpcServer)

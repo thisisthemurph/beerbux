@@ -1,4 +1,4 @@
-import type { Session } from "@/api/types.ts";
+import type { Session } from "@/api/types/session.ts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
 import {
 	Card,

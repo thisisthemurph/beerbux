@@ -10,19 +10,18 @@ import {
 } from "@/components/primary-action-card.tsx";
 import { Beer, SquarePlus } from "lucide-react";
 import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
-import { TransactionListing } from "@/features/session/detail/transaction-listing.tsx";
 import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
-import type {
-	Session,
-	SessionTransaction,
-	TransactionMemberAmounts,
-	User,
-} from "@/api/types.ts";
+import type { Session, SessionTransaction } from "@/api/types/session.ts";
+import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
+import type { User } from "@/api/types/user.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
 import { AddMemberDrawer } from "@/features/session/detail/add-member/add-member-drawer.tsx";
+import type { SessionHistory } from "@/api/types/session-history.ts";
+import { SessionHistoryCard } from "@/features/session/detail/session-history-card/session-history-card.tsx";
 
 type SessionDetailContentProps = {
 	session: Session;
+	history: SessionHistory | undefined;
 	user: User;
 	onMemberAdminStateUpdate: (
 		sessionId: string,
@@ -49,6 +48,7 @@ function calculateAverage(transactions: SessionTransaction[]) {
 
 export function SessionDetailContent({
 	session,
+	history,
 	user,
 	onMemberAdminStateUpdate,
 	handleNewTransaction,
@@ -122,8 +122,8 @@ export function SessionDetailContent({
 				onRemoveMember={onRemoveMember}
 			/>
 
-			<TransactionListing
-				transactions={session.transactions}
+			<SessionHistoryCard
+				events={history?.events ?? []}
 				members={session.members}
 				avatarData={avatarData}
 			/>

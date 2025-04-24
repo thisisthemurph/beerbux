@@ -1,4 +1,4 @@
-import type { User } from "@/api/types.ts";
+import type { User } from "@/api/types/user.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 

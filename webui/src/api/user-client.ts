@@ -1,5 +1,6 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { Session, UserBalance } from "@/api/types.ts";
+import type { Session } from "@/api/types/session.ts";
+import type { UserBalance } from "@/api/types/user.ts";
 
 function useUserClient() {
 	const logout = async () => {

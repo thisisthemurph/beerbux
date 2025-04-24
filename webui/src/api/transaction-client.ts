@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { TransactionMemberAmounts } from "@/api/types.ts";
+import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
 
 export default function useTransactionClient() {
 	const createTransaction = async (

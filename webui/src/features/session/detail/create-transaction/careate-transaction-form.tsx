@@ -1,4 +1,5 @@
-import type { SessionMember, TransactionMemberAmounts } from "@/api/types.ts";
+import type { SessionMember } from "@/api/types/session.ts";
+import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
 import { Button } from "@/components/ui/button.tsx";
 import {
 	Form,

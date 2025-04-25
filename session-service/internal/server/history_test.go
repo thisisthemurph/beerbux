@@ -3,6 +3,8 @@ package server_test
 import (
 	"context"
 	"encoding/json"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +15,6 @@ import (
 	"github.com/thisisthemurph/beerbux/session-service/tests/testinfra"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	"testing"
 )
 
 func TestGetBySessionID(t *testing.T) {
@@ -42,18 +43,8 @@ func TestGetBySessionID(t *testing.T) {
 		},
 	}
 
-	eventData2 := &historypb.TransactionCreatedEventData{
-		TransactionId: uuid.NewString(),
-		Lines: []*historypb.TransactionLine{
-			{
-				MemberId: member1ID,
-				Amount:   1,
-			},
-			{
-				MemberId: member3ID,
-				Amount:   1,
-			},
-		},
+	eventData2 := &historypb.MemberRemovedEventData{
+		MemberId: member2ID,
 	}
 
 	data1, err := json.Marshal(eventData1)
@@ -75,16 +66,23 @@ func TestGetBySessionID(t *testing.T) {
 		WithEventType(history.EventTransactionCreated).
 		WithEventData(data2).
 		Build(db)
+	ev3 := builder.NewSessionHistoryBuilder(t).
+		WithID(3).
+		WithSessionID(sessionID).
+		WithMemberID(member3ID).
+		WithEventType(history.EventMemberLeft).
+		WithEventData(nil).
+		Build(db)
 	// A session history item for a different session that should not be retrieved.
 	_ = builder.NewSessionHistoryBuilder(t).
-		WithID(3).
+		WithID(4).
 		WithSessionID(uuid.NewString()).
 		WithMemberID(uuid.NewString()).
 		WithEventType(history.EventTransactionCreated).
 		WithEventData(data2).
 		Build(db)
 
-	expectedEvents := []history.SessionHistory{ev1, ev2}
+	expectedEvents := []history.SessionHistory{ev1, ev2, ev3}
 
 	sessionHistory, err := historyServer.GetBySessionID(context.Background(), &historypb.GetBySessionIDRequest{
 		SessionId: sessionID,
@@ -100,7 +98,6 @@ func TestGetBySessionID(t *testing.T) {
 		assert.Equal(t, expectedEvent.ID, event.Id)
 		assert.Equal(t, expectedEvent.MemberID, event.MemberId)
 		assert.Equal(t, expectedEvent.EventType, event.EventType)
-		assert.NotNil(t, event.EventData)
 		assertEventData(t, event.EventType, expectedEvent.EventData, event.EventData)
 	}
 }
@@ -109,10 +106,19 @@ func assertEventData(t *testing.T, eventType string, expectedData []byte, data *
 	et := history.NewEventType(eventType)
 	switch et {
 	case history.EventTransactionCreated:
+		assert.NotNil(t, data)
 		var expectedTransactionCreatedEventData *historypb.TransactionCreatedEventData
 		err := json.Unmarshal(expectedData, &expectedTransactionCreatedEventData)
 		require.NoError(t, err)
 		assertTransactionCreatedEventData(t, expectedTransactionCreatedEventData, data)
+	case history.EventMemberRemoved:
+		assert.NotNil(t, data)
+		var expectedMemberRemovedEventData *historypb.MemberRemovedEventData
+		err := json.Unmarshal(expectedData, &expectedMemberRemovedEventData)
+		require.NoError(t, err)
+		assertMemberRemovedEventData(t, expectedMemberRemovedEventData, data)
+	case history.EventMemberLeft:
+		assert.Nil(t, data)
 	default:
 		t.Fatalf("unknown event type %s", eventType)
 	}
@@ -130,4 +136,11 @@ func assertTransactionCreatedEventData(t *testing.T, expected *historypb.Transac
 		assert.Equal(t, expectedLine.MemberId, line.MemberId)
 		assert.Equal(t, expectedLine.Amount, line.Amount)
 	}
+}
+
+func assertMemberRemovedEventData(t *testing.T, expected *historypb.MemberRemovedEventData, data *anypb.Any) {
+	var eventData historypb.MemberRemovedEventData
+	err := anypb.UnmarshalTo(data, &eventData, proto.UnmarshalOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, expected.MemberId, eventData.MemberId)
 }

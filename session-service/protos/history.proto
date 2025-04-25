@@ -38,4 +38,6 @@ message TransactionLine {
   double amount = 2;
 }
 
-message EmptyResponse {}
+message MemberRemovedEventData {
+  string member_id = 1;
+}

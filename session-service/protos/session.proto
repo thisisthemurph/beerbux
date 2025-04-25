@@ -1,16 +1,18 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package session.service;
 option go_package = "protos/sessionpb;sessionpb";
 
 service Session {
   rpc CreateSession(CreateSessionRequest) returns (SessionResponse);
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
-  rpc UpdateSessionActiveState(UpdateSessionActiveStateRequest) returns (EmptyResponse);
+  rpc UpdateSessionActiveState(UpdateSessionActiveStateRequest) returns (google.protobuf.Empty);
   rpc ListSessionsForUser(ListSessionsForUserRequest) returns (ListSessionsForUserResponse);
-  rpc AddMemberToSession(AddMemberToSessionRequest) returns (EmptyResponse);
-  rpc RemoveMemberFromSession(RemoveMemberFromSessionRequest) returns (EmptyResponse);
-  rpc UpdateSessionMemberAdminState(UpdateSessionMemberAdminStateRequest) returns (EmptyResponse);
+  rpc AddMemberToSession(AddMemberToSessionRequest) returns (google.protobuf.Empty);
+  rpc RemoveMemberFromSession(RemoveMemberFromSessionRequest) returns (google.protobuf.Empty);
+  rpc UpdateSessionMemberAdminState(UpdateSessionMemberAdminStateRequest) returns (google.protobuf.Empty);
 }
 
 message CreateSessionRequest {
@@ -34,6 +36,7 @@ message GetSessionResponse {
 message UpdateSessionActiveStateRequest {
   string session_id = 1;
   bool is_active = 2;
+  string performed_by_id = 3;
 }
 
 message SessionTransactionLine {
@@ -80,17 +83,18 @@ message SessionResponse {
 message AddMemberToSessionRequest {
   string session_id = 1;
   string user_id = 2;
+  string performed_by_id = 3;
 }
 
 message RemoveMemberFromSessionRequest {
   string session_id = 1;
   string user_id = 2;
+  string performed_by_id = 3;
 }
 
 message UpdateSessionMemberAdminStateRequest {
   string session_id = 1;
   string user_id = 2;
   bool is_admin = 3;
+  string performed_by_id = 4;
 }
-
-message EmptyResponse {}

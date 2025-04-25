@@ -186,6 +186,7 @@ func setupSessionGRPCServer(
 	ss := server.NewSessionServer(
 		db,
 		sessionRepository,
+		historyRepository,
 		userpb.NewUserClient(userClientConn),
 		publisher.NewSessionMemberAddedKafkaPublisher(cfg.Kafka.Brokers),
 		logger)

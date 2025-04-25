@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/internal/server"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
@@ -22,14 +23,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func BuildSessionServer(t *testing.T, db *sql.DB, userClient *fake.UserClient) *server.SessionServer {
+	t.Helper()
+	sessionRepo := session.New(db)
+	historyRepo := history.NewHistoryRepository(db)
+	fakeUserClient := fake.NewFakeUserClient()
+	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
+
+	if userClient != nil {
+		fakeUserClient = userClient
+	}
+
+	return server.NewSessionServer(db, sessionRepo, historyRepo, fakeUserClient, fakePublisher, slog.Default())
+}
+
 func TestGetSession_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").
@@ -46,11 +57,7 @@ func TestGetSession_Success(t *testing.T) {
 func TestGetSession_GetSession_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	sessionID := uuid.New()
 	transactionID := uuid.NewString()
@@ -136,11 +143,7 @@ func TestGetSession_GetSession_Success(t *testing.T) {
 func TestGetSession_When_SessionDoesNotExist_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	sessionID := uuid.New().String()
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: sessionID})
@@ -152,11 +155,7 @@ func TestGetSession_When_SessionDoesNotExist_ReturnsError(t *testing.T) {
 func TestGetSession_With_InvalidRequest_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	resp, err := sessionServer.GetSession(context.Background(), &sessionpb.GetSessionRequest{SessionId: ""})
 	assertStatusHasCode(t, err, codes.InvalidArgument)
@@ -166,11 +165,7 @@ func TestGetSession_With_InvalidRequest_ReturnsError(t *testing.T) {
 func TestListSessionsForUser_ReturnsSessionsOrderedByUpdatedAt(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	member := builder.NewMemberBuilder(t).
 		WithName("Member 1").
@@ -222,11 +217,7 @@ func TestListSessionsForUser_ReturnsSessionsOrderedByUpdatedAt(t *testing.T) {
 func TestListSessionsForUser_When_ProvidedWithPagingData_ReturnsPagedResults(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	member := builder.NewMemberBuilder(t).
 		WithName("Member 1").
@@ -302,12 +293,9 @@ func TestListSessionsForUser_When_ProvidedWithPagingData_ReturnsPagedResults(t *
 func TestCreateSession_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
-
 	fakeUserID := uuid.NewString()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(fakeUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, fakeUserClient)
 
 	req := &sessionpb.CreateSessionRequest{
 		UserId: fakeUserID,
@@ -334,11 +322,8 @@ func TestCreateSession_Success(t *testing.T) {
 func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
-
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(uuid.NewString(), "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, fakeUserClient)
 
 	req := &sessionpb.CreateSessionRequest{
 		UserId: uuid.NewString(),
@@ -354,7 +339,7 @@ func TestCreateSession_WhenUserNotFound_Error(t *testing.T) {
 func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	existingMember := builder.NewMemberBuilder(t).
 		WithName("user").
@@ -364,10 +349,6 @@ func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").
 		Build(db)
-
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,
@@ -382,16 +363,14 @@ func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
 func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
 
 	testUserID := uuid.NewString()
+	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
+	sessionServer := BuildSessionServer(t, db, fakeUserClient)
+
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").
 		Build(db)
-
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,
@@ -406,12 +385,10 @@ func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
 func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
 
 	testUserID := uuid.NewString()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
 	fakeUserClient := fake.NewFakeUserClient().WithUser(testUserID, "user", "username")
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, fakeUserClient)
 
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: uuid.NewString(),
@@ -427,20 +404,15 @@ func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {
 func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	ssn := builder.NewSessionBuilder(t).
 		WithName("Test Session").
 		Build(db)
 
-	testUserID := uuid.NewString()
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
-
 	req := &sessionpb.AddMemberToSessionRequest{
 		SessionId: ssn.ID,
-		UserId:    testUserID,
+		UserId:    uuid.NewString(),
 	}
 
 	_, err := sessionServer.AddMemberToSession(context.Background(), req)
@@ -451,7 +423,7 @@ func TestAddMemberToSession_WhenUserNotFound_Errors(t *testing.T) {
 func TestRemoveMemberFromSession(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	existingMember1 := builder.NewMemberBuilder(t).
 		WithName("user 1").
@@ -469,44 +441,64 @@ func TestRemoveMemberFromSession(t *testing.T) {
 		WithExistingMember(existingMember2).
 		Build(db)
 
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	testCases := []struct {
+		name          string
+		performedBy   string
+		expectedEvent string
+	}{
+		{
+			"member removed",
+			existingMember1.ID,
+			history.EventMemberRemoved.String(),
+		},
+		{
+			"member left",
+			"",
+			history.EventMemberLeft.String(),
+		},
+	}
 
-	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
-		SessionId: ssn.ID,
-		UserId:    existingMember2.ID,
-	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
+				SessionId:     ssn.ID,
+				UserId:        existingMember2.ID,
+				PerformedById: tc.performedBy,
+			})
 
-	assert.NoError(t, err)
+			assert.NoError(t, err)
 
-	count := 0
-	countQuery := "select count(*) from session_members where session_id = ? and is_deleted = ?;"
+			count := 0
+			countQuery := "select count(*) from session_members where session_id = ? and is_deleted = ?;"
 
-	err = db.QueryRow(countQuery, ssn.ID, false).Scan(&count)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+			err = db.QueryRow(countQuery, ssn.ID, false).Scan(&count)
+			require.NoError(t, err)
+			assert.Equal(t, 1, count)
 
-	err = db.QueryRow(countQuery, ssn.ID, true).Scan(&count)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+			err = db.QueryRow(countQuery, ssn.ID, true).Scan(&count)
+			require.NoError(t, err)
+			assert.Equal(t, 1, count)
 
-	var isDeleted bool
-	query := "select is_deleted from session_members where session_id = ? and member_id = ?;"
+			var isDeleted bool
+			query := "select is_deleted from session_members where session_id = ? and member_id = ?;"
 
-	err = db.QueryRow(query, ssn.ID, existingMember1.ID).Scan(&isDeleted)
-	require.NoError(t, err)
-	assert.False(t, isDeleted)
+			err = db.QueryRow(query, ssn.ID, existingMember1.ID).Scan(&isDeleted)
+			require.NoError(t, err)
+			assert.False(t, isDeleted)
 
-	err = db.QueryRow(query, ssn.ID, existingMember2.ID).Scan(&isDeleted)
-	require.NoError(t, err)
-	assert.True(t, isDeleted)
+			err = db.QueryRow(query, ssn.ID, existingMember2.ID).Scan(&isDeleted)
+			require.NoError(t, err)
+			assert.True(t, isDeleted)
+
+			assertSessionHistoryTableRecordCount(t, db, tc.expectedEvent, 1)
+		})
+	}
 }
 
 func TestRemoveMemberFromSession_When_DeletingOnlyAdmin_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	adminMember := builder.NewMemberBuilder(t).
 		WithName("user 1").
@@ -524,10 +516,6 @@ func TestRemoveMemberFromSession_When_DeletingOnlyAdmin_ReturnsError(t *testing.
 		WithExistingMember(normalMember).
 		Build(db)
 
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
-
 	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
 		SessionId: ssn.ID,
 		UserId:    adminMember.ID,
@@ -540,7 +528,7 @@ func TestRemoveMemberFromSession_When_DeletingOnlyAdmin_ReturnsError(t *testing.
 func TestRemoveMemberFromSession_When_DeletingTheLastMember_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-	sessionRepo := session.New(db)
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	onlyMember := builder.NewMemberBuilder(t).
 		WithName("user").
@@ -551,10 +539,6 @@ func TestRemoveMemberFromSession_When_DeletingTheLastMember_ReturnsError(t *test
 		WithName("Test Session").
 		WithExistingAdminMember(onlyMember).
 		Build(db)
-
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
 
 	_, err := sessionServer.RemoveMemberFromSession(context.Background(), &sessionpb.RemoveMemberFromSessionRequest{
 		SessionId: ssn.ID,
@@ -594,11 +578,7 @@ func TestUpdateSessionMemberAdminState(t *testing.T) {
 	q := "select is_admin from session_members where member_id = ?;"
 	for _, tc := range testCases {
 		db := testinfra.SetupTestDB(t, "../db/migrations")
-
-		sessionRepo := session.New(db)
-		fakeUserClient := fake.NewFakeUserClient()
-		fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-		sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+		sessionServer := BuildSessionServer(t, db, nil)
 
 		ssn := builder.NewSessionBuilder(t).
 			WithID(uuid.New()).
@@ -643,11 +623,7 @@ func TestUpdateSessionMemberAdminState(t *testing.T) {
 func TestUpdateSessionActiveState_When_SessionExists_Updates(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	testCases := []struct {
 		name                string
@@ -709,11 +685,7 @@ func TestUpdateSessionActiveState_When_SessionExists_Updates(t *testing.T) {
 func TestUpdateSessionActiveState_When_SessionNotFound_ReturnsError(t *testing.T) {
 	db := testinfra.SetupTestDB(t, "../db/migrations")
 	t.Cleanup(func() { db.Close() })
-
-	sessionRepo := session.New(db)
-	fakeUserClient := fake.NewFakeUserClient()
-	fakePublisher := fake.NewFakeSessionMemberAddedPublisher()
-	sessionServer := server.NewSessionServer(db, sessionRepo, fakeUserClient, fakePublisher, slog.Default())
+	sessionServer := BuildSessionServer(t, db, nil)
 
 	_, err := sessionServer.UpdateSessionActiveState(context.Background(), &sessionpb.UpdateSessionActiveStateRequest{
 		SessionId: uuid.NewString(),
@@ -723,9 +695,16 @@ func TestUpdateSessionActiveState_When_SessionNotFound_ReturnsError(t *testing.T
 	assert.ErrorIs(t, err, server.ErrSessionNotFound)
 }
 
-func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, expectedName, expectedUsername string, expectedOwner bool) {
+func assertSessionHistoryTableRecordCount(t *testing.T, db *sql.DB, eventType string, expectedCount int) {
 	t.Helper()
 
+	var count int
+	err := db.QueryRow("select count(*) from session_history where event_type = ?;", eventType).Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, expectedCount, count)
+}
+
+func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, expectedName, expectedUsername string, expectedOwner bool) {
 	var memberName, memberUsername string
 	err := db.QueryRow("select name, username from members where id = ?", memberID).Scan(&memberName, &memberUsername)
 	assert.NoError(t, err)
@@ -739,8 +718,6 @@ func assertUserInsertedAsMember(t *testing.T, db *sql.DB, sessionID, memberID, e
 }
 
 func assertStatusHasCode(t *testing.T, err error, expectedCode codes.Code) {
-	t.Helper()
-
 	assert.Error(t, err)
 	st, ok := status.FromError(err)
 	assert.True(t, ok)

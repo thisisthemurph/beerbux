@@ -16,12 +16,18 @@ type EventType string
 const (
 	EventUnknown            EventType = "unknown_event"
 	EventTransactionCreated EventType = "transaction_created"
+	EventMemberRemoved      EventType = "member_removed"
+	EventMemberLeft         EventType = "member_left"
 )
 
 func NewEventType(t string) EventType {
 	switch t {
 	case EventTransactionCreated.String():
 		return EventTransactionCreated
+	case EventMemberRemoved.String():
+		return EventMemberRemoved
+	case EventMemberLeft.String():
+		return EventMemberLeft
 	default:
 		return EventUnknown
 	}
@@ -34,6 +40,8 @@ func (et EventType) String() string {
 type HistoryRepository interface {
 	GetBySessionID(ctx context.Context, sessionID string) (*historypb.SessionHistoryResponse, error)
 	CreateTransactionCreatedEvent(ctx context.Context, sessionID, memberID string, event *historypb.TransactionCreatedEventData) error
+	CreateMemberRemovedEvent(ctx context.Context, sessionID, memberID, performedByMemberId string) error
+	CreateMemberLeftEvent(ctx context.Context, sessionID, memberID string) error
 }
 
 type SQLiteHistoryRepository struct {
@@ -88,6 +96,18 @@ func parseEvent(eventType EventType, b []byte) (*anypb.Any, error) {
 			return nil, err
 		}
 		return a, err
+	case EventMemberRemoved:
+		var memberRemovedEvent *historypb.MemberRemovedEventData
+		if err := json.Unmarshal(b, &memberRemovedEvent); err != nil {
+			return nil, err
+		}
+		a, err := anypb.New(memberRemovedEvent)
+		if err != nil {
+			return nil, err
+		}
+		return a, err
+	case EventMemberLeft:
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("unknown event type: %s", eventType)
 	}
@@ -104,5 +124,32 @@ func (r *SQLiteHistoryRepository) CreateTransactionCreatedEvent(ctx context.Cont
 		MemberID:  memberID,
 		EventType: EventTransactionCreated.String(),
 		EventData: data,
+	})
+}
+
+func (r *SQLiteHistoryRepository) CreateMemberRemovedEvent(ctx context.Context, sessionID, memberID, performedByMemberId string) error {
+	eventData := &historypb.MemberRemovedEventData{
+		MemberId: memberID,
+	}
+
+	data, err := json.Marshal(eventData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal member removed event: %w", err)
+	}
+
+	return r.queries.CreateSessionHistory(ctx, CreateSessionHistoryParams{
+		SessionID: sessionID,
+		MemberID:  performedByMemberId,
+		EventType: EventMemberRemoved.String(),
+		EventData: data,
+	})
+}
+
+func (r *SQLiteHistoryRepository) CreateMemberLeftEvent(ctx context.Context, sessionID, memberID string) error {
+	return r.queries.CreateSessionHistory(ctx, CreateSessionHistoryParams{
+		SessionID: sessionID,
+		MemberID:  memberID,
+		EventType: EventMemberLeft.String(),
+		EventData: nil,
 	})
 }

@@ -11,11 +11,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/thisisthemurph/beerbux/session-service/internal/publisher"
+	"github.com/thisisthemurph/beerbux/session-service/internal/repository/history"
 	"github.com/thisisthemurph/beerbux/session-service/internal/repository/session"
 	"github.com/thisisthemurph/beerbux/session-service/protos/sessionpb"
 	"github.com/thisisthemurph/beerbux/user-service/protos/userpb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -30,6 +32,7 @@ type SessionServer struct {
 	TX
 
 	sessionRepository           *session.Queries
+	historyRepository           history.HistoryRepository
 	logger                      *slog.Logger
 	userClient                  userpb.UserClient
 	sessionMemberAddedPublisher publisher.SessionMemberAddedPublisher
@@ -38,6 +41,7 @@ type SessionServer struct {
 func NewSessionServer(
 	db *sql.DB,
 	sessionRepository *session.Queries,
+	historyRepository history.HistoryRepository,
 	userClient userpb.UserClient,
 	sessionMemberAddedPublisher publisher.SessionMemberAddedPublisher,
 	logger *slog.Logger,
@@ -45,6 +49,7 @@ func NewSessionServer(
 	return &SessionServer{
 		TX:                          db,
 		sessionRepository:           sessionRepository,
+		historyRepository:           historyRepository,
 		userClient:                  userClient,
 		sessionMemberAddedPublisher: sessionMemberAddedPublisher,
 		logger:                      logger,
@@ -240,7 +245,7 @@ func (s *SessionServer) CreateSession(ctx context.Context, r *sessionpb.CreateSe
 	}, nil
 }
 
-func (s *SessionServer) UpdateSessionActiveState(ctx context.Context, r *sessionpb.UpdateSessionActiveStateRequest) (*sessionpb.EmptyResponse, error) {
+func (s *SessionServer) UpdateSessionActiveState(ctx context.Context, r *sessionpb.UpdateSessionActiveStateRequest) (*emptypb.Empty, error) {
 	if exists, err := s.sessionRepository.SessionExists(ctx, r.SessionId); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to determine if the session exists: %v", err)
 	} else if !exists {
@@ -258,7 +263,7 @@ func (s *SessionServer) UpdateSessionActiveState(ctx context.Context, r *session
 }
 
 // AddMemberToSession adds a user to a session.
-func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.AddMemberToSessionRequest) (*sessionpb.EmptyResponse, error) {
+func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.AddMemberToSessionRequest) (*emptypb.Empty, error) {
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin tx: %v", err)
@@ -357,10 +362,10 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 		s.logger.Error("failed to publish session member added event", "error", err)
 	}
 
-	return &sessionpb.EmptyResponse{}, nil
+	return nil, nil
 }
 
-func (s *SessionServer) RemoveMemberFromSession(ctx context.Context, r *sessionpb.RemoveMemberFromSessionRequest) (*sessionpb.EmptyResponse, error) {
+func (s *SessionServer) RemoveMemberFromSession(ctx context.Context, r *sessionpb.RemoveMemberFromSessionRequest) (*emptypb.Empty, error) {
 	memberCount, err := s.sessionRepository.CountSessionMembers(ctx, r.SessionId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to count session members: %v", err)
@@ -398,10 +403,23 @@ func (s *SessionServer) RemoveMemberFromSession(ctx context.Context, r *sessionp
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to remove member from session: %v", err)
 	}
+
+	if r.PerformedById == "" {
+		err := s.historyRepository.CreateMemberLeftEvent(ctx, r.SessionId, r.UserId)
+		if err != nil {
+			s.logger.Error("Failed to log member left event", "error", err)
+		}
+	} else {
+		err := s.historyRepository.CreateMemberRemovedEvent(ctx, r.SessionId, r.UserId, r.PerformedById)
+		if err != nil {
+			s.logger.Error("Failed to log member removed event", "error", err)
+		}
+	}
+
 	return nil, nil
 }
 
-func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *sessionpb.UpdateSessionMemberAdminStateRequest) (*sessionpb.EmptyResponse, error) {
+func (s *SessionServer) UpdateSessionMemberAdminState(ctx context.Context, r *sessionpb.UpdateSessionMemberAdminStateRequest) (*emptypb.Empty, error) {
 	count, err := s.sessionRepository.CountSessionAdmins(ctx, r.SessionId)
 	if err != nil {
 		s.logger.Error("failed to count session admins", "error", err)

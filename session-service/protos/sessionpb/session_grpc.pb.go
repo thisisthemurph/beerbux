@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -34,11 +35,11 @@ const (
 type SessionClient interface {
 	CreateSession(ctx context.Context, in *CreateSessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
-	UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ListSessionsForUser(ctx context.Context, in *ListSessionsForUserRequest, opts ...grpc.CallOption) (*ListSessionsForUserResponse, error)
-	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
-	RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
-	UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type sessionClient struct {
@@ -69,9 +70,9 @@ func (c *sessionClient) GetSession(ctx context.Context, in *GetSessionRequest, o
 	return out, nil
 }
 
-func (c *sessionClient) UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+func (c *sessionClient) UpdateSessionActiveState(ctx context.Context, in *UpdateSessionActiveStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EmptyResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Session_UpdateSessionActiveState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -89,9 +90,9 @@ func (c *sessionClient) ListSessionsForUser(ctx context.Context, in *ListSession
 	return out, nil
 }
 
-func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EmptyResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Session_AddMemberToSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -99,9 +100,9 @@ func (c *sessionClient) AddMemberToSession(ctx context.Context, in *AddMemberToS
 	return out, nil
 }
 
-func (c *sessionClient) RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+func (c *sessionClient) RemoveMemberFromSession(ctx context.Context, in *RemoveMemberFromSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EmptyResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Session_RemoveMemberFromSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -109,9 +110,9 @@ func (c *sessionClient) RemoveMemberFromSession(ctx context.Context, in *RemoveM
 	return out, nil
 }
 
-func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
+func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *UpdateSessionMemberAdminStateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EmptyResponse)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Session_UpdateSessionMemberAdminState_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -125,11 +126,11 @@ func (c *sessionClient) UpdateSessionMemberAdminState(ctx context.Context, in *U
 type SessionServer interface {
 	CreateSession(context.Context, *CreateSessionRequest) (*SessionResponse, error)
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
-	UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*EmptyResponse, error)
+	UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*emptypb.Empty, error)
 	ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error)
-	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error)
-	RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*EmptyResponse, error)
-	UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error)
+	AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*emptypb.Empty, error)
+	RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*emptypb.Empty, error)
+	UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedSessionServer()
 }
 
@@ -146,19 +147,19 @@ func (UnimplementedSessionServer) CreateSession(context.Context, *CreateSessionR
 func (UnimplementedSessionServer) GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSession not implemented")
 }
-func (UnimplementedSessionServer) UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*EmptyResponse, error) {
+func (UnimplementedSessionServer) UpdateSessionActiveState(context.Context, *UpdateSessionActiveStateRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionActiveState not implemented")
 }
 func (UnimplementedSessionServer) ListSessionsForUser(context.Context, *ListSessionsForUserRequest) (*ListSessionsForUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSessionsForUser not implemented")
 }
-func (UnimplementedSessionServer) AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*EmptyResponse, error) {
+func (UnimplementedSessionServer) AddMemberToSession(context.Context, *AddMemberToSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMemberToSession not implemented")
 }
-func (UnimplementedSessionServer) RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*EmptyResponse, error) {
+func (UnimplementedSessionServer) RemoveMemberFromSession(context.Context, *RemoveMemberFromSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMemberFromSession not implemented")
 }
-func (UnimplementedSessionServer) UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*EmptyResponse, error) {
+func (UnimplementedSessionServer) UpdateSessionMemberAdminState(context.Context, *UpdateSessionMemberAdminStateRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionMemberAdminState not implemented")
 }
 func (UnimplementedSessionServer) mustEmbedUnimplementedSessionServer() {}

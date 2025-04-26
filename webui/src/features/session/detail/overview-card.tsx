@@ -21,7 +21,7 @@ export function OverviewCard({
 	average,
 }: OverviewCardProps) {
 	return (
-		<Card className="bg-primary">
+		<Card className="bg-primary text-white shadow-xl">
 			<CardHeader className="sr-only">
 				<CardTitle>Overview card</CardTitle>
 			</CardHeader>

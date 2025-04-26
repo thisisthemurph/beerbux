@@ -38,6 +38,10 @@ message TransactionLine {
   double amount = 2;
 }
 
+message MemberAddedEventData {
+  string member_id = 1;
+}
+
 message MemberRemovedEventData {
   string member_id = 1;
 }

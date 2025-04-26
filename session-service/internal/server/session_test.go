@@ -358,6 +358,7 @@ func TestAddMemberToSession_WhenMemberInMembersTable_Success(t *testing.T) {
 	_, err := sessionServer.AddMemberToSession(context.Background(), req)
 	assert.NoError(t, err)
 	assertUserInsertedAsMember(t, db, ssn.ID, existingMember.ID, "user", "username", false)
+	assertSessionHistoryTableRecordCount(t, db, "member_added", 1)
 }
 
 func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
@@ -380,6 +381,7 @@ func TestAddMemberToSession_WhenMemberNotInSessionsTable_Success(t *testing.T) {
 	_, err := sessionServer.AddMemberToSession(context.Background(), req)
 	assert.NoError(t, err)
 	assertUserInsertedAsMember(t, db, ssn.ID, testUserID, "user", "username", false)
+	assertSessionHistoryTableRecordCount(t, db, "member_added", 1)
 }
 
 func TestAddMemberToSession_WhenSessionNotFound_Errors(t *testing.T) {

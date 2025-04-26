@@ -1,23 +1,21 @@
 import type { TransactionCreatedSessionHistoryEvent } from "@/api/types/session-history.ts";
-import { UserAvatar } from "@/components/user-avatar.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { SessionMember } from "@/api/types/session.ts";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
-import { EventContainer } from "@/features/session/detail/session-history-card/event-container.tsx";
+import { BaseHistoryEventRow, type HistoryEventRow } from "./base-row";
 
-interface TransactionCreatedEventProps
-	extends TransactionCreatedSessionHistoryEvent {
-	creator: SessionMember | undefined;
-	creatorAvatarData: AvatarData;
+interface TransactionCreatedRowProps
+	extends TransactionCreatedSessionHistoryEvent,
+		HistoryEventRow {
+	actor: SessionMember | undefined;
 	members: SessionMember[];
 }
 
-export function TransactionCreatedEvent({
-	creator,
-	creatorAvatarData,
+export function TransactionCreatedRow({
+	actor,
+	actorAvatarData,
 	members,
 	...event
-}: TransactionCreatedEventProps) {
+}: TransactionCreatedRowProps) {
 	function stringifyMemberNames(usernames: string[]): string {
 		if (usernames.length === members.length - 1) return "everyone";
 		if (usernames.length === 1) return usernames[0];
@@ -26,16 +24,15 @@ export function TransactionCreatedEvent({
 	}
 
 	return (
-		<EventContainer>
-			<UserAvatar data={creatorAvatarData} />
+		<BaseHistoryEventRow actorAvatarData={actorAvatarData}>
 			<div className="grid grid-cols-5 grid-rows-2 w-full">
 				<p
 					className={cn(
 						"col-span-4 font-semibold tracking-wider",
-						creator?.isDeleted && "line-through",
+						actor?.isDeleted && "line-through",
 					)}
 				>
-					{creator?.username ?? "unknown"}
+					{actor?.username ?? "unknown"}
 				</p>
 				<div className="row-span-2 flex items-center justify-end">
 					<p className="font-semibold">
@@ -52,6 +49,6 @@ export function TransactionCreatedEvent({
 					)}
 				</p>
 			</div>
-		</EventContainer>
+		</BaseHistoryEventRow>
 	);
 }

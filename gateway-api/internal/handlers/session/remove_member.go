@@ -50,8 +50,9 @@ func (h *RemoveMemberFromSessionHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	_, err = h.sessionClient.RemoveMemberFromSession(r.Context(), &sessionpb.RemoveMemberFromSessionRequest{
-		SessionId: params.SessionID,
-		UserId:    params.MemberID,
+		SessionId:     params.SessionID,
+		UserId:        params.MemberID,
+		PerformedById: c.Subject,
 	})
 	if err != nil {
 		sc, ok := status.FromError(err)

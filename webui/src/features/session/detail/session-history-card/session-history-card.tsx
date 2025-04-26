@@ -13,13 +13,10 @@ import {
 import { useState } from "react";
 import type { SessionMember } from "@/api/types/session.ts";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
-import { format, parse } from "date-fns";
 import { Button } from "@/components/ui/button.tsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { EventGroup } from "./event-group";
-
-type GroupedEventRecords = Record<string, SessionHistoryEvent[]>;
-const DATE_FMT_LONG = "EEEE do MMMM, yyyy";
+import { useGroupedEvents } from "@/features/session/detail/hooks/use-grouped-events.ts";
 
 type SessionHistoryCardProps = {
 	events: SessionHistoryEvent[];
@@ -33,19 +30,10 @@ export function SessionHistoryCard({
 	avatarData,
 }: SessionHistoryCardProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const groupedEvents = groupEventsByDate(events);
-	const sortedGroupLabels = Object.keys(groupedEvents).sort((a, b) => {
-		return (
-			parse(b, DATE_FMT_LONG, new Date()).getTime() -
-			parse(a, DATE_FMT_LONG, new Date()).getTime()
-		);
-	});
-
-	const firstGroupLabel = sortedGroupLabels[0];
-	const firstGroupEvents = groupedEvents[firstGroupLabel];
+	const grouped = useGroupedEvents(events);
 	const showCollapsibleTrigger =
-		sortedGroupLabels.length > 1 ||
-		(firstGroupEvents && firstGroupEvents.length > 5);
+		grouped.sortedLabels.length > 1 ||
+		(grouped.firstEvents && grouped.firstEvents.length > 5);
 
 	return (
 		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -67,21 +55,23 @@ export function SessionHistoryCard({
 					{members.length <= 1 && <NoMembers />}
 					{members.length > 1 && events.length === 0 && <NoEventsMessage />}
 
-					{firstGroupEvents.length > 0 && (
+					{grouped.firstEvents.length > 0 && (
 						<EventGroup
-							label={firstGroupLabel}
-							events={isOpen ? firstGroupEvents : firstGroupEvents.slice(0, 5)}
+							label={grouped.firstLabel}
+							events={
+								isOpen ? grouped.firstEvents : grouped.firstEvents.slice(0, 5)
+							}
 							members={members}
 							avatarData={avatarData}
 						/>
 					)}
 
 					<CollapsibleContent>
-						{sortedGroupLabels.slice(1).map((label) => (
+						{grouped.sortedLabels.slice(1).map((label) => (
 							<EventGroup
 								key={label}
 								label={label}
-								events={groupedEvents[label]}
+								events={grouped.events[label]}
 								members={members}
 								avatarData={avatarData}
 							/>
@@ -112,28 +102,4 @@ function NoEventsMessage() {
 			</p>
 		</div>
 	);
-}
-
-function groupEventsByDate(events: SessionHistoryEvent[]): GroupedEventRecords {
-	const groupedEvents = events.reduce((acc, transaction) => {
-		const formattedDate = format(
-			new Date(transaction.createdAt),
-			DATE_FMT_LONG,
-		);
-
-		if (!acc[formattedDate]) {
-			acc[formattedDate] = [];
-		}
-
-		acc[formattedDate].push(transaction);
-		return acc;
-	}, {} as GroupedEventRecords);
-
-	for (const date in groupedEvents) {
-		groupedEvents[date].sort((a, b) => {
-			return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-		});
-	}
-
-	return groupedEvents;
 }

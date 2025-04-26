@@ -1,4 +1,8 @@
-export type HistoryEventType = "transaction_created" | "member_added";
+export type HistoryEventType =
+	| "transaction_created"
+	| "member_added"
+	| "member_removed"
+	| "member_left";
 
 export type SessionHistory = {
 	sessionId: string;
@@ -8,6 +12,7 @@ export type SessionHistory = {
 interface BaseSessionHistoryEvent {
 	id: number;
 	eventType: HistoryEventType;
+	eventData: unknown;
 	memberId: string;
 	createdAt: string;
 }
@@ -32,6 +37,21 @@ export interface MemberAddedSessionHistoryEvent
 	};
 }
 
+export interface MemberRemovedSessionHistoryEvent
+	extends BaseSessionHistoryEvent {
+	eventType: "member_removed";
+	eventData: {
+		memberId: string;
+	};
+}
+
+export interface MemberLeftSessionHistoryEvent extends BaseSessionHistoryEvent {
+	eventType: "member_left";
+	eventData: undefined;
+}
+
 export type SessionHistoryEvent =
 	| TransactionCreatedSessionHistoryEvent
-	| MemberAddedSessionHistoryEvent;
+	| MemberAddedSessionHistoryEvent
+	| MemberRemovedSessionHistoryEvent
+	| MemberLeftSessionHistoryEvent;

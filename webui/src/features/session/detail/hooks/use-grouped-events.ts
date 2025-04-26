@@ -28,18 +28,35 @@ function groupEventsByDate(events: SessionHistoryEvent[]): GroupedEventRecords {
 	return groupedEvents;
 }
 
-type GroupedEvents = {
-	// Contains the most recent date label to be displayed first
-	firstLabel: string;
-	// Contains the events of the most recent label
+type EmptyGroupedEvents = {
+	hasEvents: false;
+	firstLabel: null;
 	firstEvents: SessionHistoryEvent[];
-	// Contains all the events grouped by the label
 	events: GroupedEventRecords;
-	// Contains the labels sorted by date
 	sortedLabels: string[];
 }
 
+type PopulatedGroupedEvents = {
+	hasEvents: true;
+	firstLabel: string;
+	firstEvents: SessionHistoryEvent[];
+	events: GroupedEventRecords;
+	sortedLabels: string[];
+}
+
+type GroupedEvents = EmptyGroupedEvents | PopulatedGroupedEvents;
+
 export function useGroupedEvents(eventsToGroup: SessionHistoryEvent[]): GroupedEvents {
+	if (eventsToGroup.length === 0) {
+		return {
+			hasEvents: false,
+			firstLabel: null,
+			firstEvents: [],
+			events: {},
+			sortedLabels: [],
+		};
+	}
+
 	const events = groupEventsByDate(eventsToGroup);
 	const sortedLabels = Object.keys(events).sort((a, b) => {
 		return (
@@ -52,6 +69,7 @@ export function useGroupedEvents(eventsToGroup: SessionHistoryEvent[]): GroupedE
 	const firstEvents = events[firstLabel];
 
 	return {
+		hasEvents: true,
 		firstLabel,
 		firstEvents,
 		events,

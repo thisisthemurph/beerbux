@@ -6,7 +6,7 @@ export type HistoryEventType =
 
 export type SessionHistory = {
 	sessionId: string;
-	events: SessionHistoryEvent[];
+	events: SessionHistoryEvent[] | null;
 };
 
 interface BaseSessionHistoryEvent {

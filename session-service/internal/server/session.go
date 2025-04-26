@@ -358,6 +358,10 @@ func (s *SessionServer) AddMemberToSession(ctx context.Context, r *sessionpb.Add
 		return nil, status.Errorf(codes.Internal, "failed to commit tx: %v", err)
 	}
 
+	if err := s.historyRepository.CreateMemberAddedEvent(ctx, r.SessionId, r.UserId, r.PerformedById); err != nil {
+		s.logger.Error("failed to create member added event", "error", err)
+	}
+
 	if err := s.sessionMemberAddedPublisher.Publish(r.SessionId, r.UserId); err != nil {
 		s.logger.Error("failed to publish session member added event", "error", err)
 	}

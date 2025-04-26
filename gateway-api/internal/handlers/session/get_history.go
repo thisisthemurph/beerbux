@@ -46,7 +46,11 @@ func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	send.JSON(w, response, http.StatusOK)
 }
 
-const EventTypeTransactionCreated = "transaction_created"
+const (
+	EventTypeTransactionCreated = "transaction_created"
+	EventTypeMemberRemoved      = "member_removed"
+	EventTypeMemberLeft         = "member_left"
+)
 
 type HistoryResponse struct {
 	SessionID string         `json:"sessionId"`
@@ -57,13 +61,17 @@ type HistoryEvent struct {
 	ID        int64       `json:"id"`
 	MemberID  string      `json:"memberId"`
 	EventType string      `json:"eventType"`
-	EventData interface{} `json:"eventData"`
+	EventData interface{} `json:"eventData,omitempty"`
 	CreatedAt string      `json:"createdAt"`
 }
 
 type TransactionCreatedEventData struct {
 	TransactionID string            `json:"transactionId"`
 	Lines         []TransactionLine `json:"lines"`
+}
+
+type MemberRemovedEventData struct {
+	MemberID string `json:"memberId"`
 }
 
 type TransactionLine struct {
@@ -99,6 +107,10 @@ func parseEventData(eventType string, d *anypb.Any) (interface{}, error) {
 	switch eventType {
 	case EventTypeTransactionCreated:
 		return parseTransactionCreatedEventData(d)
+	case EventTypeMemberRemoved:
+		return parseMemberRemovedEventData(d)
+	case EventTypeMemberLeft:
+		return nil, nil
 	default:
 		return nil, ErrUnknownHistoryEventType
 	}
@@ -118,5 +130,16 @@ func parseTransactionCreatedEventData(d *anypb.Any) (interface{}, error) {
 				Amount:   line.Amount,
 			}
 		}),
+	}, nil
+}
+
+func parseMemberRemovedEventData(d *anypb.Any) (interface{}, error) {
+	var msg historypb.MemberRemovedEventData
+	if err := d.UnmarshalTo(&msg); err != nil {
+		return nil, err
+	}
+
+	return MemberRemovedEventData{
+		MemberID: msg.MemberId,
 	}, nil
 }

@@ -55,7 +55,7 @@ export function SessionHistoryCard({
 					{members.length <= 1 && <NoMembers />}
 					{members.length > 1 && events.length === 0 && <NoEventsMessage />}
 
-					{(grouped.hasEvents && grouped.firstEvents.length > 0) && (
+					{grouped.hasEvents && grouped.firstEvents.length > 0 && (
 						<EventGroup
 							label={grouped.firstLabel}
 							events={

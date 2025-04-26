@@ -34,7 +34,7 @@ type EmptyGroupedEvents = {
 	firstEvents: SessionHistoryEvent[];
 	events: GroupedEventRecords;
 	sortedLabels: string[];
-}
+};
 
 type PopulatedGroupedEvents = {
 	hasEvents: true;
@@ -42,11 +42,13 @@ type PopulatedGroupedEvents = {
 	firstEvents: SessionHistoryEvent[];
 	events: GroupedEventRecords;
 	sortedLabels: string[];
-}
+};
 
 type GroupedEvents = EmptyGroupedEvents | PopulatedGroupedEvents;
 
-export function useGroupedEvents(eventsToGroup: SessionHistoryEvent[]): GroupedEvents {
+export function useGroupedEvents(
+	eventsToGroup: SessionHistoryEvent[],
+): GroupedEvents {
 	if (eventsToGroup.length === 0) {
 		return {
 			hasEvents: false,

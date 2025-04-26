@@ -32,6 +32,7 @@ export function EventGroup({
 					case "transaction_created":
 						return (
 							<TransactionCreatedRow
+								key={event.id}
 								actor={actor}
 								actorAvatarData={actorAvatarData}
 								members={members}
@@ -41,6 +42,7 @@ export function EventGroup({
 					case "member_added": {
 						return (
 							<MemberAddedRow
+								key={event.id}
 								actorUsername={actorUsername}
 								actorAvatarData={actorAvatarData}
 								addedMemberUsername={
@@ -53,6 +55,7 @@ export function EventGroup({
 					case "member_removed": {
 						return (
 							<MemberRemovedRow
+								key={event.id}
 								actorUsername={actorUsername}
 								actorAvatarData={actorAvatarData}
 								removedMemberUsername={
@@ -65,6 +68,7 @@ export function EventGroup({
 					case "member_left":
 						return (
 							<MemberLeftRow
+								key={event.id}
 								actorUsername={actorUsername}
 								actorAvatarData={actorAvatarData}
 							/>

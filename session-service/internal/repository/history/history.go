@@ -25,6 +25,8 @@ func NewEventType(t string) EventType {
 	switch t {
 	case EventTransactionCreated.String():
 		return EventTransactionCreated
+	case EventMemberAdded.String():
+		return EventMemberAdded
 	case EventMemberRemoved.String():
 		return EventMemberRemoved
 	case EventMemberLeft.String():

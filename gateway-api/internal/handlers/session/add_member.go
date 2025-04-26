@@ -99,8 +99,9 @@ func (h *AddMemberToSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	_, err = h.sessionClient.AddMemberToSession(r.Context(), &sessionpb.AddMemberToSessionRequest{
-		SessionId: sessionID.String(),
-		UserId:    userToAdd.UserId,
+		SessionId:     sessionID.String(),
+		UserId:        userToAdd.UserId,
+		PerformedById: c.Subject,
 	})
 	if err != nil {
 		send.Error(w, "Failed to add member to session", http.StatusInternalServerError)

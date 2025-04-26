@@ -93,28 +93,19 @@ func parseEvent(eventType EventType, b []byte) (*anypb.Any, error) {
 		if err := json.Unmarshal(b, &transactionCreatedEvent); err != nil {
 			return nil, err
 		}
-		a, err := anypb.New(transactionCreatedEvent)
-		if err != nil {
-			return nil, err
-		}
-		return a, err
+		return anypb.New(transactionCreatedEvent)
 	case EventMemberAdded:
 		var memberAddedEvent *historypb.MemberAddedEventData
 		if err := json.Unmarshal(b, &memberAddedEvent); err != nil {
 			return nil, err
 		}
-		a, err := anypb.New(memberAddedEvent)
-		return a, err
+		return anypb.New(memberAddedEvent)
 	case EventMemberRemoved:
 		var memberRemovedEvent *historypb.MemberRemovedEventData
 		if err := json.Unmarshal(b, &memberRemovedEvent); err != nil {
 			return nil, err
 		}
-		a, err := anypb.New(memberRemovedEvent)
-		if err != nil {
-			return nil, err
-		}
-		return a, err
+		return anypb.New(memberRemovedEvent)
 	case EventMemberLeft:
 		return nil, nil
 	default:

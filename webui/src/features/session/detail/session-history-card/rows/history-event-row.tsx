@@ -23,6 +23,8 @@ export function HistoryEventRow({
 		return members.find((m) => m.id === memberId)?.username ?? "someone";
 	}
 
+	if (actor === undefined) return null;
+
 	switch (event.eventType) {
 		case "transaction_created":
 			return (

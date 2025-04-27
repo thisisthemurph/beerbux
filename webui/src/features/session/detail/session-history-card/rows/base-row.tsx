@@ -15,7 +15,7 @@ export function BaseHistoryEventRow({
 	children,
 }: EventHistoryBaseRowProps) {
 	return (
-		<div className="flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors">
+		<div className="flex items-center gap-4 px-6 py-4 tracking-wide hover:bg-muted transition-colors">
 			<UserAvatar data={actorAvatarData} />
 			{children}
 		</div>

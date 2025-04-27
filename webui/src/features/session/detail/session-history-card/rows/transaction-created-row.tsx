@@ -1,5 +1,4 @@
 import type { TransactionCreatedSessionHistoryEvent } from "@/api/types/session-history.ts";
-import { cn } from "@/lib/utils.ts";
 import type { SessionMember } from "@/api/types/session.ts";
 import { BaseHistoryEventRow, type HistoryEventRow } from "./base-row";
 import { Username, UsernameGroup } from "@/components/username.tsx";
@@ -29,15 +28,10 @@ export function TransactionCreatedRow({
 	return (
 		<BaseHistoryEventRow actorAvatarData={actorAvatarData}>
 			<div className="flex justify-between gap-4 w-full">
-				<p
-					className={cn(
-						"tracking-wider",
-						actor?.isDeleted && "line-through",
-					)}
-				>
+				<p>
 					<Username {...actor} /> bought a round for{" "}
 					<UsernameGroup
-						maxMembers={members.length-1}
+						maxMembers={members.length - 1}
 						usernames={memberUsernames}
 					/>
 				</p>

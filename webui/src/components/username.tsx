@@ -12,7 +12,7 @@ export function Username({ username, isDeleted, variant }: UsernameProps) {
 	return (
 		<span
 			className={cn(
-				"font-semibold tracking-wider",
+				"font-semibold",
 				isDeleted && "line-through",
 				variant === "subtle" && "text-muted-foreground",
 			)}
@@ -23,7 +23,9 @@ export function Username({ username, isDeleted, variant }: UsernameProps) {
 }
 
 type UsernameGroupProps = {
+	// The usernames to display
 	usernames: string[];
+	// The maximum number of members to show before using "everyone"
 	maxMembers: number;
 };
 

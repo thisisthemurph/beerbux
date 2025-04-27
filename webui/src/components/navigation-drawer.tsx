@@ -10,28 +10,26 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer.tsx";
-import { cn } from "@/lib/utils.ts";
-import {
-	type NavigationView,
-	useNavigationStore,
-} from "@/stores/navigation-store.ts";
+import { useNavigationStore } from "@/stores/navigation-store.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import {
-	AlignRight as BurgerMenuIcon,
+	AlignRight as BurgerMenuIcon, Bolt,
 	ChevronDown,
-	ChevronLeft,
+	LogIn,
 	LogOut,
-	User2,
+	User2, UserRoundPen,
 } from "lucide-react";
 import type * as React from "react";
-import { Link } from "react-router";
+import { Link, type LinkProps } from "react-router";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils.ts";
 
 export default function NavigationDrawer() {
 	const { logout } = useUserClient();
 	const localLogout = useUserStore((state) => state.logout);
-	const { view, setView, isOpen, open, close } = useNavigationStore();
+	const { isOpen, open, close } = useNavigationStore();
 	const user = useUserStore((state) => state.user);
+	const loggedIn = !!user;
 
 	function handleLogout() {
 		logout()
@@ -43,103 +41,73 @@ export default function NavigationDrawer() {
 
 	return (
 		<Drawer open={isOpen} onClose={close}>
-			{user && <UserButton onClick={() => open("user")} />}
-			<button
-				type="button"
-				title="Open navigation drawer"
-				onClick={() => open()}
-			>
-				<BurgerMenuIcon />
-			</button>
+			{user ? (
+				<UserButton onClick={open} />
+			) : (
+				<button type="button" onClick={open}>
+					<BurgerMenuIcon />
+				</button>
+			)}
 			<DrawerContent>
 				<DrawerHeader>
-					<DrawerTitle
-						className={cn(
-							"sr-only text-center font-mono tracking-wider text-2xl",
-							view !== "primary" && "not-sr-only",
-						)}
-					>
-						{user?.username}
+					<DrawerTitle className="text-center font-mono tracking-wider text-2xl">
+						{loggedIn ? user.username : "Beerbux"}
 					</DrawerTitle>
 					<DrawerDescription className="sr-only">Navigation</DrawerDescription>
-					<section className="flex flex-col gap-2 my-6 text-center text-xl">
-						<NavigationContent view={view} />
-					</section>
 				</DrawerHeader>
-				<DrawerFooter>
-					<section className="flex items-center justify-between">
-						<div className="space-x-2">
-							{/* Show the user button when the user is logged in */}
-							{view === "primary" && user && (
-								<Button variant="secondary" onClick={() => setView("user")}>
-									<User2 />
-								</Button>
-							)}
 
-							{/* Sow the theme toggle when the user is logged out */}
-							{!user && <ThemeToggle />}
+				<NavigationMenu loggedIn={loggedIn} />
 
-							{/* Show the back button and logout button when the user is viewing their profile */}
-							{view === "user" && user && (
-								<>
-									<Button
-										variant="secondary"
-										title="Back to main navigation"
-										onClick={() => setView("primary")}
-									>
-										<ChevronLeft />
-									</Button>
-									<Button variant="secondary" onClick={handleLogout}>
-										<LogOut />
-										<span>Logout</span>
-									</Button>
-								</>
-							)}
-						</div>
+				<DrawerFooter className="flex flex-row items-center justify-between">
+					{loggedIn ? (
+						<LogoutButton handleLogout={handleLogout} />
+					) : (
+						<LoginButton />
+					)}
 
-						{/* Show the close navigation button at all times */}
-						<div className="space-x-2">
-							{/* Show the theme toggle when the user is logged in and in user view */}
-							{view === "user" && user && <ThemeToggle />}
-							<DrawerClose asChild>
-								<Button
-									variant="outline"
-									title="Close navigation"
-									onClick={() => setView("primary")}
-								>
-									<ChevronDown />
-								</Button>
-							</DrawerClose>
-						</div>
-					</section>
+					<div className="space-x-2">
+						<ThemeToggle />
+						<DrawerClose asChild>
+							<Button variant="outline" title="Close navigation">
+								<ChevronDown />
+							</Button>
+						</DrawerClose>
+					</div>
 				</DrawerFooter>
 			</DrawerContent>
 		</Drawer>
 	);
 }
 
-function NavigationContent({ view }: { view: NavigationView }) {
-	switch (view) {
-		case "primary":
-			return <PrimaryNavigationContent />;
-		case "user":
-			return <UserNavigationContent />;
-	}
-}
-
-function PrimaryNavigationContent() {
+function NavigationMenu({ loggedIn }: { loggedIn: boolean }) {
 	return (
-		<DrawerClose asChild>
-			<Link to="/">Home</Link>
-		</DrawerClose>
+		// <nav className="flex flex-col gap-2 my-6 text-center text-xl">
+		<nav className="grid grid-cols-2 gap-2 mx-2 mb-8">
+			{loggedIn ? <LoggedInNavigationMenu /> : <LoggedOutNavigationMenu />}
+		</nav>
 	);
 }
 
-function UserNavigationContent() {
+function LoggedOutNavigationMenu() {
 	return (
 		<>
-			<Link to="/profile">Profile</Link>
-			<Link to="/settings">Settings</Link>
+			<NavCloseLink to="/">Home</NavCloseLink>
+			<NavCloseLink to="/about">About</NavCloseLink>
+		</>
+	);
+}
+
+function LoggedInNavigationMenu() {
+	return (
+		<>
+			<NavCloseLink to="/profile">
+				<UserRoundPen />
+				<span>Profile</span>
+			</NavCloseLink>
+			<NavCloseLink to="/settings">
+				<Bolt />
+				<span>Settings</span>
+			</NavCloseLink>
 		</>
 	);
 }
@@ -149,5 +117,43 @@ function UserButton(props: React.ComponentProps<"button">) {
 		<Button size="icon" variant="secondary" className="rounded-full" {...props}>
 			<User2 />
 		</Button>
+	);
+}
+
+function LogoutButton({ handleLogout }: { handleLogout: () => void }) {
+	return (
+		<Button variant="secondary" onClick={handleLogout}>
+			<LogOut />
+			<span>Logout</span>
+		</Button>
+	);
+}
+
+function LoginButton() {
+	return (
+		<DrawerClose asChild>
+			<Button variant="secondary" asChild>
+				<Link to="/login">
+					<LogIn />
+					<span>Login</span>
+				</Link>
+			</Button>
+		</DrawerClose>
+	);
+}
+
+function NavCloseLink({ children, className, ...props }: LinkProps) {
+	return (
+		<DrawerClose asChild>
+			<Link
+				{...props}
+				className={cn(
+					className,
+					"flex justify-center items-center gap-2 p-6 font-semibold tracking-wide border border-primary/50 dark:border-primary/30 rounded hover:bg-primary/50 dark:hover:bg-primary/30 transition-colors",
+				)}
+			>
+				{children}
+			</Link>
+		</DrawerClose>
 	);
 }

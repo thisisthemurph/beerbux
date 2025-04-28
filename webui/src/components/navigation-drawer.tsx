@@ -13,11 +13,13 @@ import {
 import { useNavigationStore } from "@/stores/navigation-store.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import {
-	AlignRight as BurgerMenuIcon, Bolt,
+	AlignRight as BurgerMenuIcon,
+	Bolt,
 	ChevronDown,
 	LogIn,
 	LogOut,
-	User2, UserRoundPen,
+	User2,
+	UserRoundPen,
 } from "lucide-react";
 import type * as React from "react";
 import { Link, type LinkProps } from "react-router";
@@ -27,7 +29,7 @@ import { cn } from "@/lib/utils.ts";
 export default function NavigationDrawer() {
 	const { logout } = useUserClient();
 	const localLogout = useUserStore((state) => state.logout);
-	const { isOpen, open, close } = useNavigationStore();
+	const nav = useNavigationStore();
 	const user = useUserStore((state) => state.user);
 	const loggedIn = !!user;
 
@@ -40,14 +42,8 @@ export default function NavigationDrawer() {
 	}
 
 	return (
-		<Drawer open={isOpen} onClose={close}>
-			{user ? (
-				<UserButton onClick={open} />
-			) : (
-				<button type="button" onClick={open}>
-					<BurgerMenuIcon />
-				</button>
-			)}
+		<Drawer open={nav.isOpen} onClose={close}>
+			{user ? <LoggedInNavButton onClick={nav.open} /> : <LoggedOutNavButton onClick={nav.open} />}
 			<DrawerContent>
 				<DrawerHeader>
 					<DrawerTitle className="text-center font-mono tracking-wider text-2xl">
@@ -59,11 +55,7 @@ export default function NavigationDrawer() {
 				<NavigationMenu loggedIn={loggedIn} />
 
 				<DrawerFooter className="flex flex-row items-center justify-between">
-					{loggedIn ? (
-						<LogoutButton handleLogout={handleLogout} />
-					) : (
-						<LoginButton />
-					)}
+					{loggedIn ? <LogoutButton handleLogout={handleLogout} /> : <LoginButton />}
 
 					<div className="space-x-2">
 						<ThemeToggle />
@@ -76,6 +68,22 @@ export default function NavigationDrawer() {
 				</DrawerFooter>
 			</DrawerContent>
 		</Drawer>
+	);
+}
+
+function LoggedInNavButton(props: React.ComponentProps<"button">) {
+	return (
+		<Button size="icon" variant="secondary" className="rounded-full" {...props}>
+			<User2 />
+		</Button>
+	);
+}
+
+function LoggedOutNavButton(props: React.ComponentProps<"button">) {
+	return (
+		<button type="button" {...props}>
+			<BurgerMenuIcon />
+		</button>
 	);
 }
 
@@ -109,14 +117,6 @@ function LoggedInNavigationMenu() {
 				<span>Settings</span>
 			</NavCloseLink>
 		</>
-	);
-}
-
-function UserButton(props: React.ComponentProps<"button">) {
-	return (
-		<Button size="icon" variant="secondary" className="rounded-full" {...props}>
-			<User2 />
-		</Button>
 	);
 }
 

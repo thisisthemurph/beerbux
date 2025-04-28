@@ -10,11 +10,12 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer.tsx";
+import { cn } from "@/lib/utils.ts";
 import { useNavigationStore } from "@/stores/navigation-store.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import {
-	AlignRight as BurgerMenuIcon,
 	Bolt,
+	AlignRight as BurgerMenuIcon,
 	ChevronDown,
 	LogIn,
 	LogOut,
@@ -24,7 +25,6 @@ import {
 import type * as React from "react";
 import { Link, type LinkProps } from "react-router";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils.ts";
 
 export default function NavigationDrawer() {
 	const { logout } = useUserClient();

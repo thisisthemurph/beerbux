@@ -11,22 +11,12 @@ type EventGroupProps = {
 	avatarData: Record<string, AvatarData>;
 };
 
-export function EventGroup({
-	label,
-	events,
-	members,
-	avatarData,
-}: EventGroupProps) {
+export function EventGroup({ label, events, members, avatarData }: EventGroupProps) {
 	return (
 		<>
 			<GroupLabel text={label} />
 			{events.map((event) => (
-				<HistoryEventRow
-					key={event.id}
-					event={event}
-					members={members}
-					avatarData={avatarData}
-				/>
+				<HistoryEventRow key={event.id} event={event} members={members} avatarData={avatarData} />
 			))}
 		</>
 	);

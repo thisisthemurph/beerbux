@@ -3,9 +3,7 @@ import type { SessionMember } from "@/api/types/session.ts";
 import { BaseHistoryEventRow, type HistoryEventRow } from "./base-row";
 import { Username, UsernameGroup } from "@/components/username.tsx";
 
-interface TransactionCreatedRowProps
-	extends TransactionCreatedSessionHistoryEvent,
-		HistoryEventRow {
+interface TransactionCreatedRowProps extends TransactionCreatedSessionHistoryEvent, HistoryEventRow {
 	actor: SessionMember;
 	members: SessionMember[];
 }
@@ -16,13 +14,9 @@ export function TransactionCreatedRow({
 	members,
 	...event
 }: TransactionCreatedRowProps) {
-	const totalAmount = event.eventData.lines.reduce(
-		(sum, v) => sum + v.amount,
-		0,
-	);
+	const totalAmount = event.eventData.lines.reduce((sum, v) => sum + v.amount, 0);
 	const memberUsernames = event.eventData.lines.map(
-		({ memberId }) =>
-			members.find((m) => m.id === memberId)?.username ?? "unknown",
+		({ memberId }) => members.find((m) => m.id === memberId)?.username ?? "unknown",
 	);
 
 	return (
@@ -30,14 +24,9 @@ export function TransactionCreatedRow({
 			<div className="flex justify-between gap-4 w-full">
 				<p>
 					<Username {...actor} /> bought a round for{" "}
-					<UsernameGroup
-						maxMembers={members.length - 1}
-						usernames={memberUsernames}
-					/>
+					<UsernameGroup maxMembers={members.length - 1} usernames={memberUsernames} />
 				</p>
-				<p className="flex items-center justify-end font-semibold">
-					${totalAmount}
-				</p>
+				<p className="flex items-center justify-end font-semibold">${totalAmount}</p>
 			</div>
 		</BaseHistoryEventRow>
 	);

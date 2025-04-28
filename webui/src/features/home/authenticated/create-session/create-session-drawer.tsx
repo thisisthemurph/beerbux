@@ -19,10 +19,7 @@ interface CreateSessionDrawerProps extends DrawerToggleProps {
 	onCreate: (values: CreateSessionFormValues) => void;
 }
 
-export function CreateSessionDrawer({
-	onCreate,
-	...drawerToggleProps
-}: CreateSessionDrawerProps) {
+export function CreateSessionDrawer({ onCreate, ...drawerToggleProps }: CreateSessionDrawerProps) {
 	return (
 		<Drawer {...drawerToggleProps}>
 			<DrawerContent>
@@ -31,8 +28,8 @@ export function CreateSessionDrawer({
 						<DrawerTitle>Start a new session</DrawerTitle>
 					</section>
 					<DrawerDescription>
-						Create a new session for you and your fiends. You can add your
-						friends once the session has been created.
+						Create a new session for you and your fiends. You can add your friends once the session has been
+						created.
 					</DrawerDescription>
 				</DrawerHeader>
 				<section className="p-4">

@@ -1,9 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils.ts";
 
@@ -30,10 +26,7 @@ export function UserAvatar({
 	);
 }
 
-function InnerUserAvatar({
-	data,
-	variant,
-}: { data: AvatarData; variant: UserAvatarVariant }) {
+function InnerUserAvatar({ data, variant }: { data: AvatarData; variant: UserAvatarVariant }) {
 	return (
 		<Avatar
 			className={cn(

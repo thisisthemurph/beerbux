@@ -32,8 +32,7 @@ type UsernameGroupProps = {
 export function UsernameGroup({ usernames, maxMembers }: UsernameGroupProps) {
 	const len = usernames.length;
 
-	if (len >= maxMembers)
-		return <Username variant="subtle" username="everyone" />;
+	if (len >= maxMembers) return <Username variant="subtle" username="everyone" />;
 	if (len === 0) return <Username variant="subtle" username="unknown" />;
 	if (len === 1) return <Username variant="subtle" username={usernames[0]} />;
 	if (len === 2)
@@ -48,8 +47,7 @@ export function UsernameGroup({ usernames, maxMembers }: UsernameGroupProps) {
 		<>
 			{usernames.slice(0, -1).map((username) => (
 				<>
-					<Username variant="subtle" key={username} username={username} />,
-					{"\u00A0"}
+					<Username variant="subtle" key={username} username={username} />,{"\u00A0"}
 				</>
 			))}
 			and {"\u00A0"}

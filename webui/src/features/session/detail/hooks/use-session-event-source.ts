@@ -19,13 +19,10 @@ export function useSessionEventSource(
 			eventSource.close();
 		};
 
-		eventSource.addEventListener(
-			"session.transaction.created",
-			async (event) => {
-				const data = JSON.parse(event.data) as SessionTransactionCreatedMessage;
-				await handleEvent(data);
-			},
-		);
+		eventSource.addEventListener("session.transaction.created", async (event) => {
+			const data = JSON.parse(event.data) as SessionTransactionCreatedMessage;
+			await handleEvent(data);
+		});
 
 		return () => eventSource.close();
 	}, [url, handleEvent]);

@@ -24,9 +24,7 @@ export function useConfirmationDialog(): [
 	() => JSX.Element | null,
 ] {
 	const [open, setOpen] = useState(false);
-	const [options, setOptions] = useState<ConfirmationDialogOptions | null>(
-		null,
-	);
+	const [options, setOptions] = useState<ConfirmationDialogOptions | null>(null);
 
 	const openDialog = useCallback((opts: ConfirmationDialogOptions) => {
 		setOptions(opts);
@@ -50,9 +48,7 @@ export function useConfirmationDialog(): [
 			<AlertDialog open={open} onOpenChange={setOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle className="text-left text-2xl">
-							{options.title}
-						</AlertDialogTitle>
+						<AlertDialogTitle className="text-left text-2xl">{options.title}</AlertDialogTitle>
 						{options.description && (
 							<AlertDialogDescription className="text-left text-lg">
 								{options.description}

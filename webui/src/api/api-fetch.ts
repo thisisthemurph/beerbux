@@ -11,10 +11,7 @@ export class ValidationError extends Error {
 	}
 }
 
-export async function apiFetch<T>(
-	url: string,
-	options?: RequestInit,
-): Promise<T> {
+export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 	try {
 		const response = await fetch(`${API_BASE_URL}${url}`, {
 			...options,
@@ -45,9 +42,7 @@ export async function apiFetch<T>(
 		if (error instanceof ValidationError) {
 			throw error; // Rethrow validation errors
 		}
-		throw new Error(
-			error instanceof Error ? error.message : "An error occurred",
-		);
+		throw new Error(error instanceof Error ? error.message : "An error occurred");
 	}
 }
 
@@ -58,13 +53,10 @@ export async function apiFetch<T>(
  * Example:
  *   { "errors": { "email": "Email is required" } }
  */
-function isValidationErrorResponse(
-	data: unknown,
-): data is ValidationErrorResponse {
+function isValidationErrorResponse(data: unknown): data is ValidationErrorResponse {
 	if (typeof data !== "object" || data === null) return false;
 	if (!("errors" in data) || "error" in data) return false;
-	if (typeof (data as { errors: Record<string, string> }).errors !== "object")
-		return false;
+	if (typeof (data as { errors: Record<string, string> }).errors !== "object") return false;
 
 	const errors = (data as { errors: Record<string, string> }).errors;
 	return errors !== null && Object.keys(errors).length > 0;

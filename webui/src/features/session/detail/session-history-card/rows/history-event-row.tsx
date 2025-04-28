@@ -28,12 +28,7 @@ export function HistoryEventRow({
 	switch (event.eventType) {
 		case "transaction_created":
 			return (
-				<TransactionCreatedRow
-					actor={actor}
-					actorAvatarData={actorAvatarData}
-					members={members}
-					{...event}
-				/>
+				<TransactionCreatedRow actor={actor} actorAvatarData={actorAvatarData} members={members} {...event} />
 			);
 		case "member_added": {
 			return (
@@ -54,16 +49,9 @@ export function HistoryEventRow({
 			);
 		}
 		case "member_left":
-			return (
-				<MemberLeftRow
-					actorUsername={actorUsername}
-					actorAvatarData={actorAvatarData}
-				/>
-			);
+			return <MemberLeftRow actorUsername={actorUsername} actorAvatarData={actorAvatarData} />;
 		default:
-			console.warn(
-				`Unhandled event type: ${(event as { eventType: string }).eventType}`,
-			);
+			console.warn(`Unhandled event type: ${(event as { eventType: string }).eventType}`);
 			return null;
 	}
 }

@@ -40,12 +40,7 @@ function BackLinkButton({ link }: { link: string }) {
 	const navigate = useNavigate();
 
 	return (
-		<Button
-			size="icon"
-			variant="secondary"
-			className="rounded-full"
-			onClick={() => navigate(link)}
-		>
+		<Button size="icon" variant="secondary" className="rounded-full" onClick={() => navigate(link)}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
@@ -56,16 +51,9 @@ function BackLinkButton({ link }: { link: string }) {
 			>
 				<title>Back</title>
 				{/* Circle */}
-				<path
-					className="stroke-none"
-					d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-				/>
+				<path className="stroke-none" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 				{/* Arrow */}
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M15 12H9m3-3-3 3 3 3"
-				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m3-3-3 3 3 3" />
 			</svg>
 		</Button>
 	);

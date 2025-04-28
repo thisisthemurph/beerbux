@@ -30,11 +30,7 @@ function useSessionClient() {
 		});
 	};
 
-	const updateSessionMemberAdmin = async (
-		sessionId: string,
-		memberId: string,
-		newAdminState: boolean,
-	) => {
+	const updateSessionMemberAdmin = async (sessionId: string, memberId: string, newAdminState: boolean) => {
 		return apiFetch<void>(`/session/${sessionId}/member/${memberId}/admin`, {
 			method: "POST",
 			body: JSON.stringify({ newAdminState }),
@@ -47,19 +43,13 @@ function useSessionClient() {
 		});
 	};
 
-	const removeMemberFromSession = async (
-		sessionId: string,
-		memberId: string,
-	) => {
+	const removeMemberFromSession = async (sessionId: string, memberId: string) => {
 		return apiFetch<void>(`/session/${sessionId}/member/${memberId}`, {
 			method: "DELETE",
 		});
 	};
 
-	const updateSessionActiveState = async (
-		sessionId: string,
-		newActiveState: boolean,
-	) => {
+	const updateSessionActiveState = async (sessionId: string, newActiveState: boolean) => {
 		const command = newActiveState ? "activate" : "deactivate";
 		return apiFetch<void>(`/session/${sessionId}/state/${command}`, {
 			method: "PUT",

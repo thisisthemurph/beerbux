@@ -26,10 +26,7 @@ export const useBackNavigation = (link: string) => {
  * @param urlPath The URL path to add the back link override to.
  * @param backLinkOverride The back link override to add to the URL path.
  */
-export function withBackLinkOverride(
-	urlPath: string,
-	backLinkOverride: string | undefined | null,
-): string {
+export function withBackLinkOverride(urlPath: string, backLinkOverride: string | undefined | null): string {
 	if (!backLinkOverride) return urlPath;
 	const urlEncodedPath = encodeURIComponent(backLinkOverride);
 	return `${urlPath}?bl=${urlEncodedPath}`;

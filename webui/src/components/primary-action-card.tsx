@@ -1,9 +1,4 @@
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -23,10 +18,7 @@ function PrimaryActionCardContent({ children }: { children: ReactNode }) {
 	return <CardContent className="px-0">{children}</CardContent>;
 }
 
-function PrimaryActionContent({
-	text,
-	icon,
-}: { text: string; icon: ReactNode }) {
+function PrimaryActionContent({ text, icon }: { text: string; icon: ReactNode }) {
 	return (
 		<div className="flex items-center gap-4 px-6 cursor-pointer">
 			{icon}
@@ -41,11 +33,7 @@ type PrimaryActionCardLinkItemProps = {
 	icon: ReactNode;
 };
 
-function PrimaryActionCardLinkItem({
-	to,
-	text,
-	icon,
-}: PrimaryActionCardLinkItemProps) {
+function PrimaryActionCardLinkItem({ to, text, icon }: PrimaryActionCardLinkItemProps) {
 	return (
 		<Link
 			to={to}
@@ -63,11 +51,7 @@ type PrimaryActionCardButtonItemProps = {
 	onClick: () => void;
 };
 
-function PrimaryActionCardButtonItem({
-	text,
-	icon,
-	onClick,
-}: PrimaryActionCardButtonItemProps) {
+function PrimaryActionCardButtonItem({ text, icon, onClick }: PrimaryActionCardButtonItemProps) {
 	return (
 		<button
 			type="button"

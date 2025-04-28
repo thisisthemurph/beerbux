@@ -1,10 +1,5 @@
 import { Badge } from "@/components/ui/badge.tsx";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { ShieldOff } from "lucide-react";
 
 type OverviewCardProps = {
@@ -14,12 +9,7 @@ type OverviewCardProps = {
 	average: number;
 };
 
-export function OverviewCard({
-	name,
-	isActive,
-	total,
-	average,
-}: OverviewCardProps) {
+export function OverviewCard({ name, isActive, total, average }: OverviewCardProps) {
 	return (
 		<Card className="bg-primary text-white shadow-xl">
 			<CardHeader className="sr-only">
@@ -45,9 +35,7 @@ export function OverviewCard({
 								<span className="text-2xl">$</span>
 								<span className="text-4xl">{total}</span>
 							</p>
-							<p className="text-xs tracking-wide font-mono font-semibold">
-								total
-							</p>
+							<p className="text-xs tracking-wide font-mono font-semibold">total</p>
 						</div>
 					</section>
 
@@ -77,9 +65,7 @@ OverviewCard.Skeleton = function OverviewCardSkeleton() {
 							<span className="text-2xl">$</span>
 							<span className="text-4xl">0</span>
 						</p>
-						<p className="text-xs tracking-wide font-mono font-semibold">
-							total
-						</p>
+						<p className="text-xs tracking-wide font-mono font-semibold">total</p>
 					</section>
 				</div>
 			</CardContent>

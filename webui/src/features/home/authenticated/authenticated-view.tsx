@@ -50,8 +50,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 			description: (
 				<>
 					<p>
-						Your <span className="font-semibold underline">{name}</span> session
-						has been created.
+						Your <span className="font-semibold underline">{name}</span> session has been created.
 					</p>
 					<p>Add members to get started!</p>
 				</>
@@ -74,9 +73,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 			</PrimaryActionCard>
 
 			<Suspense fallback={<SessionListing.Skeleton />}>
-				<SessionListing sessions={sessions}>
-					{sessions && <AllSessionsLink />}
-				</SessionListing>
+				<SessionListing sessions={sessions}>{sessions && <AllSessionsLink />}</SessionListing>
 			</Suspense>
 
 			<CreateSessionDrawer

@@ -17,13 +17,9 @@ export function UserCard({ username, netBalance }: UserCardProps) {
 					<div title="Total of all beers given and recieved">
 						<p className="text-right">
 							<span className="text-lg">$</span>
-							<span className="text-3xl text-right tracking-wide">
-								{netBalance ?? 0}
-							</span>
+							<span className="text-3xl text-right tracking-wide">{netBalance ?? 0}</span>
 						</p>
-						<p className="text-xs text-right tracking-wide font-semibold">
-							net
-						</p>
+						<p className="text-xs text-right tracking-wide font-semibold">net</p>
 					</div>
 				</section>
 			</CardContent>

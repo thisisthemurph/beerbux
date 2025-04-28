@@ -23,17 +23,11 @@ function SessionListingPage() {
 			{sessionsPending ? (
 				<SessionListing.Skeleton />
 			) : (
-				<SessionListing
-					sessions={activeSessions ?? []}
-					parentPath={"/sessions"}
-				/>
+				<SessionListing sessions={activeSessions ?? []} parentPath={"/sessions"} />
 			)}
 
 			{inactiveSessions.length > 0 && (
-				<SessionListing
-					title="Your inactive settings"
-					sessions={inactiveSessions}
-				/>
+				<SessionListing title="Your inactive settings" sessions={inactiveSessions} />
 			)}
 		</>
 	);

@@ -7,10 +7,7 @@ interface MemberLeftRowProps extends HistoryEventRow {
 	actorUsername: string;
 }
 
-export function MemberLeftRow({
-	actorUsername,
-	actorAvatarData,
-}: MemberLeftRowProps) {
+export function MemberLeftRow({ actorUsername, actorAvatarData }: MemberLeftRowProps) {
 	return (
 		<BaseHistoryEventRow actorAvatarData={actorAvatarData}>
 			<div>

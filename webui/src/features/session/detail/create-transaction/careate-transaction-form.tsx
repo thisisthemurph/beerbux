@@ -1,13 +1,7 @@
 import type { SessionMember } from "@/api/types/session.ts";
 import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
 import { Button } from "@/components/ui/button.tsx";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-} from "@/components/ui/form.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Minus, Plus } from "lucide-react";
@@ -16,10 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const formSchema = z.record(
-	z.string(),
-	z.number().int().min(0, "Amount cannot be less than 0"),
-);
+const formSchema = z.record(z.string(), z.number().int().min(0, "Amount cannot be less than 0"));
 
 type TransactionFormValues = z.infer<typeof formSchema>;
 
@@ -45,14 +36,11 @@ export function CreateTransactionForm({
 	}, [total, onTotalChanged]);
 
 	function handleSubmit(values: TransactionFormValues) {
-		const transaction = Object.entries(values).reduce<TransactionMemberAmounts>(
-			(acc, [memberId, amount]) => {
-				const value = Number(amount);
-				if (value > 0) acc[memberId] = value;
-				return acc;
-			},
-			{},
-		);
+		const transaction = Object.entries(values).reduce<TransactionMemberAmounts>((acc, [memberId, amount]) => {
+			const value = Number(amount);
+			if (value > 0) acc[memberId] = value;
+			return acc;
+		}, {});
 
 		if (total <= 0) {
 			toast.error("The transaction must have at least one non-zero value.");
@@ -76,10 +64,7 @@ export function CreateTransactionForm({
 						control={form.control}
 						render={({ field }) => (
 							<FormItem className="flex justify-between items-center">
-								<FormLabel
-									htmlFor={field.name}
-									className="w-full text-lg tracking-wide"
-								>
+								<FormLabel htmlFor={field.name} className="w-full text-lg tracking-wide">
 									{member.username}
 								</FormLabel>
 								<Button
@@ -102,11 +87,7 @@ export function CreateTransactionForm({
 										className="text-center font-semibold"
 										onChange={(e) => {
 											const value = Number(e.target.value);
-											form.setValue(
-												member.id,
-												Number.isNaN(value) ? 0 : value,
-												{ shouldValidate: true },
-											);
+											form.setValue(member.id, Number.isNaN(value) ? 0 : value, { shouldValidate: true });
 
 											updateTotal();
 										}}
@@ -136,8 +117,7 @@ export function CreateTransactionForm({
 }
 
 function updateValueBy(value: string | number, amount: number): number {
-	const newValue =
-		(typeof value === "string" ? Number.parseInt(value) : value) + amount;
+	const newValue = (typeof value === "string" ? Number.parseInt(value) : value) + amount;
 	if (newValue < 0) {
 		return 0;
 	}

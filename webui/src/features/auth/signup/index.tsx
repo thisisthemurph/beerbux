@@ -1,17 +1,7 @@
 import { ValidationError } from "@/api/api-fetch.ts";
 import useAuthClient from "@/api/auth-client.ts";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import {
-	SignupForm,
-	type SignupFormValues,
-} from "@/features/auth/signup/signup-form.tsx";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SignupForm, type SignupFormValues } from "@/features/auth/signup/signup-form.tsx";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { PageHeading } from "@/components/page-heading.tsx";
@@ -20,12 +10,7 @@ function SignupPage() {
 	const navigate = useNavigate();
 	const { signup } = useAuthClient();
 
-	async function handleSignup({
-		name,
-		username,
-		password,
-		verificationPassword,
-	}: SignupFormValues) {
+	async function handleSignup({ name, username, password, verificationPassword }: SignupFormValues) {
 		try {
 			await signup(name, username, password, verificationPassword);
 			navigate("/login?signup=true");

@@ -17,8 +17,7 @@ export function MemberRemovedRow({
 		<BaseHistoryEventRow actorAvatarData={actorAvatarData}>
 			<div>
 				<span className="font-semibold">{actorUsername}</span> removed{" "}
-				<span className="font-semibold">{removedMemberUsername}</span> from the
-				session
+				<span className="font-semibold">{removedMemberUsername}</span> from the session
 			</div>
 		</BaseHistoryEventRow>
 	);

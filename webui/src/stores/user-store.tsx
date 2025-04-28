@@ -2,11 +2,19 @@ import type { User } from "@/api/types/user.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type UserStoreState = {
-	user: User | null;
+type LoggedInUserStoreState = {
+	user: User;
+	isLoggedIn: true;
 	isLoading: boolean;
-	isAuthenticated: boolean;
 };
+
+type LoggedOutUserStoreState = {
+	user: null;
+	isLoggedIn: false;
+	isLoading: boolean;
+};
+
+type UserStoreState = LoggedInUserStoreState | LoggedOutUserStoreState;
 
 type UserStoreActions = {
 	setIsLoading: (isLoading: boolean) => void;
@@ -21,10 +29,10 @@ export const useUserStore = create<UserStore>()(
 		(set) => ({
 			user: null,
 			isLoading: false,
-			isAuthenticated: false,
+			isLoggedIn: false,
 			setIsLoading: (isLoading) => set({ isLoading }),
-			setUser: (user: User) => set({ user, isAuthenticated: true, isLoading: false }),
-			logout: () => set({ user: null, isAuthenticated: false }),
+			setUser: (user: User) => set({ user, isLoggedIn: true, isLoading: false }),
+			logout: () => set({ user: null, isLoggedIn: false, isLoading: false }),
 		}),
 		{
 			name: "user-store", // Key for local storage

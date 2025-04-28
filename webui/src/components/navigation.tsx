@@ -5,7 +5,7 @@ import { useUserStore } from "@/stores/user-store.tsx";
 import { Link, useNavigate } from "react-router";
 
 export function Navigation() {
-	const user = useUserStore((state) => state.user);
+	const isLoggedIn = useUserStore((state) => state.isLoggedIn);
 	const backLink = useBackNavigationStore((state) => state.backLink);
 
 	return (
@@ -19,7 +19,7 @@ export function Navigation() {
 				</Link>
 			)}
 			<div className="flex items-center gap-4">
-				{!user && <LoginButton />}
+				{!isLoggedIn && <LoginButton />}
 				<NavigationDrawer />
 			</div>
 		</nav>

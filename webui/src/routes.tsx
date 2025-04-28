@@ -1,3 +1,4 @@
+import NotFoundPage from "@/features/NotFound.tsx";
 import LoginPage from "@/features/auth/login";
 import SignupPage from "@/features/auth/signup";
 import HomePage from "@/features/home";
@@ -15,6 +16,7 @@ function AppRoutes() {
 				<Route path="/signup" element={<SignupPage />} />
 				<Route path="/sessions" element={<SessionListingPage />} />
 				<Route path="/session/:sessionId" element={<SessionDetailPage />} />
+				<Route path="*" element={<NotFoundPage />} />
 			</Route>
 		</Routes>
 	);

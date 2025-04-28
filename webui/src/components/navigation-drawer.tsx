@@ -17,6 +17,7 @@ import {
 	Bolt,
 	AlignRight as BurgerMenuIcon,
 	ChevronDown,
+	Home,
 	LogIn,
 	LogOut,
 	User2,
@@ -27,35 +28,35 @@ import { Link, type LinkProps } from "react-router";
 import { toast } from "sonner";
 
 export default function NavigationDrawer() {
-	const { logout } = useUserClient();
-	const localLogout = useUserStore((state) => state.logout);
 	const nav = useNavigationStore();
-	const user = useUserStore((state) => state.user);
-	const loggedIn = !!user;
+	const { logout } = useUserClient();
+	const { user, isLoggedIn, logout: localLogout } = useUserStore();
 
 	function handleLogout() {
 		logout()
 			.then(localLogout)
-			.then(close)
+			.then(nav.close)
 			.then(() => toast.success("Logged out successfully"))
 			.catch(() => toast.error("Failed to logout"));
 	}
 
 	return (
-		<Drawer open={nav.isOpen} onClose={close}>
+		<Drawer open={nav.isOpen} onClose={nav.close} onOpenChange={nav.toggle}>
 			{user ? <LoggedInNavButton onClick={nav.open} /> : <LoggedOutNavButton onClick={nav.open} />}
 			<DrawerContent>
 				<DrawerHeader>
 					<DrawerTitle className="text-center font-mono tracking-wider text-2xl">
-						{loggedIn ? user.username : "Beerbux"}
+						{isLoggedIn ? user.username : "Beerbux"}
 					</DrawerTitle>
 					<DrawerDescription className="sr-only">Navigation</DrawerDescription>
 				</DrawerHeader>
 
-				<NavigationMenu loggedIn={loggedIn} />
+				<nav className="grid grid-cols-2 gap-2 mx-2 mb-8">
+					{isLoggedIn ? <LoggedInNavigationMenu username={user?.username} /> : <LoggedOutNavigationMenu />}
+				</nav>
 
 				<DrawerFooter className="flex flex-row items-center justify-between">
-					{loggedIn ? <LogoutButton handleLogout={handleLogout} /> : <LoginButton />}
+					{isLoggedIn ? <LogoutButton handleLogout={handleLogout} /> : <LoginButton />}
 
 					<div className="space-x-2">
 						<ThemeToggle />
@@ -87,15 +88,6 @@ function LoggedOutNavButton(props: React.ComponentProps<"button">) {
 	);
 }
 
-function NavigationMenu({ loggedIn }: { loggedIn: boolean }) {
-	return (
-		// <nav className="flex flex-col gap-2 my-6 text-center text-xl">
-		<nav className="grid grid-cols-2 gap-2 mx-2 mb-8">
-			{loggedIn ? <LoggedInNavigationMenu /> : <LoggedOutNavigationMenu />}
-		</nav>
-	);
-}
-
 function LoggedOutNavigationMenu() {
 	return (
 		<>
@@ -105,9 +97,13 @@ function LoggedOutNavigationMenu() {
 	);
 }
 
-function LoggedInNavigationMenu() {
+function LoggedInNavigationMenu({ username }: { username: string }) {
 	return (
 		<>
+			<NavCloseLink to="/">
+				<Home />
+				<span>{username}</span>
+			</NavCloseLink>
 			<NavCloseLink to="/profile">
 				<UserRoundPen />
 				<span>Profile</span>

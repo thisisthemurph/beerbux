@@ -9,12 +9,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog";
-import {
-	ArrowLeftFromLine,
-	CircleCheck,
-	CircleX,
-	EllipsisVertical,
-} from "lucide-react";
+import { ArrowLeftFromLine, CircleCheck, CircleX, EllipsisVertical } from "lucide-react";
 
 type SessionMenuProps = {
 	isActive: boolean;
@@ -23,12 +18,7 @@ type SessionMenuProps = {
 	onChangeActiveState: () => void;
 };
 
-export function SessionMenu({
-	isActive,
-	showAdminActions,
-	onLeave,
-	onChangeActiveState,
-}: SessionMenuProps) {
+export function SessionMenu({ isActive, showAdminActions, onLeave, onChangeActiveState }: SessionMenuProps) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
 
 	const closeSessionDescription =
@@ -66,16 +56,11 @@ export function SessionMenu({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="min-w-64 mx-4">
-					<DropdownMenuLabel className="text-lg font-semibold">
-						Session actions
-					</DropdownMenuLabel>
+					<DropdownMenuLabel className="text-lg font-semibold">Session actions</DropdownMenuLabel>
 					{showAdminActions && (
 						<DropdownMenuGroup>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								className="group text-lg gap-4 cursor-pointer"
-								onClick={handleCloseSession}
-							>
+							<DropdownMenuItem className="group text-lg gap-4 cursor-pointer" onClick={handleCloseSession}>
 								{isActive ? (
 									<CircleX className="size-6 group-hover:text-destructive/75 transition-colors" />
 								) : (
@@ -86,10 +71,7 @@ export function SessionMenu({
 						</DropdownMenuGroup>
 					)}
 					<DropdownMenuGroup>
-						<DropdownMenuItem
-							className="group text-lg gap-4 cursor-pointer"
-							onClick={handleLeaveSession}
-						>
+						<DropdownMenuItem className="group text-lg gap-4 cursor-pointer" onClick={handleLeaveSession}>
 							<ArrowLeftFromLine className="size-6 text-muted-foreground group-hover:text-primary/75 transition-colors" />
 							<span>Leave session</span>
 						</DropdownMenuItem>
@@ -102,11 +84,7 @@ export function SessionMenu({
 
 SessionMenu.Skeleton = function SessionMenuSkeleton() {
 	return (
-		<Button
-			size="icon"
-			variant="secondary"
-			className="rounded-full animate-pulse"
-		>
+		<Button size="icon" variant="secondary" className="rounded-full animate-pulse">
 			<EllipsisVertical />
 		</Button>
 	);

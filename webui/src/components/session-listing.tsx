@@ -1,19 +1,8 @@
 import type { Session } from "@/api/types/session.ts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card.tsx";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { withBackLinkOverride } from "@/hooks/use-back-navigation.ts";
 import { ShieldOff } from "lucide-react";
 import type { ReactNode } from "react";
@@ -26,38 +15,22 @@ type SessionListingProps = {
 	parentPath?: string;
 };
 
-function SessionListing({
-	title,
-	sessions,
-	children,
-	parentPath,
-}: SessionListingProps) {
+function SessionListing({ title, sessions, children, parentPath }: SessionListingProps) {
 	return (
 		<Card>
 			<CardHeader>
 				<section className="flex justify-between items-center">
 					<CardTitle>{title ?? "Your sessions"}</CardTitle>
-					<p className="text-muted-foreground">
-						{sessions.length > 0 ? sessions.length : "No"} sessions
-					</p>
+					<p className="text-muted-foreground">{sessions.length > 0 ? sessions.length : "No"} sessions</p>
 				</section>
 			</CardHeader>
 			<CardContent className="px-0">
 				<section className="flex flex-col">
 					{sessions.length === 0 && <NoSessionsIndicator />}
 					{sessions.map((session) => {
-						const url = withBackLinkOverride(
-							`/session/${session.id}`,
-							parentPath,
-						);
+						const url = withBackLinkOverride(`/session/${session.id}`, parentPath);
 
-						return (
-							<SessionListingItem
-								key={session.id}
-								session={session}
-								url={url}
-							/>
-						);
+						return <SessionListingItem key={session.id} session={session} url={url} />;
 					})}
 				</section>
 			</CardContent>
@@ -66,16 +39,9 @@ function SessionListing({
 	);
 }
 
-function SessionListingItem({
-	session,
-	url,
-}: { session: Session; url: string }) {
+function SessionListingItem({ session, url }: { session: Session; url: string }) {
 	return (
-		<Link
-			to={url}
-			key={session.id}
-			className="group hover:bg-muted transition-colors"
-		>
+		<Link to={url} key={session.id} className="group hover:bg-muted transition-colors">
 			<div className="flex items-center gap-6 py-4 px-6">
 				<Avatar className="w-10 h-10">
 					<AvatarFallback className="group-hover:bg-card transition-colors">
@@ -86,9 +52,7 @@ function SessionListingItem({
 					<p>{session.name}</p>
 					{!session.isActive && <InactiveIcon />}
 				</div>
-				<p className="text-xl text-muted-foreground font-semibold">
-					${session.total}
-				</p>
+				<p className="text-xl text-muted-foreground font-semibold">${session.total}</p>
 			</div>
 		</Link>
 	);

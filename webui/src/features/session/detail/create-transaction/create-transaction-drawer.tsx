@@ -34,9 +34,7 @@ export function CreateTransactionDrawer({
 						<DrawerTitle>Buy a round</DrawerTitle>
 						<p>${total}</p>
 					</section>
-					<DrawerDescription>
-						Select the members you want to buy a round for.
-					</DrawerDescription>
+					<DrawerDescription>Select the members you want to buy a round for.</DrawerDescription>
 				</DrawerHeader>
 				<section className="p-4">
 					<CreateTransactionForm

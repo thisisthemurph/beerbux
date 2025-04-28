@@ -1,17 +1,7 @@
 import { ValidationError } from "@/api/api-fetch.ts";
 import useAuthClient from "@/api/auth-client.ts";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import {
-	LoginForm,
-	type LoginFormValues,
-} from "@/features/auth/login/login-form.tsx";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoginForm, type LoginFormValues } from "@/features/auth/login/login-form.tsx";
 import { tryCatch } from "@/lib/try-catch.ts";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { useEffect, useRef } from "react";

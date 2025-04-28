@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button.tsx";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-} from "@/components/ui/form.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -47,11 +41,7 @@ export function CreateSessionForm({ onCreate }: NewSessionFormProps) {
 						<FormItem>
 							<FormLabel htmlFor={field.name}>Session name</FormLabel>
 							<FormControl>
-								<Input
-									type="text"
-									{...field}
-									placeholder="Name of your session"
-								/>
+								<Input type="text" {...field} placeholder="Name of your session" />
 							</FormControl>
 						</FormItem>
 					)}

@@ -8,17 +8,12 @@ interface MemberAddedRowProps extends HistoryEventRow {
 	addedMemberUsername: string;
 }
 
-export function MemberAddedRow({
-	actorUsername,
-	actorAvatarData,
-	addedMemberUsername,
-}: MemberAddedRowProps) {
+export function MemberAddedRow({ actorUsername, actorAvatarData, addedMemberUsername }: MemberAddedRowProps) {
 	return (
 		<BaseHistoryEventRow actorAvatarData={actorAvatarData}>
 			<div>
 				<span className="font-semibold">{actorUsername}</span> added{" "}
-				<span className="font-semibold">{addedMemberUsername}</span> to the
-				session
+				<span className="font-semibold">{addedMemberUsername}</span> to the session
 			</div>
 		</BaseHistoryEventRow>
 	);

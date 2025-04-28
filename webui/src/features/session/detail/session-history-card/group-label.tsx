@@ -11,9 +11,5 @@ export function GroupLabel({ text }: { text: string }) {
 			? "Yesterday"
 			: format(d, isThisYear(d) ? DATE_FMT_SHORT : DATE_FMT_LONG);
 
-	return (
-		<p className="px-6 py-4 text-muted-foreground font-semibold tracking-wide">
-			{label}
-		</p>
-	);
+	return <p className="px-6 py-4 text-muted-foreground font-semibold tracking-wide">{label}</p>;
 }

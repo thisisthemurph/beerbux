@@ -7,13 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import {
-	Crown,
-	EllipsisVertical,
-	ShieldMinus,
-	ShieldUser,
-	UserMinus,
-} from "lucide-react";
+import { Crown, EllipsisVertical, ShieldMinus, ShieldUser, UserMinus } from "lucide-react";
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog.tsx";
 
 type MemberDropdownMenuProps = {
@@ -45,10 +39,7 @@ export function MemberDropdownMenu({
 		<>
 			<ConfirmationDialog />
 			<DropdownMenu>
-				<DropdownMenuTrigger
-					className="py-6 font-semibold w-full text-left"
-					asChild
-				>
+				<DropdownMenuTrigger className="py-6 font-semibold w-full text-left" asChild>
 					<Button variant="ghost" size="icon" className="rounded-full">
 						<EllipsisVertical className="size-6 text-muted-foreground group-hover:text-primary" />
 					</Button>
@@ -63,15 +54,8 @@ export function MemberDropdownMenu({
 						)}
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="text-lg gap-4 cursor-pointer"
-						onClick={onChangeAdminState}
-					>
-						{isAdmin ? (
-							<ShieldMinus className="size-6" />
-						) : (
-							<ShieldUser className="size-6" />
-						)}
+					<DropdownMenuItem className="text-lg gap-4 cursor-pointer" onClick={onChangeAdminState}>
+						{isAdmin ? <ShieldMinus className="size-6" /> : <ShieldUser className="size-6" />}
 						<span>{isAdmin ? "Remove admin" : "Promote to admin"}</span>
 					</DropdownMenuItem>
 					<DropdownMenuItem

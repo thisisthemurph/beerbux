@@ -23,14 +23,8 @@ type SessionDetailContentProps = {
 	session: Session;
 	history: SessionHistory | undefined;
 	user: User;
-	onMemberAdminStateUpdate: (
-		sessionId: string,
-		memberId: string,
-		newAdminState: boolean,
-	) => void;
-	handleNewTransaction: (
-		transaction: TransactionMemberAmounts,
-	) => Promise<void>;
+	onMemberAdminStateUpdate: (sessionId: string, memberId: string, newAdminState: boolean) => void;
+	handleNewTransaction: (transaction: TransactionMemberAmounts) => Promise<void>;
 	handleAddMember: (username: string) => Promise<void>;
 	onLeaveSession: () => void;
 	onChangeSessionActiveState: () => void;
@@ -64,9 +58,7 @@ export function SessionDetailContent({
 		.filter((m) => m.id !== user.id)
 		.sort((a, b) => a.name.localeCompare(b.name));
 
-	const { avatarData } = useUserAvatarData(
-		session?.members.map((m) => m.username) ?? [],
-	);
+	const { avatarData } = useUserAvatarData(session?.members.map((m) => m.username) ?? []);
 
 	if (!currentMember) {
 		return <PageError message="You are not a member of this session." />;
@@ -83,10 +75,7 @@ export function SessionDetailContent({
 				/>
 			</PageHeading>
 
-			<OverviewCard
-				{...session}
-				average={calculateAverage(session.transactions)}
-			/>
+			<OverviewCard {...session} average={calculateAverage(session.transactions)} />
 
 			{session.isActive && (
 				<PrimaryActionCard>
@@ -111,10 +100,7 @@ export function SessionDetailContent({
 
 			<MemberDetailsCard
 				showMemberDropdownMenu={currentMember.isAdmin}
-				members={[
-					currentMember,
-					...otherSessionMembers.filter((m) => !m.isDeleted),
-				]}
+				members={[currentMember, ...otherSessionMembers.filter((m) => !m.isDeleted)]}
 				avatarData={avatarData}
 				onChangeMemberAdminState={(memberId, newAdminState) =>
 					onMemberAdminStateUpdate(session.id, memberId, newAdminState)
@@ -122,11 +108,7 @@ export function SessionDetailContent({
 				onRemoveMember={onRemoveMember}
 			/>
 
-			<SessionHistoryCard
-				events={history?.events ?? []}
-				members={session.members}
-				avatarData={avatarData}
-			/>
+			<SessionHistoryCard events={history?.events ?? []} members={session.members} avatarData={avatarData} />
 
 			<CreateTransactionDrawer
 				members={otherSessionMembers}

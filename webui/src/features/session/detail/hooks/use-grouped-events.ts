@@ -6,10 +6,7 @@ const DATE_FMT_LONG = "EEEE do MMMM, yyyy";
 
 function groupEventsByDate(events: SessionHistoryEvent[]): GroupedEventRecords {
 	const groupedEvents = events.reduce((acc, transaction) => {
-		const formattedDate = format(
-			new Date(transaction.createdAt),
-			DATE_FMT_LONG,
-		);
+		const formattedDate = format(new Date(transaction.createdAt), DATE_FMT_LONG);
 
 		if (!acc[formattedDate]) {
 			acc[formattedDate] = [];
@@ -46,9 +43,7 @@ type PopulatedGroupedEvents = {
 
 type GroupedEvents = EmptyGroupedEvents | PopulatedGroupedEvents;
 
-export function useGroupedEvents(
-	eventsToGroup: SessionHistoryEvent[],
-): GroupedEvents {
+export function useGroupedEvents(eventsToGroup: SessionHistoryEvent[]): GroupedEvents {
 	if (eventsToGroup.length === 0) {
 		return {
 			hasEvents: false,
@@ -61,10 +56,7 @@ export function useGroupedEvents(
 
 	const events = groupEventsByDate(eventsToGroup);
 	const sortedLabels = Object.keys(events).sort((a, b) => {
-		return (
-			parse(b, DATE_FMT_LONG, new Date()).getTime() -
-			parse(a, DATE_FMT_LONG, new Date()).getTime()
-		);
+		return parse(b, DATE_FMT_LONG, new Date()).getTime() - parse(a, DATE_FMT_LONG, new Date()).getTime();
 	});
 
 	const firstLabel = sortedLabels[0];

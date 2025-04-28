@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button.tsx";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-} from "@/components/ui/form.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,19 +7,13 @@ import { z } from "zod";
 
 const formSchema = z
 	.object({
-		name: z
-			.string()
-			.nonempty()
-			.max(50, "Your name cannot be more than 50 characters"),
+		name: z.string().nonempty().max(50, "Your name cannot be more than 50 characters"),
 		username: z
 			.string()
 			.nonempty()
 			.min(3, "Your username must be at least 3 characters")
 			.max(25, "Your username cannot be more than 25 characters"),
-		password: z
-			.string()
-			.nonempty()
-			.min(8, "Your password must be at least 8 characters"),
+		password: z.string().nonempty().min(8, "Your password must be at least 8 characters"),
 		verificationPassword: z.string().nonempty(),
 	})
 	.refine((schema) => schema.password === schema.verificationPassword, {

@@ -1,15 +1,6 @@
 import type { SessionHistoryEvent } from "@/api/types/session-history.ts";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card.tsx";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible.tsx";
 import { useState } from "react";
 import type { SessionMember } from "@/api/types/session.ts";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
@@ -24,16 +15,11 @@ type SessionHistoryCardProps = {
 	avatarData: Record<string, AvatarData>;
 };
 
-export function SessionHistoryCard({
-	events,
-	members,
-	avatarData,
-}: SessionHistoryCardProps) {
+export function SessionHistoryCard({ events, members, avatarData }: SessionHistoryCardProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const grouped = useGroupedEvents(events);
 	const showCollapsibleTrigger =
-		grouped.sortedLabels.length > 1 ||
-		(grouped.firstEvents && grouped.firstEvents.length > 5);
+		grouped.sortedLabels.length > 1 || (grouped.firstEvents && grouped.firstEvents.length > 5);
 
 	return (
 		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -58,9 +44,7 @@ export function SessionHistoryCard({
 					{grouped.hasEvents && grouped.firstEvents.length > 0 && (
 						<EventGroup
 							label={grouped.firstLabel}
-							events={
-								isOpen ? grouped.firstEvents : grouped.firstEvents.slice(0, 5)
-							}
+							events={isOpen ? grouped.firstEvents : grouped.firstEvents.slice(0, 5)}
 							members={members}
 							avatarData={avatarData}
 						/>
@@ -96,10 +80,7 @@ function NoEventsMessage() {
 	return (
 		<div className="p-6 text-muted-foreground text-center  w-[90%] mx-auto tracking-wide">
 			<p className="pb-4 font-semibold">Well this is a bit depressing!</p>
-			<p>
-				It looks like nobody's bought a round yet. Once someone gets one in, it
-				will be shown here.
-			</p>
+			<p>It looks like nobody's bought a round yet. Once someone gets one in, it will be shown here.</p>
 		</div>
 	);
 }

@@ -52,9 +52,7 @@ export default function SessionDetailPage() {
 		},
 	});
 
-	const currentMember = sessionQuery.data?.members.find(
-		(m) => m.id === user.id,
-	);
+	const currentMember = sessionQuery.data?.members.find((m) => m.id === user.id);
 
 	async function handleLeaveSession() {
 		if (!sessionId) {
@@ -80,36 +78,24 @@ export default function SessionDetailPage() {
 			return;
 		}
 
-		const { err } = await tryCatch(
-			removeMemberFromSession(sessionId, memberId),
-		);
+		const { err } = await tryCatch(removeMemberFromSession(sessionId, memberId));
 		const member = sessionQuery.data?.members.find((m) => m.id === memberId);
 
 		if (err) {
-			toast.error(
-				`There was an issue removing ${member?.username ?? "the member"} from the session.`,
-				{
-					description: err.message,
-				},
-			);
+			toast.error(`There was an issue removing ${member?.username ?? "the member"} from the session.`, {
+				description: err.message,
+			});
 			return;
 		}
 
-		toast.success(
-			`${member?.username ?? "The member"} has been removed from the session.`,
-		);
+		toast.success(`${member?.username ?? "The member"} has been removed from the session.`);
 		await queryClient.invalidateQueries({
 			queryKey: ["session", sessionId],
 		});
 	}
 
-	async function handleUpdateSessionActiveState(
-		sessionId: string,
-		newActiveState: boolean,
-	) {
-		const { err } = await tryCatch(
-			updateSessionActiveState(sessionId, newActiveState),
-		);
+	async function handleUpdateSessionActiveState(sessionId: string, newActiveState: boolean) {
+		const { err } = await tryCatch(updateSessionActiveState(sessionId, newActiveState));
 		if (err) {
 			toast.error(
 				newActiveState
@@ -119,11 +105,7 @@ export default function SessionDetailPage() {
 			return;
 		}
 
-		toast.success(
-			newActiveState
-				? "The session has been re-opened."
-				: "The session has been closed.",
-		);
+		toast.success(newActiveState ? "The session has been re-opened." : "The session has been closed.");
 		await queryClient.invalidateQueries({
 			queryKey: ["session", sessionId],
 		});
@@ -136,11 +118,7 @@ export default function SessionDetailPage() {
 			newAdminState: boolean;
 		}) => {
 			const { err } = await tryCatch(
-				updateSessionMemberAdmin(
-					data.sessionId,
-					data.memberId,
-					data.newAdminState,
-				),
+				updateSessionMemberAdmin(data.sessionId, data.memberId, data.newAdminState),
 			);
 			if (err) {
 				toast.error(
@@ -166,18 +144,13 @@ export default function SessionDetailPage() {
 			if (msg.creatorId === user.id) return;
 			if (!sessionQuery.data) return;
 
-			const creator = sessionQuery.data.members.find(
-				(m) => m.id === msg.creatorId,
-			);
+			const creator = sessionQuery.data.members.find((m) => m.id === msg.creatorId);
 
 			toast.info("New round bought", {
 				description: (
 					<p>
 						{creator?.username ?? "Someone"} bought a{" "}
-						<span className="font-semibold">
-							${Math.round(msg.total * 100) / 100}
-						</span>{" "}
-						round.
+						<span className="font-semibold">${Math.round(msg.total * 100) / 100}</span> round.
 					</p>
 				),
 			});
@@ -218,8 +191,7 @@ export default function SessionDetailPage() {
 				message={
 					sessionQuery.error.message.includes("not found")
 						? "The session could not be found, please ensure you have the correct session."
-						: (sessionQuery.error?.message ??
-							"There has been an unexpected error fetching the session.")
+						: (sessionQuery.error?.message ?? "There has been an unexpected error fetching the session.")
 				}
 			/>
 		);
@@ -249,10 +221,7 @@ export default function SessionDetailPage() {
 			}
 			onLeaveSession={handleLeaveSession}
 			onChangeSessionActiveState={() =>
-				handleUpdateSessionActiveState(
-					sessionQuery.data.id,
-					!sessionQuery.data.isActive,
-				)
+				handleUpdateSessionActiveState(sessionQuery.data.id, !sessionQuery.data.isActive)
 			}
 			onRemoveMember={handleRemoveMemberFromSession}
 		/>

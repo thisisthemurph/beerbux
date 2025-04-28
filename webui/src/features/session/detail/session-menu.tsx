@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,14 +17,8 @@ type SessionMenuProps = {
 	onLeave: () => void;
 	onChangeActiveState: () => void;
 };
-
 export function SessionMenu({ isActive, showAdminActions, onLeave, onChangeActiveState }: SessionMenuProps) {
 	const [openConfirmationDialog, ConfirmationDialog] = useConfirmationDialog();
-
-	const closeSessionDescription =
-		"Are you sure you want to close this session? Once closed, members will be able to see the session, but will never be able to interact with it again. Once closed, the session cannot be reopened.";
-	const openSessionDescription =
-		"Are you sure you want to re-open this session? Once re-opened, members will be able to interact with it again.";
 
 	const handleCloseSession = () => {
 		openConfirmationDialog({
@@ -81,6 +75,18 @@ export function SessionMenu({ isActive, showAdminActions, onLeave, onChangeActiv
 		</>
 	);
 }
+
+const closeSessionDescription = (
+	<div className="flex flex-col gap-2">
+		<p>
+			Once closed, members will be able to see the session, but will not be able to interact with it until it
+			is reopened.
+		</p>
+		<p>The session can be reopened by any admin member.</p>
+	</div>
+);
+
+const openSessionDescription = "Once re-opened, members will be able to interact with this session again.";
 
 SessionMenu.Skeleton = function SessionMenuSkeleton() {
 	return (

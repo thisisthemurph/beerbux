@@ -9,11 +9,11 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button.tsx";
-import { type JSX, useCallback, useState } from "react";
+import { type JSX, type ReactNode, useCallback, useState } from "react";
 
 interface ConfirmationDialogOptions {
 	title: string;
-	description?: string;
+	description?: ReactNode;
 	confirmText?: string;
 	cancelText?: string;
 	onConfirm: () => void;

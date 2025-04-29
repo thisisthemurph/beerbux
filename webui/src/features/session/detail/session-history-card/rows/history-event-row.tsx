@@ -1,9 +1,13 @@
 import type { SessionHistoryEvent } from "@/api/types/session-history.ts";
-import { TransactionCreatedRow } from "@/features/session/detail/session-history-card/rows/transaction-created-row.tsx";
-import { MemberAddedRow } from "@/features/session/detail/session-history-card/rows/member-added-row.tsx";
-import { MemberRemovedRow } from "@/features/session/detail/session-history-card/rows/member-removed-row.tsx";
-import { MemberLeftRow } from "@/features/session/detail/session-history-card/rows/member-left-row.tsx";
 import type { SessionMember } from "@/api/types/session.ts";
+import {
+	MemberAddedRow,
+	MemberLeftRow,
+	MemberRemovedRow,
+	SessionClosedRow,
+	SessionOpenedRow,
+	TransactionCreatedRow,
+} from "@/features/session/detail/session-history-card/rows";
 import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 
 export function HistoryEventRow({
@@ -50,6 +54,10 @@ export function HistoryEventRow({
 		}
 		case "member_left":
 			return <MemberLeftRow actorUsername={actorUsername} actorAvatarData={actorAvatarData} />;
+		case "session_closed":
+			return <SessionClosedRow actorUsername={actorUsername} actorAvatarData={actorAvatarData} />;
+		case "session_opened":
+			return <SessionOpenedRow actorUsername={actorUsername} actorAvatarData={actorAvatarData} />;
 		default:
 			console.warn(`Unhandled event type: ${(event as { eventType: string }).eventType}`);
 			return null;

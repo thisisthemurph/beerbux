@@ -19,6 +19,8 @@ const (
 	EventMemberAdded        EventType = "member_added"
 	EventMemberRemoved      EventType = "member_removed"
 	EventMemberLeft         EventType = "member_left"
+	EventSessionClosed      EventType = "session_closed"
+	EventSessionOpened      EventType = "session_opened"
 )
 
 func NewEventType(t string) EventType {
@@ -31,6 +33,10 @@ func NewEventType(t string) EventType {
 		return EventMemberRemoved
 	case EventMemberLeft.String():
 		return EventMemberLeft
+	case EventSessionClosed.String():
+		return EventSessionClosed
+	case EventSessionOpened.String():
+		return EventSessionOpened
 	default:
 		return EventUnknown
 	}
@@ -46,6 +52,8 @@ type HistoryRepository interface {
 	CreateMemberAddedEvent(ctx context.Context, sessionID, memberID, performedByMemberId string) error
 	CreateMemberRemovedEvent(ctx context.Context, sessionID, memberID, performedByMemberId string) error
 	CreateMemberLeftEvent(ctx context.Context, sessionID, memberID string) error
+	CreateSessionClosedEvent(ctx context.Context, sessionID, memberID string) error
+	CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID string) error
 }
 
 type SQLiteHistoryRepository struct {
@@ -108,7 +116,7 @@ func parseEvent(eventType EventType, b []byte) (*anypb.Any, error) {
 			return nil, err
 		}
 		return anypb.New(memberRemovedEvent)
-	case EventMemberLeft:
+	case EventMemberLeft, EventSessionClosed, EventSessionOpened:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("unknown event type: %s", eventType)
@@ -170,6 +178,24 @@ func (r *SQLiteHistoryRepository) CreateMemberLeftEvent(ctx context.Context, ses
 		SessionID: sessionID,
 		MemberID:  memberID,
 		EventType: EventMemberLeft.String(),
+		EventData: nil,
+	})
+}
+
+func (r *SQLiteHistoryRepository) CreateSessionClosedEvent(ctx context.Context, sessionID, memberID string) error {
+	return r.queries.CreateSessionHistory(ctx, CreateSessionHistoryParams{
+		SessionID: sessionID,
+		MemberID:  memberID,
+		EventType: EventSessionClosed.String(),
+		EventData: nil,
+	})
+}
+
+func (r *SQLiteHistoryRepository) CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID string) error {
+	return r.queries.CreateSessionHistory(ctx, CreateSessionHistoryParams{
+		SessionID: sessionID,
+		MemberID:  memberID,
+		EventType: EventSessionOpened.String(),
 		EventData: nil,
 	})
 }

@@ -41,8 +41,9 @@ func (h *UpdateSessionActiveStateHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	}
 
 	_, err = h.sessionClient.UpdateSessionActiveState(r.Context(), &sessionpb.UpdateSessionActiveStateRequest{
-		SessionId: params.SessionID,
-		IsActive:  params.NewIsActiveState,
+		SessionId:     params.SessionID,
+		IsActive:      params.NewIsActiveState,
+		PerformedById: c.Subject,
 	})
 	if err != nil {
 		h.logger.Error("Error updating session active state", "error", err)

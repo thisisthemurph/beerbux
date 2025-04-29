@@ -1,8 +1,8 @@
 import type { SessionHistoryEvent } from "@/api/types/session-history.ts";
 import type { SessionMember } from "@/api/types/session.ts";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { GroupLabel } from "@/features/session/detail/session-history-card/group-label.tsx";
-import { HistoryEventRow } from "@/features/session/detail/session-history-card/rows/history-event-row.tsx";
+import { HistoryEventRow } from "@/features/session/detail/session-history-card/rows";
+import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 
 type EventGroupProps = {
 	label: string;

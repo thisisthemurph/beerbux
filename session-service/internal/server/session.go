@@ -259,6 +259,12 @@ func (s *SessionServer) UpdateSessionActiveState(ctx context.Context, r *session
 		return nil, status.Errorf(codes.Internal, "failed to update the session: %v", err)
 	}
 
+	if r.IsActive {
+		_ = s.historyRepository.CreateSessionOpenedEvent(ctx, r.SessionId, r.PerformedById)
+	} else {
+		_ = s.historyRepository.CreateSessionClosedEvent(ctx, r.SessionId, r.PerformedById)
+	}
+
 	return nil, nil
 }
 

@@ -51,6 +51,8 @@ const (
 	EventTypeMemberAdded        = "member_added"
 	EventTypeMemberRemoved      = "member_removed"
 	EventTypeMemberLeft         = "member_left"
+	EventTypeSessionClosed      = "session_closed"
+	EventTypeSessionOpened      = "session_opened"
 )
 
 type HistoryResponse struct {
@@ -116,7 +118,7 @@ func parseEventData(eventType string, d *anypb.Any) (interface{}, error) {
 		return parseMemberAddedEventData(d)
 	case EventTypeMemberRemoved:
 		return parseMemberRemovedEventData(d)
-	case EventTypeMemberLeft:
+	case EventTypeMemberLeft, EventTypeSessionOpened, EventTypeSessionClosed:
 		return nil, nil
 	default:
 		return nil, ErrUnknownHistoryEventType

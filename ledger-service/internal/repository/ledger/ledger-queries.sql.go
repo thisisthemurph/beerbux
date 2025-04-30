@@ -12,8 +12,8 @@ import (
 const calculateUserTotal = `-- name: CalculateUserTotal :one
 select
     user_id,
-    cast(coalesce(sum(case when amount > 0 then amount else 0 end), 0) as real) as credit,
-    cast(coalesce(sum(case when amount < 0 then amount * -1 else 0 end), 0) as real) as debit,
+    cast(coalesce(sum(case when amount > 0 then amount else 0 end), 0) as real) as debit,
+    cast(coalesce(sum(case when amount < 0 then amount * -1 else 0 end), 0) as real) as credit,
     cast(coalesce(sum(amount), 0) as real) as net
 from ledger
 where user_id = ?
@@ -22,8 +22,8 @@ group by user_id
 
 type CalculateUserTotalRow struct {
 	UserID string
-	Credit float64
 	Debit  float64
+	Credit float64
 	Net    float64
 }
 
@@ -32,8 +32,8 @@ func (q *Queries) CalculateUserTotal(ctx context.Context, userID string) (Calcul
 	var i CalculateUserTotalRow
 	err := row.Scan(
 		&i.UserID,
-		&i.Credit,
 		&i.Debit,
+		&i.Credit,
 		&i.Net,
 	)
 	return i, err

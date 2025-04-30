@@ -46,11 +46,9 @@ export function useInformationDialog(): [
 						)}
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<section className="flex gap-2 justify-end tracking-wider">
+						<section className="flex justify-end">
 							<AlertDialogAction onClick={handleCancel} asChild>
-								<Button variant="secondary" size="lg">
-									{options.confirmText ?? "OK"}
-								</Button>
+								<Button variant="secondary">{options.confirmText ?? "OK"}</Button>
 							</AlertDialogAction>
 						</section>
 					</AlertDialogFooter>

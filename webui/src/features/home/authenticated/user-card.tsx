@@ -31,15 +31,15 @@ function NetBalance({ balance }: { balance: number }) {
 			title: "Net Balance",
 			description: (
 				<>
-					<p>Think of this number as your beer bank balance of all beers bought and received.</p>
-					<div className="grid grid-cols-5 gap-4 mt-4">
-						<PlusCircle className="size-8 col-span-1 text-green-500 translate-y-1/2" />
+					<span>Think of this number as your beer bank balance of all beers bought and received.</span>
+					<span className="grid grid-cols-5 gap-4 mt-4">
+						<PlusCircle className="size-8 col-span-1 text-green-500/50 translate-y-1/2" />
 						<span className="col-span-4">A positive number means you received more than you bought.</span>
-						<MinusCircle className="size-8 col-span-1 text-red-500 translate-y-1/2" />
+						<MinusCircle className="size-8 col-span-1 text-red-500/50 translate-y-1/2" />
 						<span className="col-span-4">
 							A negative number means you're either a stand-up guy or a pushover.
 						</span>
-					</div>
+					</span>
 				</>
 			),
 		});

@@ -1,24 +1,35 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useInformationDialog } from "@/hooks/use-information-dialog.tsx";
 import { MinusCircle, PlusCircle } from "lucide-react";
 
 type UserCardProps = {
 	username: string;
+	credit: number;
+	debit: number;
 	netBalance: number;
 };
 
-export function UserCard({ username, netBalance }: UserCardProps) {
+export function UserCard({ username, credit, debit, netBalance }: UserCardProps) {
 	return (
 		<Card className="bg-primary text-white min-h-36 shadow-xl">
 			<CardContent className="flex flex-col justify-between">
 				<section className="flex justify-between font-semibold">
 					<div>
 						<p className="text-2xl tracking-wider">Beerbux</p>
-						<p className="text-sm font-mono tracking-wide">{username}</p>
+						<p className="text-sm font-mono tracking-wide mt-0">{username}</p>
 					</div>
 					<NetBalance balance={netBalance} />
 				</section>
 			</CardContent>
+			<CardFooter className="gap-2">
+				<Badge variant="secondary" className="text-sm" title="Total amount of beers received">
+					debit: ${debit}
+				</Badge>
+				<Badge variant="secondary" className="text-sm" title="Total amount of beers bought">
+					credit: ${credit}
+				</Badge>
+			</CardFooter>
 		</Card>
 	);
 }

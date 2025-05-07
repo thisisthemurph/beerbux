@@ -1,22 +1,23 @@
 import type { SessionHistoryEvent } from "@/api/types/session-history.ts";
+import type { SessionMember } from "@/api/types/session.ts";
+import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible.tsx";
-import { useState } from "react";
-import type { SessionMember } from "@/api/types/session.ts";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
-import { Button } from "@/components/ui/button.tsx";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { EventGroup } from "./event-group";
 import { useGroupedEvents } from "@/features/session/detail/hooks/use-grouped-events.ts";
+import { useUserAvatarDataBySession } from "@/hooks/user-avatar-data.ts";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { EventGroup } from "./event-group";
 
 type SessionHistoryCardProps = {
+	sessionId: string;
 	events: SessionHistoryEvent[];
 	members: SessionMember[];
-	avatarData: Record<string, AvatarData>;
 };
 
-export function SessionHistoryCard({ events, members, avatarData }: SessionHistoryCardProps) {
+export function SessionHistoryCard({ sessionId, events, members }: SessionHistoryCardProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	const avatarData = useUserAvatarDataBySession(sessionId);
 	const grouped = useGroupedEvents(events);
 	const showCollapsibleTrigger =
 		grouped.sortedLabels.length > 1 || (grouped.firstEvents && grouped.firstEvents.length > 5);

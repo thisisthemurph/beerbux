@@ -1,23 +1,24 @@
-import { useState } from "react";
-import { useUserAvatarData } from "@/hooks/user-avatar-data.ts";
+import type { SessionHistory } from "@/api/types/session-history.ts";
+import type { Session, SessionMember, SessionTransaction } from "@/api/types/session.ts";
+import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
+import type { User } from "@/api/types/user.ts";
 import { PageError } from "@/components/page-error.tsx";
-import { SessionMenu } from "@/features/session/detail/session-menu.tsx";
-import { OverviewCard } from "@/features/session/detail/overview-card.tsx";
+import { PageHeading } from "@/components/page-heading.tsx";
 import {
 	PrimaryActionCard,
 	PrimaryActionCardButtonItem,
 	PrimaryActionCardContent,
 } from "@/components/primary-action-card.tsx";
-import { Beer, SquarePlus } from "lucide-react";
-import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
-import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
-import type { Session, SessionTransaction } from "@/api/types/session.ts";
-import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
-import type { User } from "@/api/types/user.ts";
-import { PageHeading } from "@/components/page-heading.tsx";
 import { AddMemberDrawer } from "@/features/session/detail/add-member/add-member-drawer.tsx";
-import type { SessionHistory } from "@/api/types/session-history.ts";
+import { CreateTransactionDrawer } from "@/features/session/detail/create-transaction/create-transaction-drawer.tsx";
+import { MemberDetailsCard } from "@/features/session/detail/member-details-card.tsx";
+import { MemberSummaryDrawer } from "@/features/session/detail/member-summary/member-summary-drawer.tsx";
+import { OverviewCard } from "@/features/session/detail/overview-card.tsx";
 import { SessionHistoryCard } from "@/features/session/detail/session-history-card/session-history-card.tsx";
+import { SessionMenu } from "@/features/session/detail/session-menu.tsx";
+import { userAvatarStore } from "@/stores/user-avatar-store.ts";
+import { Beer, SquarePlus } from "lucide-react";
+import { useState } from "react";
 
 type SessionDetailContentProps = {
 	session: Session;
@@ -57,8 +58,22 @@ export function SessionDetailContent({
 	const otherSessionMembers = (session?.members ?? [])
 		.filter((m) => m.id !== user.id)
 		.sort((a, b) => a.name.localeCompare(b.name));
+	const [selectedMember, setSelectedMember] = useState<SessionMember | undefined>();
 
-	const { avatarData } = useUserAvatarData(session?.members.map((m) => m.username) ?? []);
+	// Set avatar data for the session, if required.
+	const memberUsernames = session.members.map((m) => m.username);
+	const setAvatarData = userAvatarStore((state) => state.setAvatarData);
+	const avatarDataRequiresUpdate = userAvatarStore((state) =>
+		state.requiresUpdate(session.id, memberUsernames),
+	);
+
+	if (avatarDataRequiresUpdate) {
+		setAvatarData(session.id, memberUsernames);
+	}
+
+	function handleMemberSelected(memberId: string) {
+		setSelectedMember(session.members.find((m) => m.id === memberId));
+	}
 
 	if (!currentMember) {
 		return <PageError message="You are not a member of this session." />;
@@ -99,16 +114,17 @@ export function SessionDetailContent({
 			)}
 
 			<MemberDetailsCard
+				sessionId={session.id}
 				showMemberDropdownMenu={currentMember.isAdmin}
 				members={[currentMember, ...otherSessionMembers.filter((m) => !m.isDeleted)]}
-				avatarData={avatarData}
 				onChangeMemberAdminState={(memberId, newAdminState) =>
 					onMemberAdminStateUpdate(session.id, memberId, newAdminState)
 				}
 				onRemoveMember={onRemoveMember}
+				onSelectMember={handleMemberSelected}
 			/>
 
-			<SessionHistoryCard events={history?.events ?? []} members={session.members} avatarData={avatarData} />
+			<SessionHistoryCard sessionId={session.id} events={history?.events ?? []} members={session.members} />
 
 			<CreateTransactionDrawer
 				members={otherSessionMembers}
@@ -127,6 +143,15 @@ export function SessionDetailContent({
 				}}
 				open={addMemberDrawerOpen}
 				onOpenChange={(open) => setAddMemberDrawerOpen(open)}
+			/>
+
+			<MemberSummaryDrawer
+				sessionId={session.id}
+				member={selectedMember ?? currentMember}
+				members={session.members ?? []}
+				transactions={session.transactions}
+				open={!!selectedMember}
+				onOpenChange={() => setSelectedMember(undefined)}
 			/>
 		</>
 	);

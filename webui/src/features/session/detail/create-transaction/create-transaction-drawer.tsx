@@ -7,12 +7,8 @@ import {
 	DrawerTitle,
 } from "@/components/ui/drawer.tsx";
 import { CreateTransactionForm } from "@/features/session/detail/create-transaction/careate-transaction-form.tsx";
+import type { DrawerToggleProps } from "@/types.ts";
 import { useState } from "react";
-
-interface DrawerToggleProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-}
 
 interface CreateTransactionDrawerProps extends DrawerToggleProps {
 	members: SessionMember[];

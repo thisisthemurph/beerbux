@@ -3,28 +3,31 @@ import { InformationButton } from "@/components/information-button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { UserAvatar } from "@/components/user-avatar.tsx";
 import { useInformationDialog } from "@/hooks/use-information-dialog.tsx";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
+import { useUserAvatarDataBySession } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store.tsx";
 import { MemberDropdownMenu } from "./member-dropdown-menu";
 
 type MemberDetailsCardProps = {
+	sessionId: string;
 	members: SessionMember[];
-	avatarData: Record<string, AvatarData>;
 	showMemberDropdownMenu: boolean;
 	onChangeMemberAdminState: (memberId: string, newAdminState: boolean) => void;
 	onRemoveMember: (memberId: string) => void;
+	onSelectMember: (memberId: string) => void;
 };
 
 export function MemberDetailsCard({
+	sessionId,
 	members,
-	avatarData,
 	showMemberDropdownMenu,
 	onChangeMemberAdminState,
 	onRemoveMember,
+	onSelectMember,
 }: MemberDetailsCardProps) {
 	const [openInformationDialog, InformationDialog] = useInformationDialog();
 	const user = useUserStore((state) => state.user);
+	const avatarData = useUserAvatarDataBySession(sessionId);
 
 	const handleInformationClick = () => {
 		openInformationDialog({
@@ -46,29 +49,29 @@ export function MemberDetailsCard({
 				</CardHeader>
 				<CardContent className="px-0">
 					{members.map((m) => (
-						<div key={m.id} className="group flex items-center gap-4 px-6 hover:bg-muted">
-							<UserAvatar
-								data={avatarData[m.username]}
-								tooltip={m.name}
-								variant={m.isAdmin ? "prominent" : "default"}
-							/>
-							<div className="flex justify-between items-center w-full">
-								<button type="button" className="flex items-center gap-2 py-6 font-semibold">
+						<section key={m.id} className="grid grid-cols-5 hover:bg-muted">
+							<button
+								type="button"
+								className="col-span-4 flex w-full items-center gap-6 pl-6 cursor-pointer"
+								onClick={() => onSelectMember(m.id)}
+							>
+								<UserAvatar data={avatarData[m.username]} variant={m.isAdmin ? "prominent" : "default"} />
+								<div className="w-full py-6 text-left tracking-wider font-semibold">
 									<span>{m.username}</span>
-								</button>
-								<div className={cn("", showMemberDropdownMenu && "w-16 text-left grid grid-cols-2")}>
-									<Balance {...m.transactionSummary} />
-									{m.id !== user?.id && showMemberDropdownMenu && (
-										<MemberDropdownMenu
-											username={m.username}
-											isAdmin={m.isAdmin}
-											onChangeAdminState={() => onChangeMemberAdminState(m.id, !m.isAdmin)}
-											onRemoveMember={() => onRemoveMember(m.id)}
-										/>
-									)}
 								</div>
+							</button>
+							<div className="flex items-center gap-2">
+								<Balance {...m.transactionSummary} />
+								{m.id !== user?.id && showMemberDropdownMenu && (
+									<MemberDropdownMenu
+										username={m.username}
+										isAdmin={m.isAdmin}
+										onChangeAdminState={() => onChangeMemberAdminState(m.id, !m.isAdmin)}
+										onRemoveMember={() => onRemoveMember(m.id)}
+									/>
+								)}
 							</div>
-						</div>
+						</section>
 					))}
 				</CardContent>
 			</Card>

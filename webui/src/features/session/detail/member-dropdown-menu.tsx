@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button.tsx";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -6,9 +7,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Crown, EllipsisVertical, ShieldMinus, ShieldUser, UserMinus } from "lucide-react";
 import { useConfirmationDialog } from "@/hooks/use-confirmation-dialog.tsx";
+import { Crown, EllipsisVertical, ShieldMinus, ShieldUser, UserMinus } from "lucide-react";
 
 type MemberDropdownMenuProps = {
 	username: string;
@@ -39,7 +39,7 @@ export function MemberDropdownMenu({
 		<>
 			<ConfirmationDialog />
 			<DropdownMenu>
-				<DropdownMenuTrigger className="py-6 font-semibold w-full text-left" asChild>
+				<DropdownMenuTrigger className="py-6 font-semibold" asChild>
 					<Button variant="ghost" size="icon" className="rounded-full">
 						<EllipsisVertical className="size-6 text-muted-foreground group-hover:text-primary" />
 					</Button>

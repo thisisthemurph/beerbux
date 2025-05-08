@@ -1,3 +1,4 @@
+import useSessionClient from "@/api/session-client.ts";
 import type { User } from "@/api/types/user.ts";
 import useUserClient from "@/api/user-client.ts";
 import {
@@ -6,14 +7,13 @@ import {
 	PrimaryActionCardContent,
 } from "@/components/primary-action-card";
 import { SessionListing } from "@/components/session-listing.tsx";
+import { CreateSessionDrawer } from "@/features/home/authenticated/create-session/create-session-drawer.tsx";
 import { UserCard } from "@/features/home/authenticated/user-card.tsx";
+import { tryCatch } from "@/lib/try-catch.ts";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { SquareChevronRight } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { CreateSessionDrawer } from "@/features/home/authenticated/create-session/create-session-drawer.tsx";
-import useSessionClient from "@/api/session-client.ts";
-import { tryCatch } from "@/lib/try-catch.ts";
 import { toast } from "sonner";
 
 type AuthenticatedViewProps = {
@@ -58,9 +58,16 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 		});
 	}
 
+	const userBalance = balance ?? { credit: 0, debit: 0, net: 0 };
+
 	return (
 		<>
-			<UserCard {...user} netBalance={balance?.net ?? 0} />
+			<UserCard
+				{...user}
+				credit={userBalance.credit}
+				debit={userBalance.debit}
+				netBalance={userBalance.net}
+			/>
 
 			<PrimaryActionCard>
 				<PrimaryActionCardContent>

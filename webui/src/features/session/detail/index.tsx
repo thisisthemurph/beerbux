@@ -1,8 +1,9 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
-import type { User } from "@/api/types/user.ts";
 import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
+import type { User } from "@/api/types/user.ts";
 import { PageError } from "@/components/page-error.tsx";
+import { SessionDetailContent } from "@/features/session/detail/session-detail-content.tsx";
 import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { tryCatch } from "@/lib/try-catch.ts";
@@ -15,7 +16,6 @@ import {
 	type SessionTransactionCreatedMessage,
 	useSessionEventSource,
 } from "./hooks/use-session-event-source.ts";
-import { SessionDetailContent } from "@/features/session/detail/session-detail-content.tsx";
 
 const SSE_BASE_URL = import.meta.env.VITE_SSE_BASE_URL;
 

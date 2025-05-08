@@ -7,13 +7,12 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer.tsx";
-import { UserAvatar } from "@/components/user-avatar.tsx";
+import { Separator } from "@/components/ui/separator.tsx";
+import { MemberBalanceRow } from "@/features/session/detail/member-summary/member-balance-row.tsx";
+import { MemberRoundStats } from "@/features/session/detail/member-summary/member-round-stats.tsx";
 import { useUserAvatarDataBySession } from "@/hooks/user-avatar-data.ts";
 import { pluralize } from "@/lib/strings.ts";
-import { cn } from "@/lib/utils.ts";
-import type { AvatarData } from "@/stores/user-avatar-store.ts";
 import type { DrawerToggleProps } from "@/types.ts";
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface MemberSummaryDrawerProps extends DrawerToggleProps {
 	sessionId: string;
@@ -54,8 +53,8 @@ export function MemberSummaryDrawer({
 	transactions,
 }: MemberSummaryDrawerProps) {
 	const otherMembers = members.filter((m) => m.id !== member.id);
-	const bought = transactions.filter((t) => t.creatorId === member.id);
-	const received = transactions.filter((t) => t.members.some((m) => m.userId === member.id));
+	const roundsBought = transactions.filter((t) => t.creatorId === member.id).length;
+	const roundsReceived = transactions.filter((t) => t.members.some((m) => m.userId === member.id)).length;
 	const transactionTotalsByMember = calculateTransactionTotalsByMember(member.id, transactions);
 	const avatarData = useUserAvatarDataBySession(sessionId);
 
@@ -63,53 +62,26 @@ export function MemberSummaryDrawer({
 		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent>
 				<DrawerHeader className="px-6">
-					<DrawerTitle>{member.username}</DrawerTitle>
-					<DrawerDescription className="text-lg">
-						{member.username} has bought {bought.length} {pluralize(bought.length, "round", "rounds")} and has
-						had {received.length} {pluralize(received.length, "round", "rounds")} bought for them.
+					<DrawerTitle className="sr-only">{member.username}</DrawerTitle>
+					<DrawerDescription className="sr-only">
+						{member.username} has bought {roundsBought} {pluralize(roundsBought, "round", "rounds")} and has
+						had {roundsReceived} {pluralize(roundsReceived, "round", "rounds")} bought for them.
 					</DrawerDescription>
+					<MemberRoundStats roundsBought={roundsBought} roundsReceived={roundsReceived} />
 				</DrawerHeader>
+				<Separator className="mb-4" />
 				<DrawerFooter className="px-6">
+					<h2>Beers owed to or by {member.username}</h2>
 					{otherMembers.map((m) => (
 						<MemberBalanceRow
 							key={m.id}
 							username={m.username}
 							amount={transactionTotalsByMember.get(m.id) ?? 0}
-							avatarData={avatarData[m.username] ?? {}}
+							userAvatarData={avatarData[m.username] ?? {}}
 						/>
 					))}
 				</DrawerFooter>
 			</DrawerContent>
 		</Drawer>
-	);
-}
-
-type MemberBalanceRowProps = {
-	username: string;
-	amount: number;
-	avatarData: AvatarData;
-};
-
-function MemberBalanceRow({ avatarData, username, amount }: MemberBalanceRowProps) {
-	const absAmount = amount < 0 ? amount * -1 : amount;
-	const symbol = amount < 0 ? <ChevronDown /> : amount > 0 ? <ChevronUp /> : "";
-
-	return (
-		<div className="flex items-center justify-between font-semibold py-2">
-			<div className="flex items-center gap-4">
-				<UserAvatar data={avatarData} />
-				<span className="tracking-wide">{username}</span>
-			</div>
-			<span
-				className={cn(
-					"flex items-center text-lg text-muted-foreground",
-					amount < 0 && "text-red-500",
-					amount > 0 && "text-green-500",
-				)}
-			>
-				<span>{symbol}</span>
-				{absAmount}
-			</span>
-		</div>
 	);
 }

@@ -6,10 +6,10 @@ type AvatarDataBySessionMap = {
 };
 
 type AvatarDataMap = {
-	[username: string]: AvatarData;
+	[username: string]: UserAvatarData;
 };
 
-export type AvatarData = {
+export type UserAvatarData = {
 	username: string | undefined;
 	initial: string | undefined;
 	color: string | undefined;

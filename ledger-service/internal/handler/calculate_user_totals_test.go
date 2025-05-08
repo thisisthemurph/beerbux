@@ -52,8 +52,8 @@ func TestCalculateUserTotals(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, user1ID, res.UserID)
-	assert.Equal(t, 2.0, res.Debit)
-	assert.Equal(t, 3.0, res.Credit)
+	assert.Equal(t, 2.0, res.Credit)
+	assert.Equal(t, 3.0, res.Debit)
 	assert.Equal(t, 1.0, res.Net)
 
 	// Test user2 (only debits)
@@ -61,8 +61,8 @@ func TestCalculateUserTotals(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, user2ID, res.UserID)
-	assert.Equal(t, 7.0, res.Debit)
-	assert.Equal(t, 0.0, res.Credit)
+	assert.Equal(t, 7.0, res.Credit)
+	assert.Equal(t, 0.0, res.Debit)
 	assert.Equal(t, -7.0, res.Net)
 
 	// Test user3 (only credits)
@@ -70,8 +70,8 @@ func TestCalculateUserTotals(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, user3ID, res.UserID)
-	assert.Equal(t, 0.0, res.Debit)
-	assert.Equal(t, 7.0, res.Credit)
+	assert.Equal(t, 0.0, res.Credit)
+	assert.Equal(t, 7.0, res.Debit)
 	assert.Equal(t, 7.0, res.Net)
 
 	// Test non-existent user
@@ -79,7 +79,7 @@ func TestCalculateUserTotals(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
 	assert.Equal(t, nonExistentUserID, res.UserID)
-	assert.Equal(t, 0.0, res.Debit)
 	assert.Equal(t, 0.0, res.Credit)
+	assert.Equal(t, 0.0, res.Debit)
 	assert.Equal(t, 0.0, res.Net)
 }

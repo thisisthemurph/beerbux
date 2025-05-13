@@ -30,3 +30,11 @@ sql:
       go:
         package: "session"
         out: "internal/repository/session"
+
+  - engine: "postgresql"
+    queries: "internal/db/queries/transaction.sql"
+    schema: "internal/db/migrations"
+    gen:
+      go:
+        package: "transaction"
+        out: "internal/repository/transaction"

@@ -3,7 +3,6 @@
 create table if not exists session_members (
     session_id uuid not null references sessions(id) on delete cascade,
     member_id uuid not null references users(id) on delete no action,
-    is_creator bool not null default false,
     is_admin bool not null default false,
     is_deleted bool not null default false,
     created_at timestamp with time zone not null default now(),

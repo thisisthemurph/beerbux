@@ -7,6 +7,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -34,6 +35,81 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (User, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteRefreshToken = `-- name: DeleteRefreshToken :exec
+delete from refresh_tokens where id = $1
+`
+
+func (q *Queries) DeleteRefreshToken(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteRefreshToken, id)
+	return err
+}
+
+const getRefreshTokensByUserID = `-- name: GetRefreshTokensByUserID :many
+select id, user_id, hashed_token, expires_at, revoked, created_at, updated_at
+from refresh_tokens
+where user_id = $1
+  and revoked = false
+  and expires_at > now()
+`
+
+func (q *Queries) GetRefreshTokensByUserID(ctx context.Context, userID uuid.UUID) ([]RefreshToken, error) {
+	rows, err := q.db.QueryContext(ctx, getRefreshTokensByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RefreshToken
+	for rows.Next() {
+		var i RefreshToken
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.HashedToken,
+			&i.ExpiresAt,
+			&i.Revoked,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const invalidateRefreshToken = `-- name: InvalidateRefreshToken :exec
+update refresh_tokens
+set revoked = true
+where id = $1
+`
+
+func (q *Queries) InvalidateRefreshToken(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, invalidateRefreshToken, id)
+	return err
+}
+
+const registerRefreshToken = `-- name: RegisterRefreshToken :exec
+insert into refresh_tokens (user_id, hashed_token, expires_at)
+values ($1, $2, $3)
+`
+
+type RegisterRefreshTokenParams struct {
+	UserID      uuid.UUID
+	HashedToken string
+	ExpiresAt   time.Time
+}
+
+func (q *Queries) RegisterRefreshToken(ctx context.Context, arg RegisterRefreshTokenParams) error {
+	_, err := q.db.ExecContext(ctx, registerRefreshToken, arg.UserID, arg.HashedToken, arg.ExpiresAt)
+	return err
 }
 
 const updatePassword = `-- name: UpdatePassword :exec

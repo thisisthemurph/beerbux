@@ -1,6 +1,12 @@
--- name: Create :one
+-- name: GetUser :one
+select * from users where id = $1 limit 1;
+
+-- name: GetUserByUsername :one
+select * from users where username = $1 limit 1;
+
+-- name: CreateUser :one
 insert into users (name, username, hashed_password)
-values ($1, $2, $2)
+values ($1, $2, $3)
 returning *;
 
 -- name: UpdatePassword :exec

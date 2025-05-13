@@ -12,19 +12,20 @@ import (
 	"github.com/google/uuid"
 )
 
-const create = `-- name: Create :one
+const createUser = `-- name: CreateUser :one
 insert into users (name, username, hashed_password)
-values ($1, $2, $2)
+values ($1, $2, $3)
 returning id, username, name, hashed_password, created_at, updated_at
 `
 
-type CreateParams struct {
-	Name     string
-	Username string
+type CreateUserParams struct {
+	Name           string
+	Username       string
+	HashedPassword string
 }
 
-func (q *Queries) Create(ctx context.Context, arg CreateParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, create, arg.Name, arg.Username)
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Username, arg.HashedPassword)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -83,6 +84,42 @@ func (q *Queries) GetRefreshTokensByUserID(ctx context.Context, userID uuid.UUID
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUser = `-- name: GetUser :one
+select id, username, name, hashed_password, created_at, updated_at from users where id = $1 limit 1
+`
+
+func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Name,
+		&i.HashedPassword,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+select id, username, name, hashed_password, created_at, updated_at from users where username = $1 limit 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Name,
+		&i.HashedPassword,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const invalidateRefreshToken = `-- name: InvalidateRefreshToken :exec

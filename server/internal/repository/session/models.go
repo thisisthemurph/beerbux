@@ -34,6 +34,7 @@ type Session struct {
 	ID        uuid.UUID
 	Name      string
 	IsActive  bool
+	CreatorID uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -50,7 +51,6 @@ type SessionHistory struct {
 type SessionMember struct {
 	SessionID uuid.UUID
 	MemberID  uuid.UUID
-	IsCreator bool
 	IsAdmin   bool
 	IsDeleted bool
 	CreatedAt time.Time

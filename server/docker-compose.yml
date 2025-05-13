@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: beerbux-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: beerbux
+    ports:
+      - "5432:5432"
+    volumes:
+      - beerbux-data:/var/lib/postgresql/data
+
+volumes:
+  beerbux-data:
+    name: beerbux-data

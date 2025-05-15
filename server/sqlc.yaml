@@ -1,12 +1,12 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/db/queries/user.sql"
-    schema: "internal/db/migrations"
+    queries: "internal/common/useraccess/db/queries.sql"
+    schema: "migrations"
     gen:
       go:
-        package: "user"
-        out: "internal/repository/user"
+        package: "db"
+        out: "internal/common/useraccess/db"
         overrides:
           - column: "user_totals.credit"
             go_type: "float64"
@@ -16,25 +16,40 @@ sql:
             go_type: "float64"
 
   - engine: "postgresql"
-    queries: "internal/db/queries/auth.sql"
-    schema: "internal/db/migrations"
+    queries: "internal/auth/db/queries.sql"
+    schema: "migrations"
     gen:
       go:
-        package: "auth"
-        out: "internal/repository/auth"
+        package: "db"
+        out: "internal/auth/db"
 
   - engine: "postgresql"
-    queries: "internal/db/queries/session.sql"
-    schema: "internal/db/migrations"
+    queries: "internal/user/db/queries.sql"
+    schema: "migrations"
     gen:
       go:
-        package: "session"
-        out: "internal/repository/session"
+        package: "db"
+        out: "internal/user/db"
+        overrides:
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
 
   - engine: "postgresql"
-    queries: "internal/db/queries/transaction.sql"
-    schema: "internal/db/migrations"
+    queries: "internal/session/db/queries.sql"
+    schema: "migrations"
     gen:
       go:
-        package: "transaction"
-        out: "internal/repository/transaction"
+        package: "db"
+        out: "internal/session/db"
+
+  - engine: "postgresql"
+    queries: "internal/transaction/db/queries.sql"
+    schema: "migrations"
+    gen:
+      go:
+        package: "db"
+        out: "internal/transaction/db"

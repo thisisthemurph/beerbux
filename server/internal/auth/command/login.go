@@ -30,6 +30,7 @@ func NewLoginCommand(queries *db.Queries, options model.AuthOptions) *LoginComma
 type LoggedInUserDetails struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
+	Name     string    `json:"name"`
 }
 
 type LoginResponse struct {
@@ -77,6 +78,7 @@ func (c *LoginCommand) Execute(ctx context.Context, username, password string) (
 		User: LoggedInUserDetails{
 			ID:       usr.ID,
 			Username: usr.Username,
+			Name:     usr.Name,
 		},
 	}, nil
 }

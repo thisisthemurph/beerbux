@@ -1,9 +1,9 @@
 package command
 
 import (
+	"beerbux/internal/common/history"
 	"beerbux/internal/session/db"
 	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/history"
 	"beerbux/pkg/dbtx"
 	"context"
 	"database/sql"

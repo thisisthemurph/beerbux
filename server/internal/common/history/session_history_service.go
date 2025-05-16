@@ -46,11 +46,8 @@ func (r *SessionHistoryService) CreateSessionOpenedEvent(ctx context.Context, se
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  memberID,
-		EventType: EventSessionOpened.String(),
-		EventData: pqtype.NullRawMessage{
-			RawMessage: nil,
-			Valid:      true,
-		},
+		EventType: EventSessionOpened,
+		EventData: newNilNullRawMessage(),
 	})
 }
 
@@ -58,8 +55,8 @@ func (r *SessionHistoryService) CreateSessionClosedEvent(ctx context.Context, se
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  memberID,
-		EventType: EventSessionClosed.String(),
-		EventData: NewNilNullRawMessage(),
+		EventType: EventSessionClosed,
+		EventData: newNilNullRawMessage(),
 	})
 }
 
@@ -75,8 +72,8 @@ func (r *SessionHistoryService) CreateMemberAddedEvent(ctx context.Context, sess
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  performedByMemberId,
-		EventType: EventMemberAdded.String(),
-		EventData: NewNullRawMessage(eventData),
+		EventType: EventMemberAdded,
+		EventData: newNullRawMessage(eventData),
 	})
 }
 
@@ -92,8 +89,8 @@ func (r *SessionHistoryService) CreateMemberRemovedEvent(ctx context.Context, se
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  performedByMemberId,
-		EventType: EventMemberRemoved.String(),
-		EventData: NewNullRawMessage(eventData),
+		EventType: EventMemberRemoved,
+		EventData: newNullRawMessage(eventData),
 	})
 }
 
@@ -101,8 +98,8 @@ func (r *SessionHistoryService) CreateMemberLeftEvent(ctx context.Context, sessi
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  memberID,
-		EventType: EventMemberLeft.String(),
-		EventData: NewNilNullRawMessage(),
+		EventType: EventMemberLeft,
+		EventData: newNilNullRawMessage(),
 	})
 }
 
@@ -118,8 +115,8 @@ func (r *SessionHistoryService) CreateMemberPromotedToAdminEvent(ctx context.Con
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  performedByMemberId,
-		EventType: EventMemberPromotedToAdmin.String(),
-		EventData: NewNullRawMessage(eventData),
+		EventType: EventMemberPromotedToAdmin,
+		EventData: newNullRawMessage(eventData),
 	})
 }
 
@@ -131,12 +128,12 @@ func (r *SessionHistoryService) CreateMemberDemotedFromAdminEvent(ctx context.Co
 	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
 		SessionID: sessionID,
 		MemberID:  performedByMemberId,
-		EventType: EventMemberDemotedFromAdmin.String(),
-		EventData: NewNullRawMessage(eventData),
+		EventType: EventMemberDemotedFromAdmin,
+		EventData: newNullRawMessage(eventData),
 	})
 }
 
-func NewNullRawMessage(v interface{}) pqtype.NullRawMessage {
+func newNullRawMessage(v interface{}) pqtype.NullRawMessage {
 	data, _ := json.Marshal(v)
 	return pqtype.NullRawMessage{
 		RawMessage: data,
@@ -144,7 +141,7 @@ func NewNullRawMessage(v interface{}) pqtype.NullRawMessage {
 	}
 }
 
-func NewNilNullRawMessage() pqtype.NullRawMessage {
+func newNilNullRawMessage() pqtype.NullRawMessage {
 	return pqtype.NullRawMessage{
 		RawMessage: nil,
 		Valid:      true,

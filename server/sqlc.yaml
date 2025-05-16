@@ -53,3 +53,8 @@ sql:
       go:
         package: "db"
         out: "internal/transaction/db"
+        overrides:
+          - column: "session_transaction_lines.amount"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"

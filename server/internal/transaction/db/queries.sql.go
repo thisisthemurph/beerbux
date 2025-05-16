@@ -7,25 +7,40 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-const addTransaction = `-- name: AddTransaction :one
-insert into session_transactions (id, session_id, member_id)
-values ($1, $2, $3)
+const createLedgerEntry = `-- name: CreateLedgerEntry :exec
+insert into ledger (transaction_id, user_id, amount) values ($1, $2, $3)
+`
+
+type CreateLedgerEntryParams struct {
+	TransactionID uuid.UUID
+	UserID        uuid.UUID
+	Amount        float64
+}
+
+func (q *Queries) CreateLedgerEntry(ctx context.Context, arg CreateLedgerEntryParams) error {
+	_, err := q.db.ExecContext(ctx, createLedgerEntry, arg.TransactionID, arg.UserID, arg.Amount)
+	return err
+}
+
+const createTransaction = `-- name: CreateTransaction :one
+insert into session_transactions (session_id, member_id)
+values ($1, $2)
 on conflict do nothing
 returning id, session_id, member_id, created_at
 `
 
-type AddTransactionParams struct {
-	ID        uuid.UUID
+type CreateTransactionParams struct {
 	SessionID uuid.UUID
 	MemberID  uuid.UUID
 }
 
-func (q *Queries) AddTransaction(ctx context.Context, arg AddTransactionParams) (SessionTransaction, error) {
-	row := q.db.QueryRowContext(ctx, addTransaction, arg.ID, arg.SessionID, arg.MemberID)
+func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (SessionTransaction, error) {
+	row := q.db.QueryRowContext(ctx, createTransaction, arg.SessionID, arg.MemberID)
 	var i SessionTransaction
 	err := row.Scan(
 		&i.ID,
@@ -36,7 +51,7 @@ func (q *Queries) AddTransaction(ctx context.Context, arg AddTransactionParams) 
 	return i, err
 }
 
-const addTransactionLine = `-- name: AddTransactionLine :one
+const createTransactionLine = `-- name: CreateTransactionLine :one
 insert into session_transaction_lines (transaction_id, member_id, amount)
 values ($1, $2, $3)
 on conflict (transaction_id, member_id)
@@ -44,15 +59,71 @@ do update set amount = excluded.amount
 returning transaction_id, member_id, amount
 `
 
-type AddTransactionLineParams struct {
+type CreateTransactionLineParams struct {
 	TransactionID uuid.UUID
 	MemberID      uuid.UUID
-	Amount        string
+	Amount        float64
 }
 
-func (q *Queries) AddTransactionLine(ctx context.Context, arg AddTransactionLineParams) (SessionTransactionLine, error) {
-	row := q.db.QueryRowContext(ctx, addTransactionLine, arg.TransactionID, arg.MemberID, arg.Amount)
+func (q *Queries) CreateTransactionLine(ctx context.Context, arg CreateTransactionLineParams) (SessionTransactionLine, error) {
+	row := q.db.QueryRowContext(ctx, createTransactionLine, arg.TransactionID, arg.MemberID, arg.Amount)
 	var i SessionTransactionLine
 	err := row.Scan(&i.TransactionID, &i.MemberID, &i.Amount)
 	return i, err
+}
+
+const getSessionByID = `-- name: GetSessionByID :one
+select s.id, s.name, s.is_active, s.created_at, s.updated_at
+from sessions s
+where s.id = $1
+`
+
+type GetSessionByIDRow struct {
+	ID        uuid.UUID
+	Name      string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetSessionByID(ctx context.Context, id uuid.UUID) (GetSessionByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByID, id)
+	var i GetSessionByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSessionMemberIDs = `-- name: GetSessionMemberIDs :many
+select member_id
+from session_members
+where session_id = $1 and is_deleted = false
+`
+
+func (q *Queries) GetSessionMemberIDs(ctx context.Context, sessionID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getSessionMemberIDs, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var member_id uuid.UUID
+		if err := rows.Scan(&member_id); err != nil {
+			return nil, err
+		}
+		items = append(items, member_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

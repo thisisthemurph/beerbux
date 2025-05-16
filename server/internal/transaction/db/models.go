@@ -14,9 +14,8 @@ import (
 type Ledger struct {
 	ID            uuid.UUID
 	TransactionID uuid.UUID
-	SessionID     uuid.UUID
 	UserID        uuid.UUID
-	Amount        string
+	Amount        float64
 	CreatedAt     time.Time
 }
 
@@ -67,7 +66,7 @@ type SessionTransaction struct {
 type SessionTransactionLine struct {
 	TransactionID uuid.UUID
 	MemberID      uuid.UUID
-	Amount        string
+	Amount        float64
 }
 
 type User struct {

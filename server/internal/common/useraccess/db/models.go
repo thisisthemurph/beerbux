@@ -14,7 +14,6 @@ import (
 type Ledger struct {
 	ID            uuid.UUID
 	TransactionID uuid.UUID
-	SessionID     uuid.UUID
 	UserID        uuid.UUID
 	Amount        float64
 	CreatedAt     time.Time

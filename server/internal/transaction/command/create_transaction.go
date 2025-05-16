@@ -108,6 +108,18 @@ func (cmd *CreateTransactionCommand) Execute(ctx context.Context, r CreateTransa
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	if historyErr := cmd.SessionHistoryWriter.CreateTransactionCreatedEvent(ctx, r.SessionID, r.CreatorID, history.TransactionHistory{
+		TransactionID: transaction.ID,
+		Lines: fn.Map(r.MemberAmounts, func(tl TransactionMemberAmount) history.TransactionHistoryLine {
+			return history.TransactionHistoryLine{
+				MemberID: tl.MemberID,
+				Amount:   tl.Amount,
+			}
+		}),
+	}); historyErr != nil {
+		return nil, historyErr
+	}
+
 	return &TransactionResponse{
 		ID: transaction.ID,
 	}, nil

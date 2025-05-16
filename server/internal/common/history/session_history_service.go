@@ -17,6 +17,7 @@ type SessionHistoryWriter interface {
 	CreateMemberLeftEvent(ctx context.Context, sessionID, memberID uuid.UUID) error
 	CreateMemberPromotedToAdminEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error
 	CreateMemberDemotedFromAdminEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error
+	CreateTransactionCreatedEvent(ctx context.Context, sessionID, performedByMemberId uuid.UUID, transactionLines TransactionHistory) error
 }
 
 type SessionHistoryService struct {
@@ -131,6 +132,31 @@ func (r *SessionHistoryService) CreateMemberDemotedFromAdminEvent(ctx context.Co
 		EventType: EventMemberDemotedFromAdmin,
 		EventData: newNullRawMessage(eventData),
 	})
+}
+
+type TransactionHistoryLine struct {
+	MemberID uuid.UUID `json:"member_id"`
+	Amount   float64   `json:"amount"`
+}
+
+type TransactionHistory struct {
+	TransactionID uuid.UUID                `json:"transaction_id"`
+	Lines         []TransactionHistoryLine `json:"lines"`
+}
+
+func (r *SessionHistoryService) CreateTransactionCreatedEvent(
+	ctx context.Context,
+	sessionID,
+	performedByMemberId uuid.UUID,
+	transactionLines TransactionHistory,
+) error {
+	return r.Queries.CreateSessionHistory(ctx, db.CreateSessionHistoryParams{
+		SessionID: sessionID,
+		MemberID:  performedByMemberId,
+		EventType: EventTransactionCreated,
+		EventData: newNullRawMessage(transactionLines),
+	})
+
 }
 
 func newNullRawMessage(v interface{}) pqtype.NullRawMessage {

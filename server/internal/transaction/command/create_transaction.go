@@ -40,15 +40,15 @@ func NewCreateTransactionCommand(queries *db.Queries, historyWriter history.Sess
 	}
 }
 
-type TransactionMemberAmount struct {
+type TransactionLine struct {
 	MemberID uuid.UUID `json:"userId"`
 	Amount   float64   `json:"amount"`
 }
 
 type CreateTransactionRequest struct {
-	SessionID     uuid.UUID                 `json:"sessionId"`
-	CreatorID     uuid.UUID                 `json:"creatorId"`
-	MemberAmounts []TransactionMemberAmount `json:"amounts"`
+	SessionID uuid.UUID         `json:"sessionId"`
+	CreatorID uuid.UUID         `json:"creatorId"`
+	Lines     []TransactionLine `json:"amounts"`
 }
 
 type TransactionResponse struct {
@@ -77,7 +77,7 @@ func (cmd *CreateTransactionCommand) Execute(ctx context.Context, r CreateTransa
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	for _, memberAmount := range r.MemberAmounts {
+	for _, memberAmount := range r.Lines {
 		_, err = qtx.CreateTransactionLine(ctx, db.CreateTransactionLineParams{
 			TransactionID: transaction.ID,
 			MemberID:      memberAmount.MemberID,
@@ -110,7 +110,7 @@ func (cmd *CreateTransactionCommand) Execute(ctx context.Context, r CreateTransa
 
 	if historyErr := cmd.SessionHistoryWriter.CreateTransactionCreatedEvent(ctx, r.SessionID, r.CreatorID, history.TransactionHistory{
 		TransactionID: transaction.ID,
-		Lines: fn.Map(r.MemberAmounts, func(tl TransactionMemberAmount) history.TransactionHistoryLine {
+		Lines: fn.Map(r.Lines, func(tl TransactionLine) history.TransactionHistoryLine {
 			return history.TransactionHistoryLine{
 				MemberID: tl.MemberID,
 				Amount:   tl.Amount,
@@ -126,11 +126,11 @@ func (cmd *CreateTransactionCommand) Execute(ctx context.Context, r CreateTransa
 }
 
 func (cmd *CreateTransactionCommand) validateRequest(ctx context.Context, r CreateTransactionRequest) error {
-	if r.MemberAmounts == nil || len(r.MemberAmounts) == 0 {
+	if r.Lines == nil || len(r.Lines) == 0 {
 		return ErrMemberAmountRequired
 	}
 
-	for _, m := range r.MemberAmounts {
+	for _, m := range r.Lines {
 		if m.Amount < MinTransactionAmount {
 			return ErrMemberAmountTooLow
 		}
@@ -139,7 +139,7 @@ func (cmd *CreateTransactionCommand) validateRequest(ctx context.Context, r Crea
 		}
 	}
 
-	memberLookup := fn.Map(r.MemberAmounts, func(ma TransactionMemberAmount) uuid.UUID {
+	memberLookup := fn.Map(r.Lines, func(ma TransactionLine) uuid.UUID {
 		return ma.MemberID
 	})
 

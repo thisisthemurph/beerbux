@@ -12,6 +12,42 @@ import (
 	"github.com/google/uuid"
 )
 
+const getByUsername = `-- name: GetByUsername :one
+select
+    u.id, u.username, u.name, u.created_at, u.updated_at,
+    coalesce(t.debit, 0) as debit,
+    coalesce(t.credit, 0) as credit
+from users u
+         left join user_totals t on u.id = t.user_id
+where u.username = $1
+limit 1
+`
+
+type GetByUsernameRow struct {
+	ID        uuid.UUID
+	Username  string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Debit     float64
+	Credit    float64
+}
+
+func (q *Queries) GetByUsername(ctx context.Context, username string) (GetByUsernameRow, error) {
+	row := q.db.QueryRowContext(ctx, getByUsername, username)
+	var i GetByUsernameRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Debit,
+		&i.Credit,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
 select
     u.id, u.username, u.name, u.created_at, u.updated_at,

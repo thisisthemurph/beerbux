@@ -29,8 +29,16 @@ func BadRequest(w http.ResponseWriter, err string) {
 	Error(w, err, http.StatusBadRequest)
 }
 
+func NotFound(w http.ResponseWriter, err string) {
+	Error(w, err, http.StatusNotFound)
+}
+
 func InternalServerError(w http.ResponseWriter, err string) {
 	Error(w, err, http.StatusInternalServerError)
+}
+
+func Unauthorized(w http.ResponseWriter, err string) {
+	Error(w, err, http.StatusUnauthorized)
 }
 
 // ValidationError sends a JSON payload detailing ozzo-validation validation errors.

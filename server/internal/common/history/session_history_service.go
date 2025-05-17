@@ -4,10 +4,14 @@ import (
 	"beerbux/internal/session/db"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
-	"time"
 )
+
+type SessionHistoryReader interface {
+	GetSessionHistory(ctx context.Context, sessionID uuid.UUID) (SessionHistoryResponse, error)
+}
 
 type SessionHistoryWriter interface {
 	CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID uuid.UUID) error
@@ -30,17 +34,28 @@ func NewSessionHistoryService(queries *db.Queries) *SessionHistoryService {
 	}
 }
 
-type SessionHistoryEvent struct {
-	ID        int32
-	MemberID  uuid.UUID
-	EventType string
-	EventData *json.RawMessage
-	CreatedAt time.Time
-}
+func (r *SessionHistoryService) GetSessionHistory(ctx context.Context, sessionID uuid.UUID) (SessionHistoryResponse, error) {
+	events, err := r.Queries.GetSessionHistory(ctx, sessionID)
+	if err != nil {
+		return SessionHistoryResponse{}, fmt.Errorf("failed to get sessio history events: %w", err)
+	}
 
-type SessionHistoryResponse struct {
-	SessionID uuid.UUID
-	Events    []SessionHistoryEvent
+	response := SessionHistoryResponse{
+		SessionID: sessionID,
+		Events:    make([]SessionHistoryEvent, 0, len(events)),
+	}
+
+	for _, e := range events {
+		response.Events = append(response.Events, SessionHistoryEvent{
+			ID:        e.ID,
+			MemberID:  e.MemberID,
+			EventType: e.EventType,
+			EventData: e.EventData,
+			CreatedAt: e.CreatedAt,
+		})
+	}
+
+	return response, nil
 }
 
 func (r *SessionHistoryService) CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID uuid.UUID) error {
@@ -61,10 +76,6 @@ func (r *SessionHistoryService) CreateSessionClosedEvent(ctx context.Context, se
 	})
 }
 
-type MemberAddedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
-}
-
 func (r *SessionHistoryService) CreateMemberAddedEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error {
 	eventData := MemberAddedEventData{
 		MemberID: memberID,
@@ -76,10 +87,6 @@ func (r *SessionHistoryService) CreateMemberAddedEvent(ctx context.Context, sess
 		EventType: EventMemberAdded,
 		EventData: newNullRawMessage(eventData),
 	})
-}
-
-type MemberRemovedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
 }
 
 func (r *SessionHistoryService) CreateMemberRemovedEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error {

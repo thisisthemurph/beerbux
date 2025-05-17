@@ -1,4 +1,4 @@
-package queries
+package query
 
 import (
 	"beerbux/internal/session/db"
@@ -38,8 +38,7 @@ func (q *ListSessionsByUserIDQuery) Execute(ctx context.Context, userID uuid.UUI
 				Name:     r.Name,
 				IsActive: r.IsActive,
 				Members:  make([]SessionMember, 0, 4),
-				//Transactions: nil,
-				Total: r.TotalAmount,
+				Total:    r.TotalAmount,
 			}
 			sessionsMap[r.ID] = s
 			sessions = append(sessions, s)

@@ -17,6 +17,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/thisisthemurph/fn v0.0.1 h1:Pj5l5Yw1D68iUJMG+40p1bKgY57xqPnQ5s5xftvcdCo=
 github.com/thisisthemurph/fn v0.0.1/go.mod h1:zn7i7T5z0I1wzBjbr/jRUbItv+P1xNsT0+VwKAV4qEQ=
+github.com/thisisthemurph/fn v0.0.2 h1:JttzA8+JfgECDL5FS+idxDa5B/g4v5kXIu0iRs5MvtQ=
+github.com/thisisthemurph/fn v0.0.2/go.mod h1:zn7i7T5z0I1wzBjbr/jRUbItv+P1xNsT0+VwKAV4qEQ=
 golang.org/x/crypto v0.38.0 h1:jt+WWG8IZlBnVbomuhg2Mdq0+BBQaHbtqHEFEigjUV8=
 golang.org/x/crypto v0.38.0/go.mod h1:MvrbAqul58NNYPKnOra203SB9vpuZW0e+RRZV+Ggqjw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

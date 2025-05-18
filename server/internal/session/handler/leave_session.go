@@ -8,11 +8,20 @@ import (
 	"beerbux/pkg/url"
 	"errors"
 	"github.com/google/uuid"
+	"log/slog"
 	"net/http"
 )
 
 type LeaveSessionHandler struct {
 	removeSessionMemberCommand *command.RemoveSessionMemberCommand
+	logger                     *slog.Logger
+}
+
+func NewLeaveSessionHandler(removeSessionMemberCommand *command.RemoveSessionMemberCommand, logger *slog.Logger) *LeaveSessionHandler {
+	return &LeaveSessionHandler{
+		removeSessionMemberCommand: removeSessionMemberCommand,
+		logger:                     logger,
+	}
 }
 
 func (h *LeaveSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +48,7 @@ func (h *LeaveSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		} else if errors.Is(err, sessionErr.ErrSessionMustHaveAtLeastOneAdmin) {
 			send.BadRequest(w, "You cannot leave the session if you are the only admin member")
 		} else {
+			h.logger.Error("failed to remove member from session", "error", err)
 			send.InternalServerError(w, "There was an issue leaving the session")
 		}
 		return

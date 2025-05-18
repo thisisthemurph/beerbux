@@ -10,9 +10,16 @@ import (
 	"strconv"
 )
 
-type ListCurrentUserSessions struct {
+type ListCurrentUserSessionsHandler struct {
 	listSessionsByUserIDQuery *query.ListSessionsByUserIDQuery
 	logger                    *slog.Logger
+}
+
+func NewListCurrentUserSessionsHandler(listSessionsByUserIDQuery *query.ListSessionsByUserIDQuery, logger *slog.Logger) *ListCurrentUserSessionsHandler {
+	return &ListCurrentUserSessionsHandler{
+		listSessionsByUserIDQuery: listSessionsByUserIDQuery,
+		logger:                    logger,
+	}
 }
 
 type CurrentUserSessionResponse struct {
@@ -29,7 +36,7 @@ type CurrentUserSessionMember struct {
 	Username string    `json:"username"`
 }
 
-func (h *ListCurrentUserSessions) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *ListCurrentUserSessionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {
 		w.WriteHeader(http.StatusUnauthorized)

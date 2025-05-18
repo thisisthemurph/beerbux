@@ -20,6 +20,18 @@ type UpdateSessionMemberAdminHandler struct {
 	logger                        *slog.Logger
 }
 
+func NewUpdateSessionMemberAdminHandler(
+	getSessionQuery *query.GetSessionQuery,
+	updateMemberAdminStateCommand *command.UpdateSessionMemberAdminStateCommand,
+	logger *slog.Logger,
+) *UpdateSessionMemberAdminHandler {
+	return &UpdateSessionMemberAdminHandler{
+		getSessionQuery:               getSessionQuery,
+		updateMemberAdminStateCommand: updateMemberAdminStateCommand,
+		logger:                        logger,
+	}
+}
+
 type UpdateSessionMemberAdminRequest struct {
 	NewAdminState bool `json:"newAdminState"`
 }

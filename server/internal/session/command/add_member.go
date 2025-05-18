@@ -18,6 +18,14 @@ type AddSessionMemberCommand struct {
 	SessionHistoryWriter history.SessionHistoryWriter
 }
 
+func NewAddSessionMemberCommand(tx dbtx.TX, queries *db.Queries, sessionHistoryWriter history.SessionHistoryWriter) *AddSessionMemberCommand {
+	return &AddSessionMemberCommand{
+		TX:                   tx,
+		Queries:              queries,
+		SessionHistoryWriter: sessionHistoryWriter,
+	}
+}
+
 func (cmd *AddSessionMemberCommand) Execute(ctx context.Context, sessionID, memberID, performedByUserID uuid.UUID) error {
 	session, err := cmd.Queries.GetSessionByID(ctx, sessionID)
 	if err != nil {

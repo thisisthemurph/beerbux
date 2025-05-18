@@ -19,9 +19,23 @@ import (
 
 type AddSessionMemberHandler struct {
 	getSessionQuery         *query.GetSessionQuery
-	getUserByUsernameQuery  *useraccess.GetUserByUsernameQuery
+	userReader              useraccess.UserReader
 	addSessionMemberCommand *command.AddSessionMemberCommand
 	logger                  *slog.Logger
+}
+
+func NewAddSessionMemberHandler(
+	getSessionQuery *query.GetSessionQuery,
+	userReader useraccess.UserReader,
+	addSessionMemberCommand *command.AddSessionMemberCommand,
+	logger *slog.Logger,
+) *AddSessionMemberHandler {
+	return &AddSessionMemberHandler{
+		getSessionQuery:         getSessionQuery,
+		userReader:              userReader,
+		addSessionMemberCommand: addSessionMemberCommand,
+		logger:                  logger,
+	}
 }
 
 type AddMemberToSessionRequest struct {
@@ -69,7 +83,7 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userToAdd, err := h.getUserByUsernameQuery.Execute(r.Context(), req.Username)
+	userToAdd, err := h.userReader.GetUserByUsername(r.Context(), req.Username)
 	if err != nil {
 		if errors.Is(err, useraccess.ErrUserNotFound) {
 			send.NotFound(w, fmt.Sprintf("User %s not found", req.Username))

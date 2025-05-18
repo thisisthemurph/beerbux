@@ -12,12 +12,12 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-type GetUserByIdQuery struct {
+type UserReaderService struct {
 	Queries *db.Queries
 }
 
-func NewGetUserByIdQuery(queries *db.Queries) *GetUserByIdQuery {
-	return &GetUserByIdQuery{
+func NewUserReaderService(queries *db.Queries) *UserReaderService {
+	return &UserReaderService{
 		Queries: queries,
 	}
 }
@@ -36,13 +36,35 @@ type UserResponse struct {
 	Account   UserAccount `json:"account"`
 }
 
-func (q *GetUserByIdQuery) GetUserByID(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
+func (q *UserReaderService) GetUserByID(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
 	usr, err := q.Queries.GetUserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to fetch user with id %s: %w", userID, err)
+	}
+
+	return &UserResponse{
+		ID:        usr.ID,
+		Username:  usr.Username,
+		Name:      usr.Name,
+		CreatedAt: usr.CreatedAt,
+		UpdatedAt: usr.UpdatedAt,
+		Account: UserAccount{
+			Debit:  usr.Debit,
+			Credit: usr.Credit,
+		},
+	}, nil
+}
+
+func (q *UserReaderService) GetUserByUsername(ctx context.Context, username string) (*UserResponse, error) {
+	usr, err := q.Queries.GetByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to fetch user with username %s: %w", username, err)
 	}
 
 	return &UserResponse{

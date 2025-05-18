@@ -67,7 +67,8 @@ func buildServerMux(cfg *api.Config, logger *slog.Logger, database *sql.DB) http
 	aq := authQueries.New(database)
 	refreshTokenCommand := command.NewRefreshTokenCommand(aq, cfg.GetAuthOptions())
 	authMiddleware := middleware.NewAuthMiddleware(refreshTokenCommand, cfg.Secrets.JWTSecret)
-	return middleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))
+	recoverMiddleware := middleware.NewRecoverMiddleware(logger)
+	return recoverMiddleware.Recover(authMiddleware.WithJWT(middleware.CORS(mux, cfg.ClientBaseURL)))
 }
 
 func connectToDatabase(driver, uri string) (*sql.DB, error) {

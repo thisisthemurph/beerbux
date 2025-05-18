@@ -227,6 +227,6 @@ func newNullRawMessage(v interface{}) pqtype.NullRawMessage {
 func newNilNullRawMessage() pqtype.NullRawMessage {
 	return pqtype.NullRawMessage{
 		RawMessage: nil,
-		Valid:      true,
+		Valid:      false,
 	}
 }

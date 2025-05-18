@@ -8,6 +8,7 @@ import (
 	authHandler "beerbux/internal/auth/handler"
 	sessionHandler "beerbux/internal/session/handler"
 	transactionHandler "beerbux/internal/transaction/handler"
+	userHandler "beerbux/internal/user/handler"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -56,6 +57,7 @@ func buildServerMux(cfg *api.Config, logger *slog.Logger, database *sql.DB) http
 		authHandler.MakeHandlerRoutes,
 		sessionHandler.MakeHandlerRoutes,
 		transactionHandler.MakeHandlerRoutes,
+		userHandler.MakeHandlerRoutes,
 	}
 
 	for _, buildRoutes := range builders {

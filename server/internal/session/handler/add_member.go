@@ -67,6 +67,7 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			send.NotFound(w, "The session could not be found")
 			return
 		}
+		h.logger.Error("failed to find session when adding member", "member", req.Username, "session", sessionID, "error", err)
 		send.InternalServerError(w, "There was an issue finding the session")
 		return
 	}
@@ -89,7 +90,7 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			send.NotFound(w, fmt.Sprintf("User %s not found", req.Username))
 			return
 		}
-		h.logger.Error("failed to find the user to add to the session", "error", err)
+		h.logger.Error("failed to find the user to add to the session", "username", req.Username, "session", sessionID, "error", err)
 		send.InternalServerError(w, "There has been an issue finding the user to add")
 		return
 	}

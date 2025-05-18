@@ -22,7 +22,7 @@ export type SessionMember = {
 
 export type SessionTransaction = {
 	id: string;
-	creatorId: string;
+	userId: string;
 	total: number;
 	createdAt: string;
 	lines: SessionTransactionLine[];

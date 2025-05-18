@@ -73,6 +73,11 @@ func (r *SessionHistoryService) parseEventJSON(eventType string, data pqtype.Nul
 
 	switch eventType {
 	case EventTransactionCreated:
+		var eventData TransactionCreatedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+		}
+		return eventData, nil
 	case EventMemberAdded:
 		var eventData MemberAddedEventData
 		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {

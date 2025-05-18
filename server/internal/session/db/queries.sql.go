@@ -16,7 +16,8 @@ import (
 const addMemberToSession = `-- name: AddMemberToSession :exec
 insert into session_members (session_id, member_id, is_admin)
 values ($1, $2, $3)
-on conflict(session_id, member_id) do nothing
+on conflict(session_id, member_id) do update
+set is_deleted = false
 `
 
 type AddMemberToSessionParams struct {

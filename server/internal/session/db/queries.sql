@@ -74,7 +74,8 @@ where sm.session_id = $1;
 -- name: AddMemberToSession :exec
 insert into session_members (session_id, member_id, is_admin)
 values ($1, $2, $3)
-on conflict(session_id, member_id) do nothing;
+on conflict(session_id, member_id) do update
+set is_deleted = false;
 
 -- name: DeleteSessionMember :exec
 update session_members

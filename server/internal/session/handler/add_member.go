@@ -97,8 +97,11 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Return early if the user being added is already a member of the session.
 	for _, m := range s.Members {
 		if m.ID == userToAdd.ID {
-			w.WriteHeader(http.StatusOK)
-			return
+			if !m.IsDeleted {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			break
 		}
 	}
 

@@ -20,8 +20,9 @@ type CreateTransactionHandler struct {
 	logger                   *slog.Logger
 }
 
-func NewCreateTransactionHandler(createTransactionCommand *command.CreateTransactionCommand, logger *slog.Logger) *CreateTransactionHandler {
+func NewCreateTransactionHandler(getSessionQuery *query.GetSessionQuery, createTransactionCommand *command.CreateTransactionCommand, logger *slog.Logger) *CreateTransactionHandler {
 	return &CreateTransactionHandler{
+		getSessionQuery:          getSessionQuery,
 		createTransactionCommand: createTransactionCommand,
 		logger:                   logger,
 	}

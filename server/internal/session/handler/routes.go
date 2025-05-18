@@ -16,7 +16,7 @@ import (
 func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
 	queries := db.New(database)
 	uaQueries := useraccessQueries.New(database)
-	sessionHistoryService := history.NewSessionHistoryService(queries)
+	sessionHistoryService := history.NewSessionHistoryService(queries, logger)
 	userReaderService := useraccess.NewUserReaderService(uaQueries)
 
 	getSessionQuery := query.NewGetSessionQuery(queries)

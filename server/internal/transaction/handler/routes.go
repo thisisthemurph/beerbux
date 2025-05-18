@@ -14,7 +14,7 @@ import (
 func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
 	queries := db.New(database)
 	ssnQueries := sessionDB.New(database)
-	sessionHistoryService := history.NewSessionHistoryService(ssnQueries)
+	sessionHistoryService := history.NewSessionHistoryService(ssnQueries, logger)
 
 	createTransactionCommand := command.NewCreateTransactionCommand(database, queries, sessionHistoryService)
 

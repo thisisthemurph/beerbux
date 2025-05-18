@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
+	"log/slog"
 )
 
 type SessionHistoryReader interface {
@@ -26,11 +27,13 @@ type SessionHistoryWriter interface {
 
 type SessionHistoryService struct {
 	Queries *db.Queries
+	logger  *slog.Logger
 }
 
-func NewSessionHistoryService(queries *db.Queries) *SessionHistoryService {
+func NewSessionHistoryService(queries *db.Queries, logger *slog.Logger) *SessionHistoryService {
 	return &SessionHistoryService{
 		Queries: queries,
+		logger:  logger,
 	}
 }
 
@@ -46,16 +49,51 @@ func (r *SessionHistoryService) GetSessionHistory(ctx context.Context, sessionID
 	}
 
 	for _, e := range events {
+		eventData, err := r.parseEventJSON(e.EventType, e.EventData)
+		if err != nil {
+			r.logger.Error("failed to parse event data", "session", sessionID, "error", err)
+		}
+
 		response.Events = append(response.Events, SessionHistoryEvent{
 			ID:        e.ID,
 			MemberID:  e.MemberID,
 			EventType: e.EventType,
-			EventData: e.EventData,
+			EventData: eventData,
 			CreatedAt: e.CreatedAt,
 		})
 	}
 
 	return response, nil
+}
+
+func (r *SessionHistoryService) parseEventJSON(eventType string, data pqtype.NullRawMessage) (interface{}, error) {
+	if !data.Valid {
+		return nil, fmt.Errorf("event type %s NillRawMessage is null", eventType)
+	}
+
+	switch eventType {
+	case EventTransactionCreated:
+	case EventMemberAdded:
+		var eventData MemberAddedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+		}
+		return eventData, nil
+	case EventMemberRemoved:
+		var eventData MemberRemovedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+		}
+		return eventData, nil
+	case EventMemberLeft, EventSessionClosed, EventSessionOpened:
+		return nil, nil
+	case EventMemberPromotedToAdmin:
+		return nil, nil
+	case EventMemberDemotedFromAdmin:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown event type %s", eventType)
+	}
 }
 
 func (r *SessionHistoryService) CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID uuid.UUID) error {

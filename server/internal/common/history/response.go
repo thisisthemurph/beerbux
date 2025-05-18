@@ -24,11 +24,11 @@ type TransactionCreatedEventData struct {
 }
 
 type MemberAddedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 }
 
 type MemberRemovedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 }
 
 type TransactionLine struct {

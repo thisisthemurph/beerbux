@@ -27,6 +27,14 @@ type MemberAddedEventData struct {
 	MemberID uuid.UUID `json:"memberId"`
 }
 
+type MemberPromotedToAdminEventData struct {
+	MemberID uuid.UUID `json:"memberId"`
+}
+
+type MemberDemotedFromAdminEventData struct {
+	MemberID uuid.UUID `json:"memberId"`
+}
+
 type MemberRemovedEventData struct {
 	MemberID uuid.UUID `json:"memberId"`
 }

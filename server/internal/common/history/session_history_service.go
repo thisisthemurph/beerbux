@@ -68,33 +68,41 @@ func (r *SessionHistoryService) GetSessionHistory(ctx context.Context, sessionID
 
 func (r *SessionHistoryService) parseEventJSON(eventType string, data pqtype.NullRawMessage) (interface{}, error) {
 	if !data.Valid {
-		return nil, fmt.Errorf("event type %s NillRawMessage is null", eventType)
+		return nil, fmt.Errorf("event type %s NillRawMessage is invalid", eventType)
 	}
 
 	switch eventType {
 	case EventTransactionCreated:
 		var eventData TransactionCreatedEventData
 		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
 		}
 		return eventData, nil
 	case EventMemberAdded:
 		var eventData MemberAddedEventData
 		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
 		}
 		return eventData, nil
 	case EventMemberRemoved:
 		var eventData MemberRemovedEventData
 		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventData, err)
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberPromotedToAdmin:
+		var eventData MemberPromotedToAdminEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberDemotedFromAdmin:
+		var eventData MemberDemotedFromAdminEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
 		}
 		return eventData, nil
 	case EventMemberLeft, EventSessionClosed, EventSessionOpened:
-		return nil, nil
-	case EventMemberPromotedToAdmin:
-		return nil, nil
-	case EventMemberDemotedFromAdmin:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("unknown event type %s", eventType)
@@ -155,7 +163,7 @@ func (r *SessionHistoryService) CreateMemberLeftEvent(ctx context.Context, sessi
 }
 
 type MemberPromotedOrDemotedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 }
 
 func (r *SessionHistoryService) CreateMemberPromotedToAdminEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error {
@@ -185,12 +193,12 @@ func (r *SessionHistoryService) CreateMemberDemotedFromAdminEvent(ctx context.Co
 }
 
 type TransactionHistoryLine struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 	Amount   float64   `json:"amount"`
 }
 
 type TransactionHistory struct {
-	TransactionID uuid.UUID                `json:"transaction_id"`
+	TransactionID uuid.UUID                `json:"transactionId"`
 	Lines         []TransactionHistoryLine `json:"lines"`
 }
 
@@ -206,7 +214,6 @@ func (r *SessionHistoryService) CreateTransactionCreatedEvent(
 		EventType: EventTransactionCreated,
 		EventData: newNullRawMessage(transactionLines),
 	})
-
 }
 
 func newNullRawMessage(v interface{}) pqtype.NullRawMessage {

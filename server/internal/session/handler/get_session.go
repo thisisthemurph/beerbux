@@ -7,6 +7,7 @@ import (
 	"beerbux/pkg/send"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/thisisthemurph/fn"
 	"log/slog"
 	"net/http"
 )
@@ -21,6 +22,25 @@ func NewGetSessionHandler(getSessionQuery *query.GetSessionQuery, logger *slog.L
 		getSessionQuery: getSessionQuery,
 		logger:          logger,
 	}
+}
+
+type GetSessionResponse struct {
+	ID           uuid.UUID                  `json:"id"`
+	Name         string                     `json:"name"`
+	Total        float64                    `json:"total"`
+	IsActive     bool                       `json:"isActive"`
+	Members      []GetSessionResponseMember `json:"members"`
+	Transactions []query.SessionTransaction `json:"transactions"`
+}
+
+type GetSessionResponseMember struct {
+	query.SessionMember
+	TransactionSummary TransactionSummary `json:"transactionSummary"`
+}
+
+type TransactionSummary struct {
+	Credit float64 `json:"credit"`
+	Debit  float64 `json:"debit"`
 }
 
 func (h *GetSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +73,46 @@ func (h *GetSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	send.JSON(w, s, http.StatusOK)
+	send.JSON(w, h.buildResponse(s), http.StatusOK)
+}
+
+func (h *GetSessionHandler) buildResponse(s *query.SessionResponse) GetSessionResponse {
+	members := fn.Map(s.Members, func(m query.SessionMember) GetSessionResponseMember {
+		return GetSessionResponseMember{
+			SessionMember:      m,
+			TransactionSummary: h.calculateTransactionSummaryForMember(s.Transactions, m.ID),
+		}
+	})
+
+	return GetSessionResponse{
+		ID:           s.ID,
+		Name:         s.Name,
+		Total:        s.Total,
+		IsActive:     s.IsActive,
+		Members:      members,
+		Transactions: s.Transactions,
+	}
+}
+
+func (h *GetSessionHandler) calculateTransactionSummaryForMember(transactions []query.SessionTransaction, memberID uuid.UUID) TransactionSummary {
+	summary := TransactionSummary{}
+	for _, t := range transactions {
+		// This member created the transaction.
+		if t.UserID == memberID {
+			summary.Debit += t.Total
+			continue
+		}
+
+		for _, line := range t.Lines {
+			// This member is a participant in the transaction.
+			if line.UserID == memberID {
+				summary.Credit += line.Amount
+				continue
+			}
+		}
+	}
+
+	return summary
 }
 
 func (h *GetSessionHandler) validateUserAgainstSessionMembers(userID uuid.UUID, members []query.SessionMember) error {

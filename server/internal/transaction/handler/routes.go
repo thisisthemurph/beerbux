@@ -16,7 +16,7 @@ func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux
 	ssnQueries := sessionDB.New(database)
 	sessionHistoryService := history.NewSessionHistoryService(ssnQueries)
 
-	createTransactionCommand := command.NewCreateTransactionCommand(queries, sessionHistoryService)
+	createTransactionCommand := command.NewCreateTransactionCommand(database, queries, sessionHistoryService)
 
 	mux.Handle("POST /api/session/{sessionId}/transaction", NewCreateTransactionHandler(createTransactionCommand, logger))
 }

@@ -21,7 +21,7 @@ func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux
 
 	getSessionQuery := query.NewGetSessionQuery(queries)
 	listSessionsByUserIDQuery := query.NewListSessionsByUserIDQuery(queries)
-	createSessionCommand := command.NewCreateSessionCommand(queries, userReaderService)
+	createSessionCommand := command.NewCreateSessionCommand(database, queries, userReaderService)
 	addSessionMemberCommand := command.NewAddSessionMemberCommand(database, queries, sessionHistoryService)
 	removeSessionMemberCommand := command.NewRemoveSessionMemberCommand(queries, sessionHistoryService)
 	updateSessionMemberAdminStateCommand := command.NewUpdateSessionMemberAdminStateCommand(queries, sessionHistoryService)

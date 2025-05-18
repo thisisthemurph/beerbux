@@ -33,8 +33,9 @@ type CreateTransactionCommand struct {
 	SessionHistoryWriter history.SessionHistoryWriter
 }
 
-func NewCreateTransactionCommand(queries *db.Queries, historyWriter history.SessionHistoryWriter) *CreateTransactionCommand {
+func NewCreateTransactionCommand(tx dbtx.TX, queries *db.Queries, historyWriter history.SessionHistoryWriter) *CreateTransactionCommand {
 	return &CreateTransactionCommand{
+		TX:                   tx,
 		Queries:              queries,
 		SessionHistoryWriter: historyWriter,
 	}

@@ -25,16 +25,16 @@ function calculateTransactionTotalsByMember(memberId: string, transactions: Sess
 	const totalsByMember = new Map<string, number>();
 
 	for (const t of transactions) {
-		if (t.creatorId === memberId) {
+		if (t.userId === memberId) {
 			// Transaction is created by this member
-			for (const m of t.members) {
-				totalsByMember.set(m.userId, (totalsByMember.get(m.userId) ?? 0) + m.amount);
+			for (const tl of t.lines) {
+				totalsByMember.set(tl.userId, (totalsByMember.get(tl.userId) ?? 0) + tl.amount);
 			}
 		} else {
 			// Transactions this member is involved in
-			for (const m of t.members) {
+			for (const m of t.lines) {
 				if (m.userId === memberId) {
-					totalsByMember.set(t.creatorId, (totalsByMember.get(t.creatorId) ?? 0) - m.amount);
+					totalsByMember.set(t.userId, (totalsByMember.get(t.userId) ?? 0) - m.amount);
 					break;
 				}
 			}
@@ -53,8 +53,8 @@ export function MemberSummaryDrawer({
 	transactions,
 }: MemberSummaryDrawerProps) {
 	const otherMembers = members.filter((m) => m.id !== member.id);
-	const roundsBought = transactions.filter((t) => t.creatorId === member.id).length;
-	const roundsReceived = transactions.filter((t) => t.members.some((m) => m.userId === member.id)).length;
+	const roundsBought = transactions.filter((t) => t.userId === member.id).length;
+	const roundsReceived = transactions.filter((t) => t.lines.some((tl) => tl.userId === member.id)).length;
 	const transactionTotalsByMember = calculateTransactionTotalsByMember(member.id, transactions);
 	const avatarData = useUserAvatarDataBySession(sessionId);
 

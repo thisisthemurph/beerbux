@@ -18,6 +18,14 @@ type GetSessionHistoryHandler struct {
 	logger               *slog.Logger
 }
 
+func NewGetSessionHistoryHandler(sessionHistoryReader history.SessionHistoryReader, getSessionQuery *query.GetSessionQuery, logger *slog.Logger) *GetSessionHistoryHandler {
+	return &GetSessionHistoryHandler{
+		sessionHistoryReader: sessionHistoryReader,
+		getSessionQuery:      getSessionQuery,
+		logger:               logger,
+	}
+}
+
 func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {
@@ -40,7 +48,7 @@ func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		send.InternalServerError(w, "There was an issue finding the session")
 		return
 	}
-	
+
 	if !s.IsMember(c.Subject) {
 		send.Unauthorized(w, "You are not a member of this session")
 		return

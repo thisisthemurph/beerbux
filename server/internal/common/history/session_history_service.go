@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
+	"log/slog"
 )
 
 type SessionHistoryReader interface {
@@ -26,11 +27,13 @@ type SessionHistoryWriter interface {
 
 type SessionHistoryService struct {
 	Queries *db.Queries
+	logger  *slog.Logger
 }
 
-func NewSessionHistoryService(queries *db.Queries) *SessionHistoryService {
+func NewSessionHistoryService(queries *db.Queries, logger *slog.Logger) *SessionHistoryService {
 	return &SessionHistoryService{
 		Queries: queries,
+		logger:  logger,
 	}
 }
 
@@ -46,16 +49,64 @@ func (r *SessionHistoryService) GetSessionHistory(ctx context.Context, sessionID
 	}
 
 	for _, e := range events {
+		eventData, err := r.parseEventJSON(e.EventType, e.EventData)
+		if err != nil {
+			r.logger.Error("failed to parse event data", "session", sessionID, "error", err)
+		}
+
 		response.Events = append(response.Events, SessionHistoryEvent{
 			ID:        e.ID,
 			MemberID:  e.MemberID,
 			EventType: e.EventType,
-			EventData: e.EventData,
+			EventData: eventData,
 			CreatedAt: e.CreatedAt,
 		})
 	}
 
 	return response, nil
+}
+
+func (r *SessionHistoryService) parseEventJSON(eventType string, data pqtype.NullRawMessage) (interface{}, error) {
+	if !data.Valid {
+		return nil, fmt.Errorf("event type %s NillRawMessage is invalid", eventType)
+	}
+
+	switch eventType {
+	case EventTransactionCreated:
+		var eventData TransactionCreatedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberAdded:
+		var eventData MemberAddedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberRemoved:
+		var eventData MemberRemovedEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberPromotedToAdmin:
+		var eventData MemberPromotedToAdminEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberDemotedFromAdmin:
+		var eventData MemberDemotedFromAdminEventData
+		if err := json.Unmarshal(data.RawMessage, &eventData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s event data: %w", eventType, err)
+		}
+		return eventData, nil
+	case EventMemberLeft, EventSessionClosed, EventSessionOpened:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown event type %s", eventType)
+	}
 }
 
 func (r *SessionHistoryService) CreateSessionOpenedEvent(ctx context.Context, sessionID, memberID uuid.UUID) error {
@@ -112,7 +163,7 @@ func (r *SessionHistoryService) CreateMemberLeftEvent(ctx context.Context, sessi
 }
 
 type MemberPromotedOrDemotedEventData struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 }
 
 func (r *SessionHistoryService) CreateMemberPromotedToAdminEvent(ctx context.Context, sessionID, memberID, performedByMemberId uuid.UUID) error {
@@ -142,12 +193,12 @@ func (r *SessionHistoryService) CreateMemberDemotedFromAdminEvent(ctx context.Co
 }
 
 type TransactionHistoryLine struct {
-	MemberID uuid.UUID `json:"member_id"`
+	MemberID uuid.UUID `json:"memberId"`
 	Amount   float64   `json:"amount"`
 }
 
 type TransactionHistory struct {
-	TransactionID uuid.UUID                `json:"transaction_id"`
+	TransactionID uuid.UUID                `json:"transactionId"`
 	Lines         []TransactionHistoryLine `json:"lines"`
 }
 
@@ -163,7 +214,6 @@ func (r *SessionHistoryService) CreateTransactionCreatedEvent(
 		EventType: EventTransactionCreated,
 		EventData: newNullRawMessage(transactionLines),
 	})
-
 }
 
 func newNullRawMessage(v interface{}) pqtype.NullRawMessage {
@@ -177,6 +227,6 @@ func newNullRawMessage(v interface{}) pqtype.NullRawMessage {
 func newNilNullRawMessage() pqtype.NullRawMessage {
 	return pqtype.NullRawMessage{
 		RawMessage: nil,
-		Valid:      true,
+		Valid:      false,
 	}
 }

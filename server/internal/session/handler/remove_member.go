@@ -20,6 +20,18 @@ type RemoveSessionMemberHandler struct {
 	logger                     *slog.Logger
 }
 
+func NewRemoveSessionMemberHandler(
+	getSessionQuery *query.GetSessionQuery,
+	removeSessionMemberCommand *command.RemoveSessionMemberCommand,
+	logger *slog.Logger,
+) *RemoveSessionMemberHandler {
+	return &RemoveSessionMemberHandler{
+		getSessionQuery:            getSessionQuery,
+		removeSessionMemberCommand: removeSessionMemberCommand,
+		logger:                     logger,
+	}
+}
+
 func (h *RemoveSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

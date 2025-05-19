@@ -19,9 +19,23 @@ import (
 
 type AddSessionMemberHandler struct {
 	getSessionQuery         *query.GetSessionQuery
-	getUserByUsernameQuery  *useraccess.GetUserByUsernameQuery
+	userReader              useraccess.UserReader
 	addSessionMemberCommand *command.AddSessionMemberCommand
 	logger                  *slog.Logger
+}
+
+func NewAddSessionMemberHandler(
+	getSessionQuery *query.GetSessionQuery,
+	userReader useraccess.UserReader,
+	addSessionMemberCommand *command.AddSessionMemberCommand,
+	logger *slog.Logger,
+) *AddSessionMemberHandler {
+	return &AddSessionMemberHandler{
+		getSessionQuery:         getSessionQuery,
+		userReader:              userReader,
+		addSessionMemberCommand: addSessionMemberCommand,
+		logger:                  logger,
+	}
 }
 
 type AddMemberToSessionRequest struct {
@@ -53,6 +67,7 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			send.NotFound(w, "The session could not be found")
 			return
 		}
+		h.logger.Error("failed to find session when adding member", "member", req.Username, "session", sessionID, "error", err)
 		send.InternalServerError(w, "There was an issue finding the session")
 		return
 	}
@@ -69,13 +84,13 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userToAdd, err := h.getUserByUsernameQuery.Execute(r.Context(), req.Username)
+	userToAdd, err := h.userReader.GetUserByUsername(r.Context(), req.Username)
 	if err != nil {
 		if errors.Is(err, useraccess.ErrUserNotFound) {
 			send.NotFound(w, fmt.Sprintf("User %s not found", req.Username))
 			return
 		}
-		h.logger.Error("failed to find the user to add to the session", "error", err)
+		h.logger.Error("failed to find the user to add to the session", "username", req.Username, "session", sessionID, "error", err)
 		send.InternalServerError(w, "There has been an issue finding the user to add")
 		return
 	}
@@ -83,8 +98,11 @@ func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// Return early if the user being added is already a member of the session.
 	for _, m := range s.Members {
 		if m.ID == userToAdd.ID {
-			w.WriteHeader(http.StatusOK)
-			return
+			if !m.IsDeleted {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			break
 		}
 	}
 

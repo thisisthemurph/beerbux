@@ -20,6 +20,18 @@ type UpdateSessionActiveStateHandler struct {
 	logger                          *slog.Logger
 }
 
+func NewUpdateSessionActiveStateHandler(
+	getSessionQuery *query.GetSessionQuery,
+	updateSessionActiveStateCommand *command.UpdateSessionActiveStateCommand,
+	logger *slog.Logger,
+) *UpdateSessionActiveStateHandler {
+	return &UpdateSessionActiveStateHandler{
+		getSessionQuery:                 getSessionQuery,
+		updateSessionActiveStateCommand: updateSessionActiveStateCommand,
+		logger:                          logger,
+	}
+}
+
 type UpdateSessionActiveStateURLParams struct {
 	SessionID        uuid.UUID
 	Command          string

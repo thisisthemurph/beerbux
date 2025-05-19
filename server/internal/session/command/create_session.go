@@ -16,8 +16,9 @@ type CreateSessionCommand struct {
 	UserReader useraccess.UserReader
 }
 
-func NewCreateSessionCommand(queries *db.Queries, userReader useraccess.UserReader) *CreateSessionCommand {
+func NewCreateSessionCommand(tx dbtx.TX, queries *db.Queries, userReader useraccess.UserReader) *CreateSessionCommand {
 	return &CreateSessionCommand{
+		TX:         tx,
 		Queries:    queries,
 		UserReader: userReader,
 	}

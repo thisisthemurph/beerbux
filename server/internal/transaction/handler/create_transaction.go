@@ -99,7 +99,7 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := h.sendTransactionCreatedMessage(createdTransaction.ID, sessionID, c.Subject); err != nil {
+	if err := h.sendTransactionCreatedMessage(sessionID, c.Subject, createdTransaction.ID, transactionLines); err != nil {
 		h.logger.Error("Failed to send session.transaction.created message", "error", err)
 	}
 
@@ -107,15 +107,21 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *CreateTransactionHandler) sendTransactionCreatedMessage(
-	transactionID,
 	sessionID,
-	creatorID uuid.UUID,
+	creatorID,
+	transactionID uuid.UUID,
+	lines []command.TransactionLine,
 ) error {
+	var total float64
+	for _, line := range lines {
+		total += line.Amount
+	}
+
 	data := TransactionCreatedMessage{
 		TransactionID: transactionID,
 		SessionID:     sessionID,
 		CreatorID:     creatorID,
-		Total:         0,
+		Total:         total,
 	}
 
 	jsonData, err := json.Marshal(data)

@@ -4,12 +4,19 @@ import (
 	"beerbux/internal/api"
 	"beerbux/internal/auth/command"
 	"beerbux/internal/auth/db"
+	"beerbux/internal/sse"
 	"database/sql"
 	"log/slog"
 	"net/http"
 )
 
-func MakeHandlerRoutes(cfg *api.Config, logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
+func MakeHandlerRoutes(
+	cfg *api.Config,
+	logger *slog.Logger,
+	database *sql.DB,
+	mux *http.ServeMux,
+	_ chan<- *sse.Message,
+) {
 	options := cfg.GetAuthOptions()
 
 	queries := db.New(database)

@@ -4,6 +4,7 @@ import (
 	"beerbux/internal/common/claims"
 	sessionErr "beerbux/internal/session/errors"
 	"beerbux/internal/session/query"
+	"beerbux/internal/sse"
 	"beerbux/internal/transaction/command"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
@@ -18,14 +19,28 @@ type CreateTransactionHandler struct {
 	getSessionQuery          *query.GetSessionQuery
 	createTransactionCommand *command.CreateTransactionCommand
 	logger                   *slog.Logger
+	msgChan                  chan<- *sse.Message
 }
 
-func NewCreateTransactionHandler(getSessionQuery *query.GetSessionQuery, createTransactionCommand *command.CreateTransactionCommand, logger *slog.Logger) *CreateTransactionHandler {
+func NewCreateTransactionHandler(
+	getSessionQuery *query.GetSessionQuery,
+	createTransactionCommand *command.CreateTransactionCommand,
+	logger *slog.Logger,
+	msgChan chan<- *sse.Message,
+) *CreateTransactionHandler {
 	return &CreateTransactionHandler{
 		getSessionQuery:          getSessionQuery,
 		createTransactionCommand: createTransactionCommand,
 		logger:                   logger,
+		msgChan:                  msgChan,
 	}
+}
+
+type TransactionCreatedMessage struct {
+	TransactionID uuid.UUID `json:"transactionId"`
+	SessionID     uuid.UUID `json:"sessionID"`
+	CreatorID     uuid.UUID `json:"creatorId"`
+	Total         float64   `json:"total"`
 }
 
 func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +88,7 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		})
 	}
 
-	_, err = h.createTransactionCommand.Execute(r.Context(), command.CreateTransactionRequest{
+	createdTransaction, err := h.createTransactionCommand.Execute(r.Context(), command.CreateTransactionRequest{
 		SessionID: sessionID,
 		CreatorID: c.Subject,
 		Lines:     transactionLines,
@@ -84,5 +99,30 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if err := h.sendTransactionCreatedMessage(createdTransaction.ID, sessionID, c.Subject); err != nil {
+		h.logger.Error("Failed to send session.transaction.created message", "error", err)
+	}
+
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *CreateTransactionHandler) sendTransactionCreatedMessage(
+	transactionID,
+	sessionID,
+	creatorID uuid.UUID,
+) error {
+	data := TransactionCreatedMessage{
+		TransactionID: transactionID,
+		SessionID:     sessionID,
+		CreatorID:     creatorID,
+		Total:         0,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	h.msgChan <- sse.NewMessage("session.transaction.created", sessionID.String(), jsonData)
+	return nil
 }

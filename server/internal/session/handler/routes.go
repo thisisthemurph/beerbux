@@ -8,12 +8,19 @@ import (
 	"beerbux/internal/session/command"
 	"beerbux/internal/session/db"
 	"beerbux/internal/session/query"
+	"beerbux/internal/sse"
 	"database/sql"
 	"log/slog"
 	"net/http"
 )
 
-func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
+func MakeHandlerRoutes(
+	_ *api.Config,
+	logger *slog.Logger,
+	database *sql.DB,
+	mux *http.ServeMux,
+	_ chan<- *sse.Message,
+) {
 	queries := db.New(database)
 	uaQueries := useraccessQueries.New(database)
 	sessionHistoryService := history.NewSessionHistoryService(queries, logger)

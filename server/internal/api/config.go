@@ -22,6 +22,7 @@ type Config struct {
 	APIAddress      string
 	Database        DBConfig
 	Secrets         SecretConfig
+	StreamService   StreamServiceConfig
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration
 }
@@ -33,6 +34,10 @@ type SecretConfig struct {
 type DBConfig struct {
 	Driver string
 	URI    string
+}
+
+type StreamServiceConfig struct {
+	HeartbeatTickerSeconds int64
 }
 
 func LoadConfig() *Config {
@@ -54,6 +59,12 @@ func LoadConfig() *Config {
 		panic(fmt.Sprintf("invalid REFRESH_TOKEN_EXPIRATION: %s", refreshTokenExpiration))
 	}
 
+	hbIntervalSeconds := mustGetenv("HEARTBEAT_INTERVAL_SECONDS")
+	heartbeatIntervalSeconds, err := strconv.ParseInt(hbIntervalSeconds, 10, 64)
+	if err != nil {
+		panic(fmt.Sprintf("invalid HEARTBEAT_INTERVAL_SECONDS: %s", hbIntervalSeconds))
+	}
+
 	return &Config{
 		Environment:   environment,
 		ClientBaseURL: mustGetenv("CLIENT_BASE_URL"),
@@ -64,6 +75,9 @@ func LoadConfig() *Config {
 		},
 		Secrets: SecretConfig{
 			JWTSecret: mustGetenv("JWT_SECRET"),
+		},
+		StreamService: StreamServiceConfig{
+			HeartbeatTickerSeconds: heartbeatIntervalSeconds,
 		},
 		AccessTokenTTL:  time.Duration(accessTokenExpirationMinutes) * time.Minute,
 		RefreshTokenTTL: time.Duration(refreshTokenExpirationMinutes) * time.Minute,

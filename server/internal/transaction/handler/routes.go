@@ -5,6 +5,7 @@ import (
 	"beerbux/internal/common/history"
 	sessionDB "beerbux/internal/session/db"
 	sessionQuery "beerbux/internal/session/query"
+	"beerbux/internal/sse"
 	"beerbux/internal/transaction/command"
 	"beerbux/internal/transaction/db"
 	"database/sql"
@@ -12,7 +13,13 @@ import (
 	"net/http"
 )
 
-func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
+func MakeHandlerRoutes(
+	_ *api.Config,
+	logger *slog.Logger,
+	database *sql.DB,
+	mux *http.ServeMux,
+	msgChan chan<- *sse.Message,
+) {
 	queries := db.New(database)
 	ssnQueries := sessionDB.New(database)
 	sessionHistoryService := history.NewSessionHistoryService(ssnQueries, logger)
@@ -20,5 +27,6 @@ func MakeHandlerRoutes(_ *api.Config, logger *slog.Logger, database *sql.DB, mux
 	getSessionQuery := sessionQuery.NewGetSessionQuery(ssnQueries)
 	createTransactionCommand := command.NewCreateTransactionCommand(database, queries, sessionHistoryService)
 
-	mux.Handle("POST /api/session/{sessionId}/transaction", NewCreateTransactionHandler(getSessionQuery, createTransactionCommand, logger))
+	mux.Handle("POST /api/session/{sessionId}/transaction", NewCreateTransactionHandler(
+		getSessionQuery, createTransactionCommand, logger, msgChan))
 }

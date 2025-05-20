@@ -22,13 +22,13 @@ export type SessionMember = {
 
 export type SessionTransaction = {
 	id: string;
-	creatorId: string;
+	userId: string;
 	total: number;
 	createdAt: string;
-	members: SessionTransactionMember[];
+	lines: SessionTransactionLine[];
 };
 
-export type SessionTransactionMember = {
+export type SessionTransactionLine = {
 	userId: string;
 	name: string;
 	username: string;

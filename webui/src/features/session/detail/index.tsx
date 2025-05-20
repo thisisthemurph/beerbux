@@ -138,14 +138,29 @@ export default function SessionDetailPage() {
 	const handleTransactionCreatedMessage = useCallback(
 		async (msg: SessionTransactionCreatedMessage) => {
 			await queryClient.invalidateQueries({
-				queryKey: ["session", msg.sessionId],
+				queryKey: ["session", sessionId],
+			});
+			await queryClient.invalidateQueries({
+				queryKey: ["session-history", sessionId],
 			});
 
-			if (msg.creatorId === user.id) return;
-			if (!sessionQuery.data) return;
+			if (!sessionQuery.data) {
+				console.warn("sessionQuery.data is undefined");
+				return;
+			}
+
+			if (msg.creatorId === user.id) {
+				toast.info("You bought a round", {
+					description: (
+						<p>
+							You bought a <span className="font-semibold">${Math.round(msg.total * 100) / 100}</span> round.
+						</p>
+					),
+				});
+				return;
+			}
 
 			const creator = sessionQuery.data.members.find((m) => m.id === msg.creatorId);
-
 			toast.info("New round bought", {
 				description: (
 					<p>
@@ -155,7 +170,7 @@ export default function SessionDetailPage() {
 				),
 			});
 		},
-		[queryClient, sessionQuery.data, user.id],
+		[queryClient, sessionQuery.data, user.id, sessionId],
 	);
 
 	useSessionEventSource(url, handleTransactionCreatedMessage);
@@ -167,8 +182,6 @@ export default function SessionDetailPage() {
 			toast.error("There was an issue creating the transaction.");
 			return;
 		}
-
-		toast.success("You bought a round!");
 	}
 
 	async function handleAddMember(username: string) {

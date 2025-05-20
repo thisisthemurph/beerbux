@@ -1,21 +1,17 @@
 package handler
 
 import (
-	"beerbux/internal/api"
 	"beerbux/internal/common/useraccess"
 	useraccessQueries "beerbux/internal/common/useraccess/db"
-	"beerbux/internal/sse"
 	"database/sql"
 	"log/slog"
 	"net/http"
 )
 
-func MakeHandlerRoutes(
-	_ *api.Config,
+func BuildRoutes(
 	logger *slog.Logger,
 	database *sql.DB,
 	mux *http.ServeMux,
-	_ chan<- *sse.Message,
 ) {
 	uaQueries := useraccessQueries.New(database)
 	userReaderService := useraccess.NewUserReaderService(uaQueries)

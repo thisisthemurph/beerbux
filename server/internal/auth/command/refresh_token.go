@@ -1,8 +1,8 @@
 package command
 
 import (
+	"beerbux/internal/api/config"
 	"beerbux/internal/auth/db"
-	"beerbux/internal/auth/model"
 	"beerbux/internal/auth/shared"
 	"context"
 	"errors"
@@ -16,10 +16,10 @@ var ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
 type RefreshTokenCommand struct {
 	Queries *db.Queries
-	Options model.AuthOptions
+	Options config.AuthOptions
 }
 
-func NewRefreshTokenCommand(queries *db.Queries, options model.AuthOptions) *RefreshTokenCommand {
+func NewRefreshTokenCommand(queries *db.Queries, options config.AuthOptions) *RefreshTokenCommand {
 	return &RefreshTokenCommand{
 		Queries: queries,
 		Options: options,

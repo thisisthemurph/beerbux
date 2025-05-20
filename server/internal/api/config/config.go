@@ -1,7 +1,6 @@
-package api
+package config
 
 import (
-	"beerbux/internal/auth/model"
 	"fmt"
 	"github.com/joho/godotenv"
 	"log/slog"
@@ -40,10 +39,10 @@ type StreamServiceConfig struct {
 	HeartbeatTickerSeconds int64
 }
 
-func LoadConfig() *Config {
-	environment, err := NewEnvironment(getenvDefault("ENVIRONMENT", string(EnvProduction)))
+func Load() (*Config, error) {
+	environment, err := NewEnvironment(getenvDefault("ENVIRONMENT", string(EnvironmentProduction)))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	accessTokenExpiration := getenvDefault("ACCESS_TOKEN_EXPIRATION", "15")
@@ -51,18 +50,18 @@ func LoadConfig() *Config {
 
 	accessTokenExpirationMinutes, err := strconv.ParseInt(accessTokenExpiration, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("invalid ACCESS_TOKEN_EXPIRATION: %s", accessTokenExpiration))
+		return nil, fmt.Errorf("invalid ACCESS_TOKEN_EXPIRATION: %s", accessTokenExpiration)
 	}
 
 	refreshTokenExpirationMinutes, err := strconv.ParseInt(refreshTokenExpiration, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("invalid REFRESH_TOKEN_EXPIRATION: %s", refreshTokenExpiration))
+		return nil, fmt.Errorf("invalid REFRESH_TOKEN_EXPIRATION: %s", refreshTokenExpiration)
 	}
 
 	hbIntervalSeconds := mustGetenv("HEARTBEAT_INTERVAL_SECONDS")
 	heartbeatIntervalSeconds, err := strconv.ParseInt(hbIntervalSeconds, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("invalid HEARTBEAT_INTERVAL_SECONDS: %s", hbIntervalSeconds))
+		return nil, fmt.Errorf("invalid HEARTBEAT_INTERVAL_SECONDS: %s", hbIntervalSeconds)
 	}
 
 	return &Config{
@@ -81,7 +80,7 @@ func LoadConfig() *Config {
 		},
 		AccessTokenTTL:  time.Duration(accessTokenExpirationMinutes) * time.Minute,
 		RefreshTokenTTL: time.Duration(refreshTokenExpirationMinutes) * time.Minute,
-	}
+	}, nil
 }
 
 func (c *Config) SlogLevel() slog.Level {
@@ -91,8 +90,8 @@ func (c *Config) SlogLevel() slog.Level {
 	return slog.LevelInfo
 }
 
-func (c *Config) GetAuthOptions() model.AuthOptions {
-	return model.AuthOptions{
+func (c *Config) GetAuthOptions() AuthOptions {
+	return AuthOptions{
 		JWTSecret:       c.Secrets.JWTSecret,
 		AccessTokenTTL:  c.AccessTokenTTL,
 		RefreshTokenTTL: c.RefreshTokenTTL,

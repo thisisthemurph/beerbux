@@ -1,8 +1,8 @@
 package command
 
 import (
+	"beerbux/internal/api/config"
 	"beerbux/internal/auth/db"
-	"beerbux/internal/auth/model"
 	"beerbux/internal/auth/shared"
 	"context"
 	"errors"
@@ -18,10 +18,10 @@ var (
 
 type SignupCommand struct {
 	Queries *db.Queries
-	Options model.AuthOptions
+	Options config.AuthOptions
 }
 
-func NewSignupCommand(queries *db.Queries, options model.AuthOptions) *SignupCommand {
+func NewSignupCommand(queries *db.Queries, options config.AuthOptions) *SignupCommand {
 	return &SignupCommand{
 		Queries: queries,
 		Options: options,

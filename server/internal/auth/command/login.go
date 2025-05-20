@@ -1,8 +1,8 @@
 package command
 
 import (
+	"beerbux/internal/api/config"
 	"beerbux/internal/auth/db"
-	"beerbux/internal/auth/model"
 	"beerbux/internal/auth/shared"
 	"context"
 	"database/sql"
@@ -17,10 +17,10 @@ var ErrUserNotFound = errors.New("user not found")
 
 type LoginCommand struct {
 	Queries *db.Queries
-	Options model.AuthOptions
+	Options config.AuthOptions
 }
 
-func NewLoginCommand(queries *db.Queries, options model.AuthOptions) *LoginCommand {
+func NewLoginCommand(queries *db.Queries, options config.AuthOptions) *LoginCommand {
 	return &LoginCommand{
 		Queries: queries,
 		Options: options,

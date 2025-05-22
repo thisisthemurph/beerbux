@@ -26,7 +26,7 @@ func NewRefreshTokenCommand(queries *db.Queries, options config.AuthOptions) *Re
 	}
 }
 
-func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, token string) (*TokenResponse, error) {
+func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, refreshToken string) (*TokenResponse, error) {
 	userRefreshTokens, err := c.Queries.GetRefreshTokensByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get refresh tokens: %w", err)
@@ -35,7 +35,7 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, tok
 	var matchedToken db.RefreshToken
 	var tokenFound bool
 	for _, t := range userRefreshTokens {
-		if err := bcrypt.CompareHashAndPassword([]byte(t.HashedToken), []byte(token)); err == nil {
+		if err := bcrypt.CompareHashAndPassword([]byte(t.HashedToken), []byte(refreshToken)); err == nil {
 			matchedToken = t
 			tokenFound = true
 			break

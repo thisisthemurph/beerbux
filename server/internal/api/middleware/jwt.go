@@ -87,7 +87,7 @@ func (mw *AuthMiddleware) refreshAccessToken(ctx context.Context, accessToken, r
 		return nil, err
 	}
 
-	return mw.refreshTokenCommand.Execute(ctx, subject, accessToken)
+	return mw.refreshTokenCommand.Execute(ctx, subject, refreshToken)
 }
 
 func (mw *AuthMiddleware) parseJWTClaims(jwtValue string) (claims.JWTClaims, error) {

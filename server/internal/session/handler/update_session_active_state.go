@@ -81,12 +81,12 @@ func (h *UpdateSessionActiveStateHandler) ServeHTTP(w http.ResponseWriter, r *ht
 }
 
 func (h *UpdateSessionActiveStateHandler) getURLParams(r *http.Request) (UpdateSessionActiveStateURLParams, bool) {
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		return UpdateSessionActiveStateURLParams{}, false
 	}
 
-	cmd, ok := url.GetStringFromPath(r, "command")
+	cmd, ok := url.Path.GetString(r, "command")
 	if !ok {
 		return UpdateSessionActiveStateURLParams{}, false
 	}

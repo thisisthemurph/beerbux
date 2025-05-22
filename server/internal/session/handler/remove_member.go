@@ -90,12 +90,12 @@ type RemoveSessionMemberURLParams struct {
 }
 
 func (h *RemoveSessionMemberHandler) getURLParams(r *http.Request) (RemoveSessionMemberURLParams, bool) {
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		return RemoveSessionMemberURLParams{}, false
 	}
 
-	memberID, ok := url.GetUUIDFromPath(r, "memberId")
+	memberID, ok := url.Path.GetUUID(r, "memberId")
 	if !ok {
 		return RemoveSessionMemberURLParams{}, false
 	}

@@ -103,11 +103,11 @@ type UpdateSessionMemberAdminURLParams struct {
 }
 
 func (h *UpdateSessionMemberAdminHandler) getURLParams(r *http.Request) (UpdateSessionMemberAdminURLParams, bool) {
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		return UpdateSessionMemberAdminURLParams{}, false
 	}
-	memberID, ok := url.GetUUIDFromPath(r, "memberId")
+	memberID, ok := url.Path.GetUUID(r, "memberId")
 	if !ok {
 		return UpdateSessionMemberAdminURLParams{}, false
 	}

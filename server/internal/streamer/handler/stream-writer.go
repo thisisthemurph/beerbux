@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+var ErrStreamingUnsupported = errors.New("streaming unsupported")
+
 type EventStreamWriter struct {
 	flusher http.Flusher
 	writer  http.ResponseWriter
@@ -15,7 +17,7 @@ type EventStreamWriter struct {
 func NewEventStreamWriter(w http.ResponseWriter) (*EventStreamWriter, error) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		return nil, errors.New("streaming unsupported")
+		return nil, ErrStreamingUnsupported
 	}
 
 	return &EventStreamWriter{

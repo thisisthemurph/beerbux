@@ -33,7 +33,7 @@ func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		send.BadRequest(w, "Session ID required")
 		return

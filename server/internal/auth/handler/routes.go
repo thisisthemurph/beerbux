@@ -1,21 +1,19 @@
 package handler
 
 import (
-	"beerbux/internal/api"
+	"beerbux/internal/api/config"
 	"beerbux/internal/auth/command"
 	"beerbux/internal/auth/db"
-	"beerbux/internal/sse"
 	"database/sql"
 	"log/slog"
 	"net/http"
 )
 
-func MakeHandlerRoutes(
-	cfg *api.Config,
+func BuildRoutes(
+	cfg *config.Config,
 	logger *slog.Logger,
 	database *sql.DB,
 	mux *http.ServeMux,
-	_ chan<- *sse.Message,
 ) {
 	options := cfg.GetAuthOptions()
 

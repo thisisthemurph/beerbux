@@ -1,16 +1,16 @@
-package api
+package config
 
 import "fmt"
 
 type Environment string
 
 const (
-	EnvDevelopment Environment = "development"
-	EnvProduction  Environment = "production"
+	EnvironmentDevelopment Environment = "development"
+	EnvironmentProduction  Environment = "production"
 )
 
 func NewEnvironment(env string) (Environment, error) {
-	if env != string(EnvDevelopment) && env != string(EnvProduction) {
+	if env != string(EnvironmentDevelopment) && env != string(EnvironmentProduction) {
 		return "", fmt.Errorf("invalid environment: %s", env)
 	}
 	return Environment(env), nil

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"beerbux/internal/api"
 	"beerbux/internal/common/history"
 	sessionDB "beerbux/internal/session/db"
 	sessionQuery "beerbux/internal/session/query"
@@ -13,8 +12,7 @@ import (
 	"net/http"
 )
 
-func MakeHandlerRoutes(
-	_ *api.Config,
+func BuildRoutes(
 	logger *slog.Logger,
 	database *sql.DB,
 	mux *http.ServeMux,

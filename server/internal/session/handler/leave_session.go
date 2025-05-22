@@ -31,7 +31,7 @@ func (h *LeaveSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		send.BadRequest(w, "Session ID is required")
 		return
@@ -62,7 +62,7 @@ type LeaveSessionHandlerURLParams struct {
 }
 
 func (h *LeaveSessionHandler) getURLParams(r *http.Request) (LeaveSessionHandlerURLParams, bool) {
-	sessionID, ok := url.GetUUIDFromPath(r, "sessionId")
+	sessionID, ok := url.Path.GetUUID(r, "sessionId")
 	if !ok {
 		return LeaveSessionHandlerURLParams{}, false
 	}

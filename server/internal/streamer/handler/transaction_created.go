@@ -2,6 +2,9 @@ package handler
 
 import (
 	"beerbux/internal/sse"
+	"beerbux/pkg/send"
+	"beerbux/pkg/url"
+	"errors"
 	"log/slog"
 	"net/http"
 )
@@ -19,13 +22,14 @@ func NewSessionTransactionCreatedHandler(logger *slog.Logger, server *sse.Server
 }
 
 func (h *SessionTransactionCreatedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserID(w, r)
+	userID, ok := url.Query.GetString(r, "user_id")
 	if !ok {
+		send.BadRequest(w, "user_id is required")
 		return
 	}
-
-	sessionID, ok := getSessionID(w, r)
+	sessionID, ok := url.Query.GetString(r, "session_id")
 	if !ok {
+		send.BadRequest(w, "session_id is required")
 		return
 	}
 
@@ -33,7 +37,12 @@ func (h *SessionTransactionCreatedHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	eventStreamWriter, err := NewEventStreamWriter(w)
 	if err != nil {
-		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		if errors.Is(err, ErrStreamingUnsupported) {
+			send.InternalServerError(w, "Streaming unsupported")
+		} else {
+			h.logger.Error("Error creating stream writer", "error", err)
+			send.InternalServerError(w, "Could not connect to streaming")
+		}
 		return
 	}
 

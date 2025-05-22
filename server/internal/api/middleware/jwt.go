@@ -28,6 +28,11 @@ func NewAuthMiddleware(refreshTokenCommand *command.RefreshTokenCommand, secret 
 // If the JWT is invalid or does not exist, the middleware will continue to the next handler.
 func (mw *AuthMiddleware) WithJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		accessCookie, err := r.Cookie(cookie.AccessTokenKey)
 		if err != nil {
 			next.ServeHTTP(w, r)

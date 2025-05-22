@@ -7,12 +7,13 @@ import (
 	"beerbux/internal/session/command"
 	"beerbux/internal/session/db"
 	"beerbux/internal/session/query"
+	"beerbux/internal/sse"
 	"database/sql"
 	"log/slog"
 	"net/http"
 )
 
-func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
+func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux, msgChan chan<- *sse.Message) {
 	queries := db.New(database)
 	uaQueries := useraccessQueries.New(database)
 	sessionHistoryService := history.NewSessionHistoryService(queries, logger)
@@ -25,9 +26,9 @@ func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
 	removeSessionMemberCommand := command.NewRemoveSessionMemberCommand(queries, sessionHistoryService)
 	updateSessionMemberAdminStateCommand := command.NewUpdateSessionMemberAdminStateCommand(queries, sessionHistoryService)
 	updateSessionActiveStateCommand := command.NewUpdateSessionActionStateCommand(queries, sessionHistoryService)
+	createTransactionCommand := command.NewCreateTransactionCommand(database, queries, sessionHistoryService)
 
 	mux.Handle("GET /api/user/sessions", NewListCurrentUserSessionsHandler(listSessionsByUserIDQuery, logger))
-	//mux.Handle("GET /api/user/{userId}/balance", NewGetBalanceHandler(userClient))
 
 	mux.Handle("GET /api/session/{sessionId}", NewGetSessionHandler(getSessionQuery, logger))
 	mux.Handle("POST /api/session", NewCreateSessionHandler(createSessionCommand, logger))
@@ -38,4 +39,6 @@ func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux) {
 	mux.Handle("PUT /api/session/{sessionId}/state/{command}", NewUpdateSessionActiveStateHandler(getSessionQuery, updateSessionActiveStateCommand, logger))
 
 	mux.Handle("GET /api/session/{sessionId}/history", NewGetSessionHistoryHandler(sessionHistoryService, getSessionQuery, logger))
+
+	mux.Handle("POST /api/session/{sessionId}/transaction", NewCreateTransactionHandler(getSessionQuery, createTransactionCommand, logger, msgChan))
 }

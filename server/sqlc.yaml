@@ -30,14 +30,6 @@ sql:
       go:
         package: "db"
         out: "internal/session/db"
-
-  - engine: "postgresql"
-    queries: "internal/transaction/db/queries.sql"
-    schema: "migrations"
-    gen:
-      go:
-        package: "db"
-        out: "internal/transaction/db"
         overrides:
           - column: "session_transaction_lines.amount"
             go_type: "float64"

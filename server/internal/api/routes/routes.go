@@ -9,7 +9,6 @@ import (
 	sessionHandler "beerbux/internal/session/handler"
 	"beerbux/internal/sse"
 	streamHandler "beerbux/internal/streamer/handler"
-	transactionHandler "beerbux/internal/transaction/handler"
 	userHandler "beerbux/internal/user/handler"
 	"database/sql"
 	"log/slog"
@@ -26,8 +25,8 @@ func Build(
 	mux := http.NewServeMux()
 
 	authHandler.BuildRoutes(cfg, logger, database, mux)
-	sessionHandler.BuildRoutes(logger, database, mux)
-	transactionHandler.BuildRoutes(logger, database, mux, msgChan)
+	sessionHandler.BuildRoutes(logger, database, mux, msgChan)
+	//transactionHandler.BuildRoutes(logger, database, mux, msgChan)
 	userHandler.BuildRoutes(logger, database, mux)
 
 	mux.Handle("/events/session", streamHandler.NewSessionTransactionCreatedHandler(logger, streamServer))

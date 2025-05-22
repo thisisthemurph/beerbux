@@ -2,7 +2,8 @@ package command
 
 import (
 	"beerbux/internal/common/history"
-	"beerbux/internal/transaction/db"
+	"beerbux/internal/session/db"
+	sessionErr "beerbux/internal/session/errors"
 	"beerbux/pkg/dbtx"
 	"context"
 	"database/sql"
@@ -15,16 +16,6 @@ import (
 const (
 	MinTransactionAmount = 0.5
 	MaxTransactionAmount = 2.0
-)
-
-var (
-	ErrCreatorCannotBeMember      = errors.New("creator cannot be a member of the transaction")
-	ErrInactiveSession            = errors.New("session is inactive")
-	ErrNotAllMembersPartOfSession = errors.New("member is not part of the session")
-	ErrMemberAmountRequired       = errors.New("member amount is required")
-	ErrMemberAmountTooLow         = errors.New("member amount must be at least 0.5")
-	ErrMemberAmountTooHigh        = errors.New("member amount cannot be more than 2")
-	ErrSessionNotFound            = errors.New("session not found")
 )
 
 type CreateTransactionCommand struct {
@@ -128,15 +119,15 @@ func (cmd *CreateTransactionCommand) Execute(ctx context.Context, r CreateTransa
 
 func (cmd *CreateTransactionCommand) validateRequest(ctx context.Context, r CreateTransactionRequest) error {
 	if r.Lines == nil || len(r.Lines) == 0 {
-		return ErrMemberAmountRequired
+		return sessionErr.ErrMemberAmountRequired
 	}
 
 	for _, m := range r.Lines {
 		if m.Amount < MinTransactionAmount {
-			return ErrMemberAmountTooLow
+			return sessionErr.ErrMemberAmountTooLow
 		}
 		if m.Amount > MaxTransactionAmount {
-			return ErrMemberAmountTooHigh
+			return sessionErr.ErrMemberAmountTooHigh
 		}
 	}
 
@@ -145,7 +136,7 @@ func (cmd *CreateTransactionCommand) validateRequest(ctx context.Context, r Crea
 	})
 
 	if fn.Contains(memberLookup, r.CreatorID) {
-		return ErrCreatorCannotBeMember
+		return sessionErr.ErrCreatorCannotBeMember
 	}
 
 	return cmd.validateSession(ctx, r.SessionID, memberLookup)
@@ -155,27 +146,27 @@ func (cmd *CreateTransactionCommand) validateSession(ctx context.Context, sessio
 	session, err := cmd.Queries.GetSessionByID(ctx, sessionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return ErrSessionNotFound
+			return sessionErr.ErrSessionNotFound
 		}
 		return fmt.Errorf("failed getting session: %w", err)
 	}
 
 	if !session.IsActive {
-		return ErrInactiveSession
+		return sessionErr.ErrInactiveSession
 	}
 
-	sessionMemberIDs, err := cmd.Queries.GetSessionMemberIDs(ctx, sessionID)
+	sessionMemberIDs, err := cmd.Queries.ListSessionMemberIDs(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("failed getting session member IDs: %w", err)
 	}
 
 	if len(sessionMemberIDs) < len(memberLookup) {
-		return ErrNotAllMembersPartOfSession
+		return sessionErr.ErrNotAllMembersPartOfSession
 	}
 
 	for _, mid := range memberLookup {
 		if !fn.Contains(sessionMemberIDs, mid) {
-			return ErrNotAllMembersPartOfSession
+			return sessionErr.ErrNotAllMembersPartOfSession
 		}
 	}
 

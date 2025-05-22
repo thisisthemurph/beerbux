@@ -64,6 +64,21 @@ func (q *Queries) CountSessionMembersIncludingDeleted(ctx context.Context, sessi
 	return count, err
 }
 
+const createLedgerEntry = `-- name: CreateLedgerEntry :exec
+insert into ledger (transaction_id, user_id, amount) values ($1, $2, $3)
+`
+
+type CreateLedgerEntryParams struct {
+	TransactionID uuid.UUID
+	UserID        uuid.UUID
+	Amount        float64
+}
+
+func (q *Queries) CreateLedgerEntry(ctx context.Context, arg CreateLedgerEntryParams) error {
+	_, err := q.db.ExecContext(ctx, createLedgerEntry, arg.TransactionID, arg.UserID, arg.Amount)
+	return err
+}
+
 const createSession = `-- name: CreateSession :one
 insert into sessions (name, creator_id) values ($1, $2) returning id, name, is_active, creator_id, created_at, updated_at
 `
@@ -107,6 +122,51 @@ func (q *Queries) CreateSessionHistory(ctx context.Context, arg CreateSessionHis
 		arg.EventData,
 	)
 	return err
+}
+
+const createTransaction = `-- name: CreateTransaction :one
+insert into session_transactions (session_id, member_id)
+values ($1, $2)
+on conflict do nothing
+returning id, session_id, member_id, created_at
+`
+
+type CreateTransactionParams struct {
+	SessionID uuid.UUID
+	MemberID  uuid.UUID
+}
+
+func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (SessionTransaction, error) {
+	row := q.db.QueryRowContext(ctx, createTransaction, arg.SessionID, arg.MemberID)
+	var i SessionTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.MemberID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createTransactionLine = `-- name: CreateTransactionLine :one
+insert into session_transaction_lines (transaction_id, member_id, amount)
+values ($1, $2, $3)
+on conflict (transaction_id, member_id)
+    do update set amount = excluded.amount
+returning transaction_id, member_id, amount
+`
+
+type CreateTransactionLineParams struct {
+	TransactionID uuid.UUID
+	MemberID      uuid.UUID
+	Amount        float64
+}
+
+func (q *Queries) CreateTransactionLine(ctx context.Context, arg CreateTransactionLineParams) (SessionTransactionLine, error) {
+	row := q.db.QueryRowContext(ctx, createTransactionLine, arg.TransactionID, arg.MemberID, arg.Amount)
+	var i SessionTransactionLine
+	err := row.Scan(&i.TransactionID, &i.MemberID, &i.Amount)
+	return i, err
 }
 
 const deleteSessionMember = `-- name: DeleteSessionMember :exec
@@ -153,6 +213,34 @@ func (q *Queries) GetSessionByID(ctx context.Context, id uuid.UUID) (GetSessionB
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Total,
+	)
+	return i, err
+}
+
+const getSessionDetailsByID = `-- name: GetSessionDetailsByID :one
+select s.id, s.name, s.is_active, s.created_at, s.updated_at
+from sessions s
+where s.id = $1
+`
+
+type GetSessionDetailsByIDRow struct {
+	ID        uuid.UUID
+	Name      string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// GetSessionDetailsByID returns the basic session data for the given session ID.
+func (q *Queries) GetSessionDetailsByID(ctx context.Context, id uuid.UUID) (GetSessionDetailsByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getSessionDetailsByID, id)
+	var i GetSessionDetailsByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -268,6 +356,35 @@ func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID uuid
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSessionMemberIDs = `-- name: ListSessionMemberIDs :many
+select member_id
+from session_members
+where session_id = $1 and is_deleted = false
+`
+
+func (q *Queries) ListSessionMemberIDs(ctx context.Context, sessionID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, listSessionMemberIDs, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var member_id uuid.UUID
+		if err := rows.Scan(&member_id); err != nil {
+			return nil, err
+		}
+		items = append(items, member_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

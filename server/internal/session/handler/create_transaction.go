@@ -2,10 +2,10 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/session/command"
 	sessionErr "beerbux/internal/session/errors"
 	"beerbux/internal/session/query"
 	"beerbux/internal/sse"
-	"beerbux/internal/transaction/command"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"encoding/json"

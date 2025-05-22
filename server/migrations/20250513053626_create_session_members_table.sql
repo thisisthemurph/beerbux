@@ -14,6 +14,19 @@ create trigger session_members_update_updated_at
     before update on session_members
     for each row
 execute function fn_update_updated_at_timestamp();
+
+create or replace function fn_session_members_trigger_sessions_mark_updated()
+returns trigger as $$
+begin
+    perform fn_sessions_mark_updated(new.session_id);
+    return new;
+end;
+$$ language plpgsql;
+
+create trigger session_members_mark_sessions_updated
+after insert or update on session_members
+for each row
+execute function fn_session_members_trigger_sessions_mark_updated();
 -- +goose StatementEnd
 
 -- +goose Down

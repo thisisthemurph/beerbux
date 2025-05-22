@@ -14,6 +14,15 @@ create trigger sessions_update_updated_at
     for each row
 execute function fn_update_updated_at_timestamp();
 
+create or replace function fn_sessions_mark_updated(session_id uuid)
+returns void as $$
+begin
+    update sessions
+    set updated_at = now()
+    where id = session_id;
+end;
+$$ language plpgsql;
+
 -- +goose StatementEnd
 
 -- +goose Down

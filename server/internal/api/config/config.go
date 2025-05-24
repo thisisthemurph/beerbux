@@ -6,14 +6,9 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		panic("failed to load environment variables")
-	}
-}
 
 type Config struct {
 	Environment       Environment
@@ -40,6 +35,10 @@ type StreamServiceConfig struct {
 }
 
 func Load() (*Config, error) {
+	if err := loadFirstEnvFile(".env", "/etc/secrets/.env"); err != nil {
+		return nil, err
+	}
+
 	environment, err := NewEnvironment(getenvDefault("ENVIRONMENT", string(EnvironmentProduction)))
 	if err != nil {
 		return nil, err
@@ -96,6 +95,16 @@ func (c *Config) GetAuthOptions() AuthOptions {
 		AccessTokenTTL:  c.AccessTokenTTL,
 		RefreshTokenTTL: c.RefreshTokenTTL,
 	}
+}
+
+func loadFirstEnvFile(paths ...string) error {
+	var err error
+	for _, path := range paths {
+		if err = godotenv.Load(path); err == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed to load .env files: %s", strings.Join(paths, ", "))
 }
 
 func getenvDefault(key, defaultValue string) string {

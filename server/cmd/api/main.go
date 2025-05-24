@@ -15,7 +15,7 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
-		Level:     cfg.SlogLevel(),
+		Level:     cfg.LogLevel,
 	}))
 
 	app, err := api.NewApp(cfg, logger)

@@ -12,6 +12,7 @@ import (
 
 type Config struct {
 	Environment       Environment
+	LogLevel          slog.Level
 	CORSClientBaseURL string
 	Address           string
 	Database          DBConfig
@@ -66,6 +67,7 @@ func Load() (*Config, error) {
 
 	return &Config{
 		Environment:       environment,
+		LogLevel:          getSlogLevel(),
 		Address:           mustGetenv("API_ADDRESS"),
 		CORSClientBaseURL: mustGetenv("CLIENT_BASE_URL"),
 		Database: DBConfig{
@@ -96,6 +98,21 @@ func (c *Config) GetAuthOptions() AuthOptions {
 		JWTSecret:       c.Secrets.JWTSecret,
 		AccessTokenTTL:  c.AccessTokenTTL,
 		RefreshTokenTTL: c.RefreshTokenTTL,
+	}
+}
+
+func getSlogLevel() slog.Level {
+	switch strings.ToLower(getenvDefault("LOG_LEVEL", "debug")) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelDebug
 	}
 }
 

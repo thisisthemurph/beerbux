@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils.ts";
+import type { UserAvatarData } from "@/stores/user-avatar-store.ts";
 
 type UserAvatarVariant = "default" | "prominent";
 
@@ -9,7 +9,7 @@ export function UserAvatar({
 	data,
 	tooltip,
 	variant,
-}: { data: AvatarData; tooltip?: string; variant?: UserAvatarVariant }) {
+}: { data: UserAvatarData; tooltip?: string; variant?: UserAvatarVariant }) {
 	if (!tooltip) {
 		return <InnerUserAvatar data={data} variant={variant ?? "default"} />;
 	}
@@ -26,7 +26,7 @@ export function UserAvatar({
 	);
 }
 
-function InnerUserAvatar({ data, variant }: { data: AvatarData; variant: UserAvatarVariant }) {
+function InnerUserAvatar({ data, variant }: { data: UserAvatarData; variant: UserAvatarVariant }) {
 	return (
 		<Avatar
 			className={cn(

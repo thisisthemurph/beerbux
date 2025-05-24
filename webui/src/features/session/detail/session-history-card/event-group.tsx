@@ -2,13 +2,13 @@ import type { SessionHistoryEvent } from "@/api/types/session-history.ts";
 import type { SessionMember } from "@/api/types/session.ts";
 import { GroupLabel } from "@/features/session/detail/session-history-card/group-label.tsx";
 import { HistoryEventRow } from "@/features/session/detail/session-history-card/rows";
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
+import type { UserAvatarData } from "@/stores/user-avatar-store.ts";
 
 type EventGroupProps = {
 	label: string;
 	events: SessionHistoryEvent[];
 	members: SessionMember[];
-	avatarData: Record<string, AvatarData>;
+	avatarData: Record<string, UserAvatarData>;
 };
 
 export function EventGroup({ label, events, members, avatarData }: EventGroupProps) {

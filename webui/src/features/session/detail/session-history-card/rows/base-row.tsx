@@ -1,9 +1,9 @@
-import type { AvatarData } from "@/hooks/user-avatar-data.ts";
 import { UserAvatar } from "@/components/user-avatar.tsx";
+import type { UserAvatarData } from "@/stores/user-avatar-store.ts";
 import type { ReactNode } from "react";
 
 export interface HistoryEventRow {
-	actorAvatarData: AvatarData;
+	actorAvatarData: UserAvatarData;
 }
 
 interface EventHistoryBaseRowProps extends HistoryEventRow {

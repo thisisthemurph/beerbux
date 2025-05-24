@@ -26,8 +26,9 @@ type SecretConfig struct {
 }
 
 type DBConfig struct {
-	Driver string
-	URI    string
+	Driver       string
+	URI          string
+	MigrationDir string
 }
 
 type StreamServiceConfig struct {
@@ -68,8 +69,9 @@ func Load() (*Config, error) {
 		Address:           mustGetenv("API_ADDRESS"),
 		CORSClientBaseURL: mustGetenv("CLIENT_BASE_URL"),
 		Database: DBConfig{
-			Driver: mustGetenv("DB_DRIVER"),
-			URI:    mustGetenv("DB_URI"),
+			Driver:       mustGetenv("DB_DRIVER"),
+			URI:          mustGetenv("DB_URI"),
+			MigrationDir: mustGetenv("GOOSE_MIGRATION_DIR"),
 		},
 		Secrets: SecretConfig{
 			JWTSecret: mustGetenv("JWT_SECRET"),

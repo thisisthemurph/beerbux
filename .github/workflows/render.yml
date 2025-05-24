@@ -1,0 +1,13 @@
+name: Render
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+
+jobs:
+  render:
+    name: Keep Render awake
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: curl https://beerbux-api.onrender.com/api/ping

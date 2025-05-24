@@ -8,7 +8,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func Connect(dbConf *config.DBConfig) (*sql.DB, error) {
+func Connect(dbConf config.DBConfig) (*sql.DB, error) {
 	database, err := sql.Open(dbConf.Driver, dbConf.URI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)

@@ -23,7 +23,7 @@ type App struct {
 func NewApp(cfg *config.Config, logger *slog.Logger) (*App, error) {
 	logger.Debug("Starting API", "environment", cfg.Environment)
 
-	db, err := database.Connect(cfg.Database.Driver, cfg.Database.URI)
+	db, err := database.Connect(cfg.Database)
 	if err != nil {
 		return nil, err
 	}

@@ -16,14 +16,14 @@ func init() {
 }
 
 type Config struct {
-	Environment     Environment
-	ClientBaseURL   string
-	APIAddress      string
-	Database        DBConfig
-	Secrets         SecretConfig
-	StreamService   StreamServiceConfig
-	AccessTokenTTL  time.Duration
-	RefreshTokenTTL time.Duration
+	Environment       Environment
+	CORSClientBaseURL string
+	Address           string
+	Database          DBConfig
+	Secrets           SecretConfig
+	StreamService     StreamServiceConfig
+	AccessTokenTTL    time.Duration
+	RefreshTokenTTL   time.Duration
 }
 
 type SecretConfig struct {
@@ -65,9 +65,9 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Environment:   environment,
-		ClientBaseURL: mustGetenv("CLIENT_BASE_URL"),
-		APIAddress:    mustGetenv("API_ADDRESS"),
+		Environment:       environment,
+		Address:           mustGetenv("API_ADDRESS"),
+		CORSClientBaseURL: mustGetenv("CLIENT_BASE_URL"),
 		Database: DBConfig{
 			Driver: mustGetenv("DB_DRIVER"),
 			URI:    mustGetenv("DB_URI"),

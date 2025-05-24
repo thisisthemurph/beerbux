@@ -1,3 +1,11 @@
+# React dist folder generated using `npm run build`
+internal/api/webapp/dist/*
+!internal/api/webapp/dist/gitkeep
+
+# Linux binary generated using `go build ./cmd/api`
+/api
+!*/api/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

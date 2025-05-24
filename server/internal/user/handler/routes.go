@@ -16,6 +16,6 @@ func BuildRoutes(
 	uaQueries := useraccessQueries.New(database)
 	userReaderService := useraccess.NewUserReaderService(uaQueries)
 
-	mux.Handle("GET /api/user", NewGetCurrentUserHandler(userReaderService, logger))
-	mux.Handle("GET /api/user/{userId}/balance", NewGetCurrentUserBalanceHandler(userReaderService, logger))
+	mux.Handle("GET /user", NewGetCurrentUserHandler(userReaderService, logger))
+	mux.Handle("GET /user/{userId}/balance", NewGetCurrentUserBalanceHandler(userReaderService, logger))
 }

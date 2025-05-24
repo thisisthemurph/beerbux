@@ -3,12 +3,10 @@ package api
 import (
 	"beerbux/internal/api/config"
 	"beerbux/internal/api/database"
-	"beerbux/internal/api/routes"
 	"beerbux/internal/sse"
 	"context"
 	"database/sql"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -48,13 +46,18 @@ func (app *App) Start() error {
 	defer cancel()
 
 	errChan := make(chan error, 1)
-	mux := routes.Build(app.Config, app.Logger, app.DB, streamServer, app.MessageReceiver())
+	server, err := app.NewServer(streamServer)
+	if err != nil {
+		app.Logger.Error("Failed to build routes", "error", err)
+		return err
+	}
+
 	go func() {
-		errChan <- http.ListenAndServe(app.Config.APIAddress, mux)
+		errChan <- server.ListenAndServe()
 	}()
 
 	hb := time.NewTicker(time.Duration(app.Config.StreamService.HeartbeatTickerSeconds) * time.Second)
-	app.Logger.Debug("Starting API server", "addr", app.Config.APIAddress)
+	app.Logger.Debug("Starting API server", "addr", app.Config.Address)
 
 	for {
 		select {

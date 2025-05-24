@@ -1,0 +1,3 @@
+This file is retained to keep the dist folder.
+The dist folder is required by embed to allow the build to work.
+Hidden files are ignored by embed, so no . at the beginning of the filename.

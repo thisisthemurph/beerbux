@@ -23,8 +23,8 @@ func BuildRoutes(
 	refreshCommand := command.NewRefreshTokenCommand(queries, options)
 	invalidateRefreshTokenCommand := command.NewInvalidateRefreshTokenCommand(queries)
 
-	mux.Handle("POST /api/auth/login", NewLoginHandler(loginCommand, logger))
-	mux.Handle("POST /api/auth/signup", NewSignupHandler(signupCommand, logger))
-	mux.Handle("POST /api/auth/refresh", NewRefreshHandler(refreshCommand, logger))
-	mux.Handle("POST /api/auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
+	mux.Handle("POST /auth/login", NewLoginHandler(loginCommand, logger))
+	mux.Handle("POST /auth/signup", NewSignupHandler(signupCommand, logger))
+	mux.Handle("POST /auth/refresh", NewRefreshHandler(refreshCommand, logger))
+	mux.Handle("POST /auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
 }

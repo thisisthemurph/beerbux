@@ -25,6 +25,9 @@ func (app *App) NewServer(streamServer *sse.Server) (*Server, error) {
 	webMux := http.NewServeMux()
 
 	// Build and handle API routes
+	apiMux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("pong"))
+	})
 	authHandler.BuildRoutes(app.Config, app.Logger, app.DB, apiMux)
 	sessionHandler.BuildRoutes(app.Logger, app.DB, apiMux, app.MessageReceiver())
 	userHandler.BuildRoutes(app.Logger, app.DB, apiMux)

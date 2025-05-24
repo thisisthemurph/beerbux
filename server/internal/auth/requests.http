@@ -1,0 +1,26 @@
+### Sign up
+POST {{base_url}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "User Name",
+  "username": "user-1",
+  "password": "password",
+  "verificationPassword": "password"
+}
+
+### Login
+POST {{base_url}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "user-1",
+  "password": "password"
+}
+
+### Logout
+POST {{base_url}}/api/auth/logout
+
+### Refresh JWT
+POST {{base_url}}/api/auth/refresh
+

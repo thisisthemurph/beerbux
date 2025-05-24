@@ -1,0 +1,11 @@
+### Create session
+POST {{base_url}}/api/session
+Content-Type: application/json
+
+{
+  "name": "Night out"
+}
+
+### List sessions for current user
+GET {{base_url}}/api/user/sessions
+

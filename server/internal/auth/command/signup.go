@@ -33,7 +33,7 @@ type TokenResponse struct {
 	RefreshToken string
 }
 
-func (c *SignupCommand) Execute(ctx context.Context, name, username, password, verificationPassword string) (*TokenResponse, error) {
+func (c *SignupCommand) Execute(ctx context.Context, name, username, email, password, verificationPassword string) (*TokenResponse, error) {
 	usernameTaken, err := c.Queries.UserWithUsernameExists(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine if username exists: %w", err)
@@ -53,6 +53,7 @@ func (c *SignupCommand) Execute(ctx context.Context, name, username, password, v
 	usr, err := c.Queries.CreateUser(ctx, db.CreateUserParams{
 		Name:           name,
 		Username:       username,
+		Email:          email,
 		HashedPassword: string(hashedBytes),
 	})
 	if err != nil {

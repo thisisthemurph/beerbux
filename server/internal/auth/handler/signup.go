@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	oz "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"log/slog"
 	"net/http"
 )
@@ -28,6 +29,7 @@ func NewSignupHandler(signupCommand *command.SignupCommand, logger *slog.Logger)
 type SignupRequest struct {
 	Name                 string `json:"name"`
 	Username             string `json:"username"`
+	Email                string `json:"email"`
 	Password             string `json:"password"`
 	VerificationPassword string `json:"verificationPassword"`
 }
@@ -45,7 +47,7 @@ func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.signupCommand.Execute(r.Context(), req.Name, req.Username, req.Password, req.VerificationPassword)
+	_, err := h.signupCommand.Execute(r.Context(), req.Name, req.Username, req.Email, req.Password, req.VerificationPassword)
 	if err != nil {
 		h.handleSignupError(w, req, err)
 		return
@@ -70,16 +72,27 @@ func (h *SignupHandler) handleSignupError(w http.ResponseWriter, req SignupReque
 
 func (r SignupRequest) Validate() error {
 	return oz.ValidateStruct(&r,
-		oz.Field(&r.Name, oz.Required.Error("Name is required"), oz.Length(2, 50).Error("Name must be between 2 and 50 characters")),
-		oz.Field(&r.Username, oz.Required.Error("Username is required"), oz.Length(3, 25).Error("Username must be between 3 and 25 characters")),
-		oz.Field(&r.Password, oz.Required.Error("Password is required"), oz.Length(8, 0).Error("Password must be at least 8 characters")),
-		oz.Field(&r.VerificationPassword, oz.Required.Error("Verification password is required")),
-		oz.Field(&r.Password, oz.By(func(value interface{}) error {
-			if r.Password != r.VerificationPassword {
-				return ErrPasswordsDoNotMatch
-			}
-			return nil
-		}),
+		oz.Field(&r.Name,
+			oz.Required.Error("Name is required"),
+			oz.Length(2, 50).Error("Name must be between 2 and 50 characters")),
+		oz.Field(&r.Username,
+			oz.Required.Error("Username is required"),
+			oz.Length(3, 25).Error("Username must be between 3 and 25 characters")),
+		oz.Field(&r.Email,
+			oz.Required.Error("Email address is required"),
+			is.Email.Error("The provided email is not a valid email address")),
+		oz.Field(&r.Password,
+			oz.Required.Error("Password is required"),
+			oz.Length(8, 0).Error("Password must be at least 8 characters")),
+		oz.Field(&r.VerificationPassword,
+			oz.Required.Error("Verification password is required")),
+		oz.Field(&r.Password,
+			oz.By(func(value interface{}) error {
+				if r.Password != r.VerificationPassword {
+					return ErrPasswordsDoNotMatch
+				}
+				return nil
+			}),
 		),
 	)
 }

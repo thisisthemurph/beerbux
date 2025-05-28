@@ -13,6 +13,7 @@ const formSchema = z
 			.nonempty()
 			.min(3, "Your username must be at least 3 characters")
 			.max(25, "Your username cannot be more than 25 characters"),
+		email: z.string().email("Please enter a valid email address").nonempty(),
 		password: z.string().nonempty().min(8, "Your password must be at least 8 characters"),
 		verificationPassword: z.string().nonempty(),
 	})
@@ -33,6 +34,7 @@ export function SignupForm({ onSubmit }: LoginFormProps) {
 		defaultValues: {
 			name: "",
 			username: "",
+			email: "",
 			password: "",
 			verificationPassword: "",
 		},
@@ -57,6 +59,7 @@ export function SignupForm({ onSubmit }: LoginFormProps) {
 						</FormItem>
 					)}
 				/>
+
 				<FormField
 					name="username"
 					control={form.control}
@@ -65,6 +68,19 @@ export function SignupForm({ onSubmit }: LoginFormProps) {
 							<FormLabel htmlFor={field.name}>Username</FormLabel>
 							<FormControl>
 								<Input {...field} />
+							</FormControl>
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					name="email"
+					control={form.control}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel htmlFor={field.name}>Email</FormLabel>
+							<FormControl>
+								<Input type="email" {...field} />
 							</FormControl>
 						</FormItem>
 					)}

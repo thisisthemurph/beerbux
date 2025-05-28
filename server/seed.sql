@@ -28,10 +28,10 @@ $$;
 
 insert into users (username, email, name, hashed_password)
 values
-    ('mike', 'mike@email.com', 'Mike', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('julian', 'julian@email.com', 'Julian', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('andrew.longname', 'andy@email.com', 'Andrew Longname', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('connor', 'connor@email.com', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.');
+    ('mike', 'mike@example.com', 'Mike', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('julian', 'julian@example.com', 'Julian', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('andrew.longname', 'andy@example.com', 'Andrew Longname', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('connor', 'connor@example.com', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.');
 
 insert into sessions (name, creator_id)
 values

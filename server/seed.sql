@@ -26,12 +26,12 @@ $$
     select id from sessions where name = p_session_name limit 1;
 $$;
 
-insert into users (username, name, hashed_password)
+insert into users (username, email, name, hashed_password)
 values
-    ('mike', 'Mike', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('julian', 'Julian', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('andrew.longname', 'Andrew Longname', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('connor', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.');
+    ('mike', 'mike@email.com', 'Mike', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('julian', 'julian@email.com', 'Julian', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('andrew.longname', 'andy@email.com', 'Andrew Longname', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
+    ('connor', 'connor@email.com', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.');
 
 insert into sessions (name, creator_id)
 values

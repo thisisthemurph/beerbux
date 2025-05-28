@@ -13,23 +13,30 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-insert into users (name, username, hashed_password)
-values ($1, $2, $3)
-returning id, username, name, hashed_password, created_at, updated_at
+insert into users (name, username, email, hashed_password)
+values ($1, $2, $3, $4)
+returning id, username, email, name, hashed_password, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	Name           string
 	Username       string
+	Email          string
 	HashedPassword string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Username, arg.HashedPassword)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Name,
+		arg.Username,
+		arg.Email,
+		arg.HashedPassword,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
 		&i.Name,
 		&i.HashedPassword,
 		&i.CreatedAt,
@@ -87,7 +94,7 @@ func (q *Queries) GetRefreshTokensByUserID(ctx context.Context, userID uuid.UUID
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, name, hashed_password, created_at, updated_at from users where id = $1 limit 1
+select id, username, email, name, hashed_password, created_at, updated_at from users where id = $1 limit 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -96,6 +103,26 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
+		&i.Name,
+		&i.HashedPassword,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+select id, username, email, name, hashed_password, created_at, updated_at from users where email = $1 limit 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
 		&i.Name,
 		&i.HashedPassword,
 		&i.CreatedAt,
@@ -105,7 +132,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-select id, username, name, hashed_password, created_at, updated_at from users where username = $1 limit 1
+select id, username, email, name, hashed_password, created_at, updated_at from users where username = $1 limit 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -114,6 +141,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
 		&i.Name,
 		&i.HashedPassword,
 		&i.CreatedAt,

@@ -3,6 +3,7 @@
 create table if not exists users (
     id uuid primary key default uuid_generate_v4(),
     username text not null unique,
+    email text not null unique,
     name text not null,
     hashed_password text not null,
     created_at timestamp with time zone not null default now(),

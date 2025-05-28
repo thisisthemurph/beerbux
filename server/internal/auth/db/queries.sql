@@ -4,12 +4,15 @@ select * from users where id = $1 limit 1;
 -- name: GetUserByUsername :one
 select * from users where username = $1 limit 1;
 
+-- name: GetUserByEmail :one
+select * from users where email = $1 limit 1;
+
 -- name: UserWithUsernameExists :one
 select exists(select 1 from users where username = $1);
 
 -- name: CreateUser :one
-insert into users (name, username, hashed_password)
-values ($1, $2, $3)
+insert into users (name, username, email, hashed_password)
+values ($1, $2, $3, $4)
 returning *;
 
 -- name: UpdatePassword :exec

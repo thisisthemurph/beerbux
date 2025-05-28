@@ -72,6 +72,7 @@ type SessionTransactionLine struct {
 type User struct {
 	ID             uuid.UUID
 	Username       string
+	Email          string
 	Name           string
 	HashedPassword string
 	CreatedAt      time.Time

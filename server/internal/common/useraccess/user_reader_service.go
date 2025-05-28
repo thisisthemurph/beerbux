@@ -79,3 +79,25 @@ func (q *UserReaderService) GetUserByUsername(ctx context.Context, username stri
 		},
 	}, nil
 }
+
+func (q *UserReaderService) GetUserByEmail(ctx context.Context, email string) (*UserResponse, error) {
+	usr, err := q.Queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to fetch user with email %s: %w", email, err)
+	}
+
+	return &UserResponse{
+		ID:        usr.ID,
+		Username:  usr.Username,
+		Name:      usr.Name,
+		CreatedAt: usr.CreatedAt,
+		UpdatedAt: usr.UpdatedAt,
+		Account: UserAccount{
+			Debit:  usr.Debit,
+			Credit: usr.Credit,
+		},
+	}, nil
+}

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -30,6 +32,7 @@ func NewLoginCommand(queries *db.Queries, options config.AuthOptions) *LoginComm
 type LoggedInUserDetails struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
+	Email    string    `json:"email"`
 	Name     string    `json:"name"`
 }
 
@@ -39,8 +42,8 @@ type LoginResponse struct {
 	User         LoggedInUserDetails `json:"user"`
 }
 
-func (c *LoginCommand) Execute(ctx context.Context, username, password string) (*LoginResponse, error) {
-	usr, err := c.Queries.GetUserByUsername(ctx, username)
+func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password string) (*LoginResponse, error) {
+	user, err := c.getUserByUsernameOrEmail(ctx, usernameOrEmail)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -48,11 +51,11 @@ func (c *LoginCommand) Execute(ctx context.Context, username, password string) (
 		return nil, ErrUserNotFound
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(usr.HashedPassword), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
 		return nil, ErrUserNotFound
 	}
 
-	accessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(user.ID, user.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -64,7 +67,7 @@ func (c *LoginCommand) Execute(ctx context.Context, username, password string) (
 	}
 
 	err = c.Queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
-		UserID:      usr.ID,
+		UserID:      user.ID,
 		HashedToken: hashedRefreshToken,
 		ExpiresAt:   time.Now().Add(c.Options.RefreshTokenTTL),
 	})
@@ -76,9 +79,42 @@ func (c *LoginCommand) Execute(ctx context.Context, username, password string) (
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User: LoggedInUserDetails{
-			ID:       usr.ID,
-			Username: usr.Username,
-			Name:     usr.Name,
+			ID:       user.ID,
+			Username: user.Username,
+			Name:     user.Name,
 		},
 	}, nil
+}
+
+func (c *LoginCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
+	if isEmail(usernameOrEmail) {
+		return c.Queries.GetUserByEmail(ctx, usernameOrEmail)
+	}
+	return c.Queries.GetUserByUsername(ctx, usernameOrEmail)
+}
+
+var (
+	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")
+	hostRegexp    = regexp.MustCompile("^[^\\s]+\\.[^\\s]+$")
+	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
+)
+
+func isEmail(email string) bool {
+	if len(email) < 6 || len(email) > 254 {
+		return false
+	}
+	at := strings.LastIndex(email, "@")
+	if at <= 0 || at > len(email)-3 {
+		return false
+	}
+	user := email[:at]
+	host := email[at+1:]
+	if len(user) > 64 {
+		return false
+	}
+	if userDotRegexp.MatchString(user) || !userRegexp.MatchString(user) || !hostRegexp.MatchString(host) {
+		return false
+	}
+
+	return true
 }

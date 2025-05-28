@@ -12,12 +12,13 @@ function useAuthClient() {
 	const signup = async (
 		name: string,
 		username: string,
+		email: string,
 		password: string,
 		verificationPassword: string,
 	): Promise<void> => {
 		return apiFetch<void>("/auth/signup", {
 			method: "POST",
-			body: JSON.stringify({ name, username, password, verificationPassword }),
+			body: JSON.stringify({ name, username, email, password, verificationPassword }),
 		});
 	};
 

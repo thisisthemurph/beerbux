@@ -81,6 +81,7 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		User: LoggedInUserDetails{
 			ID:       user.ID,
 			Username: user.Username,
+			Email:    user.Email,
 			Name:     user.Name,
 		},
 	}, nil

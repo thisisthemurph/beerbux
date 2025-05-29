@@ -26,7 +26,21 @@ function useAuthClient() {
 		return apiFetch<User>("/user");
 	};
 
-	return { login, signup, getCurrentUser };
+	const initializePasswordReset = async (newPassword: string): Promise<void> => {
+		return apiFetch<void>("/auth/password/initialize-reset", {
+			method: "POST",
+			body: JSON.stringify({ newPassword }),
+		});
+	};
+
+	const resetPassword = async (otp: string): Promise<void> => {
+		return apiFetch<void>("/auth/password/reset", {
+			method: "POST",
+			body: JSON.stringify({ otp }),
+		});
+	};
+
+	return { login, signup, getCurrentUser, initializePasswordReset, resetPassword };
 }
 
 export default useAuthClient;

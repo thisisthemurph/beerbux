@@ -19,10 +19,10 @@ export type PasswordFormValues = z.infer<typeof formSchema>;
 export type OTPFormValues = z.infer<typeof otpFormSchema>;
 
 type UpdatePasswordFormProps = {
-	onSuccess: (values: PasswordFormValues) => void;
+	onSubmit: (values: PasswordFormValues) => void;
 };
 
-export function UpdatePasswordForm({ onSuccess }: UpdatePasswordFormProps) {
+export function UpdatePasswordForm({ onSubmit }: UpdatePasswordFormProps) {
 	const form = useForm<PasswordFormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -31,8 +31,7 @@ export function UpdatePasswordForm({ onSuccess }: UpdatePasswordFormProps) {
 	});
 
 	function handleSubmit(values: PasswordFormValues) {
-		console.log(values);
-		onSuccess(values);
+		onSubmit(values);
 	}
 
 	return (
@@ -66,10 +65,10 @@ export function UpdatePasswordForm({ onSuccess }: UpdatePasswordFormProps) {
 
 type UpdatePasswordOTPFormProps = {
 	onCancel: () => void;
-	onSuccess: (otp: string) => void;
+	onOtpCompleted: (otp: string) => void;
 };
 
-export function UpdatePasswordOTPForm({ onCancel, onSuccess }: UpdatePasswordOTPFormProps) {
+export function UpdatePasswordOTPForm({ onCancel, onOtpCompleted }: UpdatePasswordOTPFormProps) {
 	const form = useForm<OTPFormValues>({
 		resolver: zodResolver(otpFormSchema),
 		defaultValues: {
@@ -80,7 +79,7 @@ export function UpdatePasswordOTPForm({ onCancel, onSuccess }: UpdatePasswordOTP
 	function handleSubmit(values: OTPFormValues) {
 		console.log("submitted otp", values);
 		// TODO: Verify OTP and reset password
-		onSuccess(values.otp);
+		onOtpCompleted(values.otp);
 	}
 
 	return (

@@ -10,36 +10,36 @@ import (
 	"net/http"
 )
 
-type PasswordResetHandler struct {
-	passwordResetCommand *command.ResetPasswordCommand
-	logger               *slog.Logger
+type UpdatePasswordHandler struct {
+	updatePasswordCommand *command.UpdatePasswordCommand
+	logger                *slog.Logger
 }
 
-func NewPasswordResetHandler(passwordResetCommand *command.ResetPasswordCommand, logger *slog.Logger) *PasswordResetHandler {
-	return &PasswordResetHandler{
-		passwordResetCommand: passwordResetCommand,
-		logger:               logger,
+func NewUpdatePasswordHandler(passwordResetCommand *command.UpdatePasswordCommand, logger *slog.Logger) *UpdatePasswordHandler {
+	return &UpdatePasswordHandler{
+		updatePasswordCommand: passwordResetCommand,
+		logger:                logger,
 	}
 }
 
-type ResetPasswordRequest struct {
+type UpdatePasswordRequest struct {
 	OTP string `json:"otp"`
 }
 
-func (h *PasswordResetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *UpdatePasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	var req ResetPasswordRequest
+	var req UpdatePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		send.BadRequest(w, "Failed to decode the request body")
 		return
 	}
 
-	if err := h.passwordResetCommand.Execute(r.Context(), c.Subject, req.OTP); err != nil {
+	if err := h.updatePasswordCommand.Execute(r.Context(), c.Subject, req.OTP); err != nil {
 		h.handleResetPasswordError(w, err)
 		return
 	}
@@ -47,7 +47,7 @@ func (h *PasswordResetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *PasswordResetHandler) handleResetPasswordError(w http.ResponseWriter, err error) {
+func (h *UpdatePasswordHandler) handleResetPasswordError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, command.ErrUserNotFound):
 		send.Unauthorized(w, "User not found")

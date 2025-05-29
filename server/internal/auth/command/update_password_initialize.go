@@ -37,7 +37,7 @@ func (c *InitializePasswordResetCommand) Execute(ctx context.Context, userID uui
 		return nil, fmt.Errorf("failed to generate one-time password: %w", err)
 	}
 
-	err = c.queries.InitializePasswordReset(ctx, db.InitializePasswordResetParams{
+	err = c.queries.InitializePasswordUpdate(ctx, db.InitializePasswordUpdateParams{
 		ID: userID,
 		PasswordUpdateOtp: sql.NullString{
 			String: OTP,

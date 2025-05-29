@@ -24,15 +24,15 @@ POST {{base_url}}/api/auth/logout
 ### Refresh JWT
 POST {{base_url}}/api/auth/refresh
 
-### Initialize Password Reset
+### Initialize Password Update
 POST {{base_url}}/api/auth/password/initialize-reset
 Content-Type: application/json
 
 {
-  "password": "password"
+  "newPassword": "password"
 }
 
-### Reset Password
+### Update Password
 POST {{base_url}}/api/auth/password/reset
 Content-Type: application/json
 

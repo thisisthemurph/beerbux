@@ -34,14 +34,14 @@ update refresh_tokens
 set revoked = true
 where id = $1;
 
--- name: InitializePasswordReset :exec
+-- name: InitializePasswordUpdate :exec
 update users
 set update_hashed_password = $2,
     password_update_otp = $3,
     password_update_requested_at = now()
 where id = $1;
 
--- name: ResetPassword :exec
+-- name: UpdatePassword :exec
 with updated as (
     select id, update_hashed_password
     from users updated_users

@@ -1,3 +1,4 @@
+import useAuthClient from "@/api/auth-client.ts";
 import useUserClient from "@/api/user-client.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export default function SettingsPage() {
 	const setUser = useUserStore((state) => state.setUser);
 	const [showPasswordOTP, setShowPasswordOTP] = useState(false);
 	const { updateUser } = useUserClient();
+	const { initializePasswordReset, resetPassword } = useAuthClient();
 
 	async function handleUpdateUser(values: UserSettingsFormValues) {
 		if (!user) return;
@@ -33,6 +35,28 @@ export default function SettingsPage() {
 					? "Next time you log in, you will need to log in with your new username."
 					: undefined,
 		});
+	}
+
+	async function handleInitializePasswordReset(password: string) {
+		const { err } = await tryCatch(initializePasswordReset(password));
+		if (err) {
+			toast.error("Failed to initialize password reset", {
+				description: err.message,
+			});
+			return;
+		}
+		toast.success("Password reset requested. Please check your email for the OTP.");
+	}
+
+	async function handlePasswordReset(otp: string) {
+		const { err } = await tryCatch(resetPassword(otp));
+		if (err) {
+			toast.error("Failed to reset password", {
+				description: err.message,
+			});
+			return;
+		}
+		toast.success("Password reset successfully. You can now log in with your new password.");
 	}
 
 	if (!user) {
@@ -76,10 +100,14 @@ export default function SettingsPage() {
 						{showPasswordOTP ? (
 							<UpdatePasswordOTPForm
 								onCancel={() => setShowPasswordOTP(false)}
-								onSuccess={() => setShowPasswordOTP(false)}
+								onOtpCompleted={(otp) => handlePasswordReset(otp).then(() => setShowPasswordOTP(false))}
 							/>
 						) : (
-							<UpdatePasswordForm onSuccess={() => setShowPasswordOTP(true)} />
+							<UpdatePasswordForm
+								onSubmit={({ password }) =>
+									handleInitializePasswordReset(password).then(() => setShowPasswordOTP(true))
+								}
+							/>
 						)}
 					</CardContent>
 				</Card>

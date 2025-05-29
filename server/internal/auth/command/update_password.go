@@ -16,17 +16,17 @@ var ErrPasswordResetNotInitialized = errors.New("password reset not initialized"
 var ErrOTPExpired = errors.New("OTP has expired")
 var ErrIncorrectOTP = errors.New("incorrect OTP")
 
-type ResetPasswordCommand struct {
+type UpdatePasswordCommand struct {
 	queries *db.Queries
 }
 
-func NewResetPasswordCommand(queries *db.Queries) *ResetPasswordCommand {
-	return &ResetPasswordCommand{
+func NewResetPasswordCommand(queries *db.Queries) *UpdatePasswordCommand {
+	return &UpdatePasswordCommand{
 		queries: queries,
 	}
 }
 
-func (c *ResetPasswordCommand) Execute(ctx context.Context, userID uuid.UUID, OTP string) error {
+func (c *UpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, OTP string) error {
 	user, err := c.queries.GetUser(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -49,7 +49,7 @@ func (c *ResetPasswordCommand) Execute(ctx context.Context, userID uuid.UUID, OT
 		return ErrIncorrectOTP
 	}
 
-	if err := c.queries.ResetPassword(ctx, userID); err != nil {
+	if err := c.queries.UpdatePassword(ctx, userID); err != nil {
 		return fmt.Errorf("failed to reset password: %w", err)
 	}
 

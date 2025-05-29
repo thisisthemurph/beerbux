@@ -45,6 +45,8 @@ export default function SettingsPage() {
 			});
 			return;
 		}
+
+		setShowPasswordOTP(true);
 		toast.success("Password reset requested. Please check your email for the OTP.");
 	}
 
@@ -56,6 +58,7 @@ export default function SettingsPage() {
 			});
 			return;
 		}
+		setShowPasswordOTP(false);
 		toast.success("Password reset successfully. You can now log in with your new password.");
 	}
 
@@ -100,14 +103,10 @@ export default function SettingsPage() {
 						{showPasswordOTP ? (
 							<UpdatePasswordOTPForm
 								onCancel={() => setShowPasswordOTP(false)}
-								onOtpCompleted={(otp) => handlePasswordReset(otp).then(() => setShowPasswordOTP(false))}
+								onOtpCompleted={(otp) => handlePasswordReset(otp)}
 							/>
 						) : (
-							<UpdatePasswordForm
-								onSubmit={({ password }) =>
-									handleInitializePasswordReset(password).then(() => setShowPasswordOTP(true))
-								}
-							/>
+							<UpdatePasswordForm onSubmit={({ password }) => handleInitializePasswordReset(password)} />
 						)}
 					</CardContent>
 				</Card>

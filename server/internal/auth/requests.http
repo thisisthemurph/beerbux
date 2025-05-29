@@ -14,7 +14,7 @@ POST {{base_url}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "user-1",
+  "username": "mike",
   "password": "password"
 }
 
@@ -23,4 +23,20 @@ POST {{base_url}}/api/auth/logout
 
 ### Refresh JWT
 POST {{base_url}}/api/auth/refresh
+
+### Initialize Password Update
+POST {{base_url}}/api/auth/password/initialize-reset
+Content-Type: application/json
+
+{
+  "newPassword": "password"
+}
+
+### Update Password
+POST {{base_url}}/api/auth/password/reset
+Content-Type: application/json
+
+{
+  "otp": "g6wfuo"
+}
 

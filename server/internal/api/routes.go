@@ -10,6 +10,7 @@ import (
 	"beerbux/internal/sse"
 	streamHandler "beerbux/internal/streamer/handler"
 	userHandler "beerbux/internal/user/handler"
+	"beerbux/pkg/email"
 	"net/http"
 )
 
@@ -24,11 +25,16 @@ func (app *App) NewServer(streamServer *sse.Server) (*Server, error) {
 	apiMux := http.NewServeMux()
 	webMux := http.NewServeMux()
 
+	emailSender := email.New(app.Config.Resend)
+	if app.Config.Environment.IsDevelopment() && app.Config.Resend.DevelopmentSendToEmail == "" {
+		emailSender = email.NewTerminalEmailLogger(app.Logger)
+	}
+
 	// Build and handle API routes
 	apiMux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("pong"))
 	})
-	authHandler.BuildRoutes(app.Config, app.Logger, app.DB, apiMux)
+	authHandler.BuildRoutes(app.Config, app.Logger, app.DB, emailSender, apiMux)
 	sessionHandler.BuildRoutes(app.Logger, app.DB, apiMux, app.MessageReceiver())
 	userHandler.BuildRoutes(app.Logger, app.DB, apiMux)
 	apiMux.Handle("/events/session", streamHandler.NewSessionTransactionCreatedHandler(app.Logger, streamServer))

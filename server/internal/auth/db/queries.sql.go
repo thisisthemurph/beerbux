@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 const createUser = `-- name: CreateUser :one
 insert into users (name, username, email, hashed_password)
 values ($1, $2, $3, $4)
-returning id, username, email, name, hashed_password, created_at, updated_at
+returning id, username, email, update_email, email_update_requested_at, email_update_otp, email_last_updated_at, name, hashed_password, update_hashed_password, password_update_requested_at, password_update_otp, password_last_updated_at, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -37,8 +38,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.Username,
 		&i.Email,
+		&i.UpdateEmail,
+		&i.EmailUpdateRequestedAt,
+		&i.EmailUpdateOtp,
+		&i.EmailLastUpdatedAt,
 		&i.Name,
 		&i.HashedPassword,
+		&i.UpdateHashedPassword,
+		&i.PasswordUpdateRequestedAt,
+		&i.PasswordUpdateOtp,
+		&i.PasswordLastUpdatedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -94,7 +103,7 @@ func (q *Queries) GetRefreshTokensByUserID(ctx context.Context, userID uuid.UUID
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, email, name, hashed_password, created_at, updated_at from users where id = $1 limit 1
+select id, username, email, update_email, email_update_requested_at, email_update_otp, email_last_updated_at, name, hashed_password, update_hashed_password, password_update_requested_at, password_update_otp, password_last_updated_at, created_at, updated_at from users where id = $1 limit 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -104,8 +113,16 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.ID,
 		&i.Username,
 		&i.Email,
+		&i.UpdateEmail,
+		&i.EmailUpdateRequestedAt,
+		&i.EmailUpdateOtp,
+		&i.EmailLastUpdatedAt,
 		&i.Name,
 		&i.HashedPassword,
+		&i.UpdateHashedPassword,
+		&i.PasswordUpdateRequestedAt,
+		&i.PasswordUpdateOtp,
+		&i.PasswordLastUpdatedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -113,7 +130,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-select id, username, email, name, hashed_password, created_at, updated_at from users where email = $1 limit 1
+select id, username, email, update_email, email_update_requested_at, email_update_otp, email_last_updated_at, name, hashed_password, update_hashed_password, password_update_requested_at, password_update_otp, password_last_updated_at, created_at, updated_at from users where email = $1 limit 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -123,8 +140,16 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ID,
 		&i.Username,
 		&i.Email,
+		&i.UpdateEmail,
+		&i.EmailUpdateRequestedAt,
+		&i.EmailUpdateOtp,
+		&i.EmailLastUpdatedAt,
 		&i.Name,
 		&i.HashedPassword,
+		&i.UpdateHashedPassword,
+		&i.PasswordUpdateRequestedAt,
+		&i.PasswordUpdateOtp,
+		&i.PasswordLastUpdatedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -132,7 +157,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-select id, username, email, name, hashed_password, created_at, updated_at from users where username = $1 limit 1
+select id, username, email, update_email, email_update_requested_at, email_update_otp, email_last_updated_at, name, hashed_password, update_hashed_password, password_update_requested_at, password_update_otp, password_last_updated_at, created_at, updated_at from users where username = $1 limit 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -142,12 +167,58 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.ID,
 		&i.Username,
 		&i.Email,
+		&i.UpdateEmail,
+		&i.EmailUpdateRequestedAt,
+		&i.EmailUpdateOtp,
+		&i.EmailLastUpdatedAt,
 		&i.Name,
 		&i.HashedPassword,
+		&i.UpdateHashedPassword,
+		&i.PasswordUpdateRequestedAt,
+		&i.PasswordUpdateOtp,
+		&i.PasswordLastUpdatedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const initialiseUpdateEmail = `-- name: InitialiseUpdateEmail :exec
+update users
+set update_email = $2,
+    email_update_otp = $3,
+    email_update_requested_at = now()
+where id = $1
+`
+
+type InitialiseUpdateEmailParams struct {
+	ID             uuid.UUID
+	UpdateEmail    sql.NullString
+	EmailUpdateOtp sql.NullString
+}
+
+func (q *Queries) InitialiseUpdateEmail(ctx context.Context, arg InitialiseUpdateEmailParams) error {
+	_, err := q.db.ExecContext(ctx, initialiseUpdateEmail, arg.ID, arg.UpdateEmail, arg.EmailUpdateOtp)
+	return err
+}
+
+const initializePasswordUpdate = `-- name: InitializePasswordUpdate :exec
+update users
+set update_hashed_password = $2,
+    password_update_otp = $3,
+    password_update_requested_at = now()
+where id = $1
+`
+
+type InitializePasswordUpdateParams struct {
+	ID                   uuid.UUID
+	UpdateHashedPassword sql.NullString
+	PasswordUpdateOtp    sql.NullString
+}
+
+func (q *Queries) InitializePasswordUpdate(ctx context.Context, arg InitializePasswordUpdateParams) error {
+	_, err := q.db.ExecContext(ctx, initializePasswordUpdate, arg.ID, arg.UpdateHashedPassword, arg.PasswordUpdateOtp)
+	return err
 }
 
 const invalidateRefreshToken = `-- name: InvalidateRefreshToken :exec
@@ -177,19 +248,46 @@ func (q *Queries) RegisterRefreshToken(ctx context.Context, arg RegisterRefreshT
 	return err
 }
 
-const updatePassword = `-- name: UpdatePassword :exec
-update users
-set hashed_password = $1
-where id = $2
+const updateEmail = `-- name: UpdateEmail :exec
+with updated as (
+    select id, update_email
+    from users updated_users
+    where updated_users.id = $1 and updated_users.email_update_requested_at is not null
+)
+update users u
+set email = updated.update_email,
+    update_email = null,
+    email_update_otp = null,
+    email_update_requested_at = null,
+    email_last_updated_at = now()
+from updated
+where u.id = updated.id
 `
 
-type UpdatePasswordParams struct {
-	HashedPassword string
-	ID             uuid.UUID
+func (q *Queries) UpdateEmail(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateEmail, id)
+	return err
 }
 
-func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
-	_, err := q.db.ExecContext(ctx, updatePassword, arg.HashedPassword, arg.ID)
+const updatePassword = `-- name: UpdatePassword :exec
+with updated as (
+    select id, update_hashed_password
+    from users updated_users
+    where updated_users.id = $1 and updated_users.password_update_requested_at is not null
+)
+update users u
+set
+    hashed_password = updated.update_hashed_password,
+    update_hashed_password = null,
+    password_update_otp = null,
+    password_update_requested_at = null,
+    password_last_updated_at = now()
+from updated
+where u.id = updated.id
+`
+
+func (q *Queries) UpdatePassword(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, id)
 	return err
 }
 

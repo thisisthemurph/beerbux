@@ -101,3 +101,11 @@ func (q *UserReaderService) GetUserByEmail(ctx context.Context, email string) (*
 		},
 	}, nil
 }
+
+func (q *UserReaderService) UserWithUsernameExists(ctx context.Context, username string) (bool, error) {
+	return q.Queries.UserWithUsernameExists(ctx, username)
+}
+
+func (q *UserReaderService) UserWithEmailExists(ctx context.Context, username string) (bool, error) {
+	return q.Queries.UserWithEmailExists(ctx, username)
+}

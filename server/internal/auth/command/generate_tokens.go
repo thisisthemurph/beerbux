@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"regexp"
 	"strings"
 	"time"
@@ -17,32 +16,32 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-type LoginCommand struct {
-	Queries *db.Queries
-	Options config.AuthOptions
+type GenerateTokensCommand struct {
+	queries *db.Queries
+	options config.AuthOptions
 }
 
-func NewLoginCommand(queries *db.Queries, options config.AuthOptions) *LoginCommand {
-	return &LoginCommand{
-		Queries: queries,
-		Options: options,
+func NewGenerateTokensCommand(queries *db.Queries, options config.AuthOptions) *GenerateTokensCommand {
+	return &GenerateTokensCommand{
+		queries: queries,
+		options: options,
 	}
 }
 
-type LoggedInUserDetails struct {
+type AuthenticatedUserDetails struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
 	Email    string    `json:"email"`
 	Name     string    `json:"name"`
 }
 
-type LoginResponse struct {
-	AccessToken  string              `json:"accessToken"`
-	RefreshToken string              `json:"refreshToken"`
-	User         LoggedInUserDetails `json:"user"`
+type TokensResponse struct {
+	AccessToken  string                   `json:"accessToken"`
+	RefreshToken string                   `json:"refreshToken"`
+	User         AuthenticatedUserDetails `json:"user"`
 }
 
-func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password string) (*LoginResponse, error) {
+func (c *GenerateTokensCommand) Execute(ctx context.Context, usernameOrEmail string) (*TokensResponse, error) {
 	user, err := c.getUserByUsernameOrEmail(ctx, usernameOrEmail)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -51,11 +50,7 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, ErrUserNotFound
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
-		return nil, ErrUserNotFound
-	}
-
-	accessToken, err := shared.GenerateJWT(user.ID, user.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(user.ID, user.Username, user.Email, c.options.JWTSecret, c.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -66,19 +61,19 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	err = c.Queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
+	err = c.queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
 		UserID:      user.ID,
 		HashedToken: hashedRefreshToken,
-		ExpiresAt:   time.Now().Add(c.Options.RefreshTokenTTL),
+		ExpiresAt:   time.Now().Add(c.options.RefreshTokenTTL),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
-	return &LoginResponse{
+	return &TokensResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User: LoggedInUserDetails{
+		User: AuthenticatedUserDetails{
 			ID:       user.ID,
 			Username: user.Username,
 			Email:    user.Email,
@@ -87,11 +82,11 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 	}, nil
 }
 
-func (c *LoginCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
+func (c *GenerateTokensCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
 	if isEmail(usernameOrEmail) {
-		return c.Queries.GetUserByEmail(ctx, usernameOrEmail)
+		return c.queries.GetUserByEmail(ctx, usernameOrEmail)
 	}
-	return c.Queries.GetUserByUsername(ctx, usernameOrEmail)
+	return c.queries.GetUserByUsername(ctx, usernameOrEmail)
 }
 
 var (

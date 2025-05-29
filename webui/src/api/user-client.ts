@@ -21,7 +21,19 @@ function useUserClient() {
 		return apiFetch<UserBalance>(`/user/${userId}/balance`);
 	};
 
-	return { getSessions, logout, getBalance };
+	type UpdateUserResponse = {
+		username: string;
+		name: string;
+	};
+
+	const updateUser = async (username: string, name: string) => {
+		return apiFetch<UpdateUserResponse>("/user", {
+			method: "PUT",
+			body: JSON.stringify({ username, name }),
+		});
+	};
+
+	return { getSessions, logout, getBalance, updateUser };
 }
 
 export default useUserClient;

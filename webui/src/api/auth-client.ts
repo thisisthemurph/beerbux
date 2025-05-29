@@ -26,7 +26,43 @@ function useAuthClient() {
 		return apiFetch<User>("/user");
 	};
 
-	return { login, signup, getCurrentUser };
+	const initializePasswordReset = async (newPassword: string): Promise<void> => {
+		return apiFetch<void>("/auth/password/initialize-reset", {
+			method: "POST",
+			body: JSON.stringify({ newPassword }),
+		});
+	};
+
+	const resetPassword = async (otp: string): Promise<void> => {
+		return apiFetch<void>("/auth/password/reset", {
+			method: "POST",
+			body: JSON.stringify({ otp }),
+		});
+	};
+
+	const initializeEmailUpdate = async (newEmail: string): Promise<void> => {
+		return apiFetch<void>("/auth/email/initialize-update", {
+			method: "POST",
+			body: JSON.stringify({ newEmail }),
+		});
+	};
+
+	const updateEmail = async (otp: string): Promise<void> => {
+		return apiFetch<void>("/auth/email", {
+			method: "POST",
+			body: JSON.stringify({ otp }),
+		});
+	};
+
+	return {
+		login,
+		signup,
+		getCurrentUser,
+		initializePasswordReset,
+		resetPassword,
+		initializeEmailUpdate,
+		updateEmail,
+	};
 }
 
 export default useAuthClient;

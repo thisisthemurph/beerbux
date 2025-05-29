@@ -16,6 +16,7 @@ type JWTClaims struct {
 	Expiration int64     `json:"exp"`
 	Subject    uuid.UUID `json:"sub"`
 	Username   string    `json:"username"`
+	Email      string    `json:"email"`
 }
 
 func (c JWTClaims) Authenticated() bool {

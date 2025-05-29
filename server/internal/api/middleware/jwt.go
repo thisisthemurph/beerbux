@@ -150,6 +150,11 @@ func (mw *AuthMiddleware) parseClaimValues(mapClaims jwt.MapClaims) (claims.JWTC
 		return claims.JWTClaims{}, fmt.Errorf("sub claim not found")
 	}
 
+	email, ok := mapClaims["email"].(string)
+	if !ok {
+		return claims.JWTClaims{}, fmt.Errorf("email claim not found")
+	}
+
 	exp, ok := mapClaims["exp"].(float64)
 	if !ok {
 		return claims.JWTClaims{}, fmt.Errorf("sub claim not found")
@@ -161,8 +166,9 @@ func (mw *AuthMiddleware) parseClaimValues(mapClaims jwt.MapClaims) (claims.JWTC
 	}
 
 	return claims.JWTClaims{
-		Expiration: int64(exp),
 		Subject:    sub,
 		Username:   username,
+		Email:      email,
+		Expiration: int64(exp),
 	}, nil
 }

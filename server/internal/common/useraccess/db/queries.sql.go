@@ -125,3 +125,25 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 	)
 	return i, err
 }
+
+const userWithEmailExists = `-- name: UserWithEmailExists :one
+select exists(select 1 from users where email = $1)
+`
+
+func (q *Queries) UserWithEmailExists(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, userWithEmailExists, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const userWithUsernameExists = `-- name: UserWithUsernameExists :one
+select exists(select 1 from users where username = $1)
+`
+
+func (q *Queries) UserWithUsernameExists(ctx context.Context, username string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, userWithUsernameExists, username)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}

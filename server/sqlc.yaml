@@ -24,6 +24,14 @@ sql:
         out: "internal/auth/db"
 
   - engine: "postgresql"
+    queries: "internal/user/db/queries.sql"
+    schema: "migrations"
+    gen:
+      go:
+        package: "db"
+        out: "internal/user/db"
+
+  - engine: "postgresql"
     queries: "internal/session/db/queries.sql"
     schema: "migrations"
     gen:

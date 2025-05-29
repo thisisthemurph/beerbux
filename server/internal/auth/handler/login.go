@@ -13,14 +13,20 @@ import (
 )
 
 type LoginHandler struct {
-	loginCommand *command.LoginCommand
-	logger       *slog.Logger
+	generateTokensCommand  *command.GenerateTokensCommand
+	comparePasswordCommand *command.ComparePasswordCommand
+	logger                 *slog.Logger
 }
 
-func NewLoginHandler(loginCommand *command.LoginCommand, logger *slog.Logger) *LoginHandler {
+func NewLoginHandler(
+	loginCommand *command.GenerateTokensCommand,
+	comparePasswordCommand *command.ComparePasswordCommand,
+	logger *slog.Logger,
+) *LoginHandler {
 	return &LoginHandler{
-		loginCommand: loginCommand,
-		logger:       logger,
+		generateTokensCommand:  loginCommand,
+		comparePasswordCommand: comparePasswordCommand,
+		logger:                 logger,
 	}
 }
 
@@ -47,19 +53,29 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.loginCommand.Execute(r.Context(), req.Username, req.Password)
+	if err := h.comparePasswordCommand.Execute(r.Context(), req.Username, req.Password); err != nil {
+		if errors.Is(err, command.ErrPasswordMismatch) || errors.Is(err, command.ErrUserNotFound) {
+			send.Unauthorized(w, "Invalid username or password")
+		} else {
+			h.logger.Error("failed when comparing login password", "error", err)
+			send.InternalServerError(w, "There was an issue logging in")
+		}
+		return
+	}
+
+	tokens, err := h.generateTokensCommand.Execute(r.Context(), req.Username)
 	if err != nil {
 		h.handleLoginError(w, err)
 		return
 	}
 
-	cookie.SetAccessTokenCookie(w, resp.AccessToken)
-	cookie.SetRefreshTokenCookie(w, resp.RefreshToken)
+	cookie.SetAccessTokenCookie(w, tokens.AccessToken)
+	cookie.SetRefreshTokenCookie(w, tokens.RefreshToken)
 
 	send.JSON(w, LoginResponse{
-		ID:       resp.User.ID,
-		Name:     resp.User.Name,
-		Username: resp.User.Username,
+		ID:       tokens.User.ID,
+		Name:     tokens.User.Name,
+		Username: tokens.User.Username,
 	}, http.StatusOK)
 }
 

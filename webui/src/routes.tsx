@@ -4,6 +4,7 @@ import SignupPage from "@/features/auth/signup";
 import HomePage from "@/features/home";
 import SessionDetailPage from "@/features/session/detail";
 import SessionListingPage from "@/features/session/listing";
+import SettingsPage from "@/features/settings";
 import RootLayout from "@/layouts/root-layout";
 import { Route, Routes } from "react-router";
 
@@ -16,6 +17,7 @@ function AppRoutes() {
 				<Route path="/signup" element={<SignupPage />} />
 				<Route path="/sessions" element={<SessionListingPage />} />
 				<Route path="/session/:sessionId" element={<SessionDetailPage />} />
+				<Route path="/settings" element={<SettingsPage />} />
 				<Route path="*" element={<NotFoundPage />} />
 			</Route>
 		</Routes>

@@ -1,0 +1,8 @@
+### Update Current User
+PUT {{base_url}}/api/user
+Content-Type: application/json
+
+{
+  "name": "Mike",
+  "username": "mike"
+}

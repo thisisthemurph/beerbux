@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { useUserStore } from "@/stores/user-store.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,19 +12,23 @@ const formSchema = z.object({
 
 export type UserSettingsFormValues = z.infer<typeof formSchema>;
 
-export function UserSettingsForm() {
-	const user = useUserStore((state) => state.user);
+type UserSettingsFormProps = {
+	name: string;
+	username: string;
+	onSubmit: (values: UserSettingsFormValues) => void;
+};
 
+export function UserSettingsForm({ name, username, onSubmit }: UserSettingsFormProps) {
 	const form = useForm<UserSettingsFormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			name: user?.name || "",
-			username: user?.username || "",
+			name: name || "",
+			username: username || "",
 		},
 	});
 
 	function handleSubmit(values: UserSettingsFormValues) {
-		console.log(values);
+		onSubmit(values);
 	}
 
 	return (

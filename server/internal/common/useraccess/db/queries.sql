@@ -27,3 +27,9 @@ from users u
 left join user_totals t on u.id = t.user_id
 where u.email = $1
 limit 1;
+
+-- name: UserWithUsernameExists :one
+select exists(select 1 from users where username = $1);
+
+-- name: UserWithEmailExists :one
+select exists(select 1 from users where email = $1);

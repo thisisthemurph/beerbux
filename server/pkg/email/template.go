@@ -27,6 +27,27 @@ func GeneratePasswordResetEmail(data PasswordResetEmailData) (string, error) {
 	return buf.String(), nil
 }
 
+type UpdateEmailAddressData struct {
+	Username          string
+	NewEmail          string
+	OTP               string
+	ExpirationMinutes string
+}
+
+func GenerateUpdateEmailAddressEmail(data UpdateEmailAddressData) (string, error) {
+	tmpl, err := parseTemplate("update_email_address_email.html")
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func parseTemplate(path string) (*template.Template, error) {
 	wd, err := os.Getwd()
 	if err != nil {

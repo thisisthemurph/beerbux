@@ -4,6 +4,8 @@ import (
 	"beerbux/internal/api/config"
 	"beerbux/internal/auth/command"
 	"beerbux/internal/auth/db"
+	"beerbux/internal/common/useraccess"
+	useraccessQueries "beerbux/internal/common/useraccess/db"
 	"beerbux/pkg/email"
 	"database/sql"
 	"log/slog"
@@ -26,6 +28,11 @@ func BuildRoutes(
 	invalidateRefreshTokenCommand := command.NewInvalidateRefreshTokenCommand(queries)
 	initializePasswordResetCommand := command.NewInitializePasswordResetCommand(queries)
 	resetPasswordCommand := command.NewResetPasswordCommand(queries)
+	initializeUpdateEmailCommand := command.NewInitializeUpdateEmailCommand(queries)
+	updateEmailCommand := command.NewUpdateEmailCommand(queries)
+
+	userAccessQueries := useraccessQueries.New(database)
+	userReaderService := useraccess.NewUserReaderService(userAccessQueries)
 
 	mux.Handle("POST /auth/login", NewLoginHandler(loginCommand, logger))
 	mux.Handle("POST /auth/signup", NewSignupHandler(signupCommand, logger))
@@ -34,4 +41,7 @@ func BuildRoutes(
 	mux.Handle("POST /auth/password/initialize-reset", NewInitializePasswordUpdateHandler(
 		initializePasswordResetCommand, emailSender, logger))
 	mux.Handle("POST /auth/password/reset", NewUpdatePasswordHandler(resetPasswordCommand, logger))
+	mux.Handle("POST /auth/email/initialize-update", NewInitializeEmailUpdateHandler(
+		initializeUpdateEmailCommand, userReaderService, emailSender, logger))
+	mux.Handle("POST /auth/email", NewUpdateEmailHandler(updateEmailCommand, logger))
 }

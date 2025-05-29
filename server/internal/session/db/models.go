@@ -74,6 +74,10 @@ type User struct {
 	ID                        uuid.UUID
 	Username                  string
 	Email                     string
+	UpdateEmail               sql.NullString
+	EmailUpdateRequestedAt    sql.NullTime
+	EmailUpdateOtp            sql.NullString
+	EmailLastUpdatedAt        sql.NullTime
 	Name                      string
 	HashedPassword            string
 	UpdateHashedPassword      sql.NullString

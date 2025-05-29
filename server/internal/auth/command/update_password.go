@@ -12,7 +12,7 @@ import (
 
 const OTPTimeToLiveMinutes int = 30
 
-var ErrPasswordResetNotInitialized = errors.New("password reset not initialized")
+var ErrProcessNotInitialized = errors.New("not initialized")
 var ErrOTPExpired = errors.New("OTP has expired")
 var ErrIncorrectOTP = errors.New("incorrect OTP")
 
@@ -36,7 +36,7 @@ func (c *UpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, O
 	}
 
 	if !user.PasswordUpdateRequestedAt.Valid || !user.PasswordUpdateOtp.Valid {
-		return ErrPasswordResetNotInitialized
+		return ErrProcessNotInitialized
 	}
 
 	now := time.Now()

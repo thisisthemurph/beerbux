@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,13 +71,17 @@ type SessionTransactionLine struct {
 }
 
 type User struct {
-	ID             uuid.UUID
-	Username       string
-	Email          string
-	Name           string
-	HashedPassword string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID                        uuid.UUID
+	Username                  string
+	Email                     string
+	Name                      string
+	HashedPassword            string
+	UpdateHashedPassword      sql.NullString
+	PasswordUpdateRequestedAt sql.NullTime
+	PasswordUpdateOtp         sql.NullString
+	PasswordLastUpdatedAt     sql.NullTime
+	CreatedAt                 time.Time
+	UpdatedAt                 time.Time
 }
 
 type UserTotal struct {

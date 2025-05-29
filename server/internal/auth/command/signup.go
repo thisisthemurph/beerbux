@@ -17,14 +17,14 @@ var (
 )
 
 type SignupCommand struct {
-	Queries *db.Queries
-	Options config.AuthOptions
+	queries *db.Queries
+	options config.AuthOptions
 }
 
 func NewSignupCommand(queries *db.Queries, options config.AuthOptions) *SignupCommand {
 	return &SignupCommand{
-		Queries: queries,
-		Options: options,
+		queries: queries,
+		options: options,
 	}
 }
 
@@ -34,7 +34,7 @@ type TokenResponse struct {
 }
 
 func (c *SignupCommand) Execute(ctx context.Context, name, username, email, password, verificationPassword string) (*TokenResponse, error) {
-	usernameTaken, err := c.Queries.UserWithUsernameExists(ctx, username)
+	usernameTaken, err := c.queries.UserWithUsernameExists(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine if username exists: %w", err)
 	} else if usernameTaken {
@@ -50,7 +50,7 @@ func (c *SignupCommand) Execute(ctx context.Context, name, username, email, pass
 		return nil, fmt.Errorf("failed to generate password: %w", err)
 	}
 
-	usr, err := c.Queries.CreateUser(ctx, db.CreateUserParams{
+	usr, err := c.queries.CreateUser(ctx, db.CreateUserParams{
 		Name:           name,
 		Username:       username,
 		Email:          email,
@@ -60,7 +60,7 @@ func (c *SignupCommand) Execute(ctx context.Context, name, username, email, pass
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	accessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -71,10 +71,10 @@ func (c *SignupCommand) Execute(ctx context.Context, name, username, email, pass
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	err = c.Queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
+	err = c.queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
 		UserID:      usr.ID,
 		HashedToken: hashedRefreshToken,
-		ExpiresAt:   time.Now().Add(c.Options.RefreshTokenTTL),
+		ExpiresAt:   time.Now().Add(c.options.RefreshTokenTTL),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)

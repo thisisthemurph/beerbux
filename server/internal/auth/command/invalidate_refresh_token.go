@@ -9,24 +9,24 @@ import (
 )
 
 type InvalidateRefreshTokenCommand struct {
-	Queries *db.Queries
+	queries *db.Queries
 }
 
 func NewInvalidateRefreshTokenCommand(authRepository *db.Queries) *InvalidateRefreshTokenCommand {
 	return &InvalidateRefreshTokenCommand{
-		Queries: authRepository,
+		queries: authRepository,
 	}
 }
 
 func (c *InvalidateRefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, token string) error {
-	userRefreshTokens, err := c.Queries.GetRefreshTokensByUserID(ctx, userID)
+	userRefreshTokens, err := c.queries.GetRefreshTokensByUserID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get refresh tokens: %w", err)
 	}
 
 	for _, t := range userRefreshTokens {
 		if err := bcrypt.CompareHashAndPassword([]byte(t.HashedToken), []byte(token)); err == nil {
-			if err := c.Queries.InvalidateRefreshToken(ctx, t.ID); err != nil {
+			if err := c.queries.InvalidateRefreshToken(ctx, t.ID); err != nil {
 				return fmt.Errorf("failed to invalidate refresh token: %w", err)
 			}
 			return nil

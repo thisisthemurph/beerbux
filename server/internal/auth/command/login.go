@@ -18,14 +18,14 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 type LoginCommand struct {
-	Queries *db.Queries
-	Options config.AuthOptions
+	queries *db.Queries
+	options config.AuthOptions
 }
 
 func NewLoginCommand(queries *db.Queries, options config.AuthOptions) *LoginCommand {
 	return &LoginCommand{
-		Queries: queries,
-		Options: options,
+		queries: queries,
+		options: options,
 	}
 }
 
@@ -55,7 +55,7 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, ErrUserNotFound
 	}
 
-	accessToken, err := shared.GenerateJWT(user.ID, user.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(user.ID, user.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -66,10 +66,10 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	err = c.Queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
+	err = c.queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
 		UserID:      user.ID,
 		HashedToken: hashedRefreshToken,
-		ExpiresAt:   time.Now().Add(c.Options.RefreshTokenTTL),
+		ExpiresAt:   time.Now().Add(c.options.RefreshTokenTTL),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
@@ -89,9 +89,9 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 
 func (c *LoginCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
 	if isEmail(usernameOrEmail) {
-		return c.Queries.GetUserByEmail(ctx, usernameOrEmail)
+		return c.queries.GetUserByEmail(ctx, usernameOrEmail)
 	}
-	return c.Queries.GetUserByUsername(ctx, usernameOrEmail)
+	return c.queries.GetUserByUsername(ctx, usernameOrEmail)
 }
 
 var (

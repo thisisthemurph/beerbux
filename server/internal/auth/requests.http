@@ -24,3 +24,19 @@ POST {{base_url}}/api/auth/logout
 ### Refresh JWT
 POST {{base_url}}/api/auth/refresh
 
+### Initialize Password Reset
+POST {{base_url}}/api/auth/password/initialize-reset
+Content-Type: application/json
+
+{
+  "password": "password"
+}
+
+### Reset Password
+POST {{base_url}}/api/auth/password/reset
+Content-Type: application/json
+
+{
+  "otp": "g6wfuo"
+}
+

@@ -6,6 +6,10 @@ create table if not exists users (
     email text not null unique,
     name text not null,
     hashed_password text not null,
+    update_hashed_password text,
+    password_update_requested_at timestamp with time zone,
+    password_update_otp text,
+    password_last_updated_at timestamp with time zone,
     created_at timestamp with time zone not null default now(),
     updated_at timestamp with time zone not null default now()
 );

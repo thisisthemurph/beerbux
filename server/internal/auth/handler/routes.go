@@ -22,9 +22,14 @@ func BuildRoutes(
 	signupCommand := command.NewSignupCommand(queries, options)
 	refreshCommand := command.NewRefreshTokenCommand(queries, options)
 	invalidateRefreshTokenCommand := command.NewInvalidateRefreshTokenCommand(queries)
+	initializePasswordResetCommand := command.NewInitializePasswordResetCommand(queries)
+	resetPasswordCommand := command.NewResetPasswordCommand(queries)
 
 	mux.Handle("POST /auth/login", NewLoginHandler(loginCommand, logger))
 	mux.Handle("POST /auth/signup", NewSignupHandler(signupCommand, logger))
 	mux.Handle("POST /auth/refresh", NewRefreshHandler(refreshCommand, logger))
 	mux.Handle("POST /auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
+	mux.Handle("POST /auth/password/initialize-reset", NewInitializePasswordResetHandler(
+		initializePasswordResetCommand, cfg.Environment.IsDevelopment(), logger))
+	mux.Handle("POST /auth/password/reset", NewPasswordResetHandler(resetPasswordCommand, logger))
 }

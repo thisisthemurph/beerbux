@@ -15,19 +15,19 @@ import (
 var ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
 type RefreshTokenCommand struct {
-	Queries *db.Queries
-	Options config.AuthOptions
+	queries *db.Queries
+	options config.AuthOptions
 }
 
 func NewRefreshTokenCommand(queries *db.Queries, options config.AuthOptions) *RefreshTokenCommand {
 	return &RefreshTokenCommand{
-		Queries: queries,
-		Options: options,
+		queries: queries,
+		options: options,
 	}
 }
 
 func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, refreshToken string) (*TokenResponse, error) {
-	userRefreshTokens, err := c.Queries.GetRefreshTokensByUserID(ctx, userID)
+	userRefreshTokens, err := c.queries.GetRefreshTokensByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get refresh tokens: %w", err)
 	}
@@ -46,12 +46,12 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, ref
 		return nil, ErrRefreshTokenNotFound
 	}
 
-	usr, err := c.Queries.GetUser(ctx, userID)
+	usr, err := c.queries.GetUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	newAccessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.Options.JWTSecret, c.Options.AccessTokenTTL)
+	newAccessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}
@@ -62,16 +62,16 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, ref
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	err = c.Queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
+	err = c.queries.RegisterRefreshToken(ctx, db.RegisterRefreshTokenParams{
 		UserID:      usr.ID,
 		HashedToken: newHashedRefreshToken,
-		ExpiresAt:   time.Now().Add(c.Options.RefreshTokenTTL),
+		ExpiresAt:   time.Now().Add(c.options.RefreshTokenTTL),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
-	_ = c.Queries.DeleteRefreshToken(ctx, matchedToken.ID)
+	_ = c.queries.DeleteRefreshToken(ctx, matchedToken.ID)
 
 	return &TokenResponse{
 		AccessToken:  newAccessToken,

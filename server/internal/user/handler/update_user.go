@@ -46,7 +46,8 @@ func (h *UpdateUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := strings.ToLower(req.Username)
-	if err := h.updateUserCommand.Execute(r.Context(), c.Subject, req.Name, username); err != nil {
+	response, err := h.updateUserCommand.Execute(r.Context(), c.Subject, req.Name, username)
+	if err != nil {
 		if errors.Is(err, command.ErrUsernameExists) {
 			msg := fmt.Sprintf("The username %s is already taken", username)
 			send.BadRequest(w, msg)
@@ -56,5 +57,5 @@ func (h *UpdateUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	send.JSON(w, response, http.StatusOK)
 }

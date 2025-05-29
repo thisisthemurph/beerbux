@@ -22,10 +22,11 @@ func (q *Queries) GetUserIDByUsername(ctx context.Context, username string) (uui
 	return id, err
 }
 
-const updateUser = `-- name: UpdateUser :exec
+const updateUser = `-- name: UpdateUser :one
 update users
 set name = $2, username = $3
 where id = $1
+returning name, username
 `
 
 type UpdateUserParams struct {
@@ -34,7 +35,14 @@ type UpdateUserParams struct {
 	Username string
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser, arg.ID, arg.Name, arg.Username)
-	return err
+type UpdateUserRow struct {
+	Name     string
+	Username string
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUser, arg.ID, arg.Name, arg.Username)
+	var i UpdateUserRow
+	err := row.Scan(&i.Name, &i.Username)
+	return i, err
 }

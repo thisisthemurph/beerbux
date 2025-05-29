@@ -21,24 +21,33 @@ func NewUpdateUserCommand(queries *db.Queries) *UpdateUserCommand {
 	}
 }
 
-func (c *UpdateUserCommand) Execute(ctx context.Context, userID uuid.UUID, newName string, newUsername string) error {
+type UserUpdateResponse struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+}
+
+func (c *UpdateUserCommand) Execute(ctx context.Context, userID uuid.UUID, newName string, newUsername string) (*UserUpdateResponse, error) {
 	existingUserID, err := c.Queries.GetUserIDByUsername(ctx, newUsername)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("failed to determine if username %s exists", newUsername)
+			return nil, fmt.Errorf("failed to determine if username %s exists", newUsername)
 		}
 	}
 	if err == nil && existingUserID != userID {
-		return ErrUsernameExists
+		return nil, ErrUsernameExists
 	}
 
-	if err := c.Queries.UpdateUser(ctx, db.UpdateUserParams{
+	result, err := c.Queries.UpdateUser(ctx, db.UpdateUserParams{
 		ID:       userID,
 		Name:     newName,
 		Username: newUsername,
-	}); err != nil {
-		return err
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &UserUpdateResponse{
+		Name:     result.Name,
+		Username: result.Username,
+	}, nil
 }

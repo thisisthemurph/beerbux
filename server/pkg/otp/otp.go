@@ -5,7 +5,7 @@ import (
 	"math/big"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+const charset = "abcdefghjkmnpqrstuvwxyz0123456789"
 
 func Generate(length int) (string, error) {
 	value := make([]byte, length)

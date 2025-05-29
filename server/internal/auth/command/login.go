@@ -55,7 +55,7 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, ErrUserNotFound
 	}
 
-	accessToken, err := shared.GenerateJWT(user.ID, user.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(user.ID, user.Username, user.Email, c.options.JWTSecret, c.options.AccessTokenTTL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}

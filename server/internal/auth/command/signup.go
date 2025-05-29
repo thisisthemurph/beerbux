@@ -60,7 +60,14 @@ func (c *SignupCommand) Execute(ctx context.Context, name, username, email, pass
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	accessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
+	accessToken, err := shared.GenerateJWT(
+		usr.ID,
+		usr.Username,
+		usr.Email,
+		c.options.JWTSecret,
+		c.options.AccessTokenTTL,
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}

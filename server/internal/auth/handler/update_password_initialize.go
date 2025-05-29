@@ -3,26 +3,28 @@ package handler
 import (
 	"beerbux/internal/auth/command"
 	"beerbux/internal/common/claims"
+	"beerbux/pkg/email"
 	"beerbux/pkg/send"
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 )
 
 type InitializePasswordUpdateHandler struct {
 	initializePasswordUpdateCommand *command.InitializePasswordResetCommand
+	emailSender                     email.Sender
 	logger                          *slog.Logger
-	isDevelopmentMode               bool
 }
 
 func NewInitializePasswordUpdateHandler(
 	initializePasswordResetCommand *command.InitializePasswordResetCommand,
-	isDevelopmentMode bool,
+	emailSender email.Sender,
 	logger *slog.Logger,
 ) *InitializePasswordUpdateHandler {
 	return &InitializePasswordUpdateHandler{
 		initializePasswordUpdateCommand: initializePasswordResetCommand,
-		isDevelopmentMode:               isDevelopmentMode,
+		emailSender:                     emailSender,
 		logger:                          logger,
 	}
 }
@@ -50,9 +52,21 @@ func (h *InitializePasswordUpdateHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	if h.isDevelopmentMode {
-		h.logger.Info("Password reset initialized", "user", c.Subject, "otp", result.OTP)
-	}
-
+	h.sendPasswordResetEmail(c, result.OTP)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *InitializePasswordUpdateHandler) sendPasswordResetEmail(c claims.JWTClaims, otp string) {
+	html, err := email.GeneratePasswordResetEmail(email.PasswordResetEmailData{
+		Username:          c.Username,
+		OTP:               otp,
+		ExpirationMinutes: strconv.FormatInt(int64(command.OTPTimeToLiveMinutes), 10),
+	})
+	if err != nil {
+		h.logger.Error("failed to generate password reset email template", "error", err)
+		return
+	}
+	if _, err := h.emailSender.Send(c.Email, "Password reset request", html); err != nil {
+		h.logger.Error("failed to send email", "error", err)
+	}
 }

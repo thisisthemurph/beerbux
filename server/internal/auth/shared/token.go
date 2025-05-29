@@ -9,10 +9,11 @@ import (
 	"time"
 )
 
-func GenerateJWT(userID uuid.UUID, username, secret string, duration time.Duration) (string, error) {
+func GenerateJWT(userID uuid.UUID, username, email, secret string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":      userID,
 		"username": username,
+		"email":    email,
 		"exp":      time.Now().Add(duration).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

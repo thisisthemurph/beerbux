@@ -51,7 +51,13 @@ func (c *RefreshTokenCommand) Execute(ctx context.Context, userID uuid.UUID, ref
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	newAccessToken, err := shared.GenerateJWT(usr.ID, usr.Username, c.options.JWTSecret, c.options.AccessTokenTTL)
+	newAccessToken, err := shared.GenerateJWT(
+		usr.ID,
+		usr.Username,
+		usr.Email,
+		c.options.JWTSecret,
+		c.options.AccessTokenTTL)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT: %w", err)
 	}

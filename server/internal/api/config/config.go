@@ -16,6 +16,7 @@ type Config struct {
 	CORSClientBaseURL string
 	Address           string
 	Database          DBConfig
+	Resend            ResendConfig
 	Secrets           SecretConfig
 	StreamService     StreamServiceConfig
 	AccessTokenTTL    time.Duration
@@ -30,6 +31,11 @@ type DBConfig struct {
 	Driver       string
 	URI          string
 	MigrationDir string
+}
+
+type ResendConfig struct {
+	Key                    string
+	DevelopmentSendToEmail string
 }
 
 type StreamServiceConfig struct {
@@ -80,6 +86,10 @@ func Load() (*Config, error) {
 		},
 		StreamService: StreamServiceConfig{
 			HeartbeatTickerSeconds: heartbeatIntervalSeconds,
+		},
+		Resend: ResendConfig{
+			Key:                    mustGetenv("RESEND_KEY"),
+			DevelopmentSendToEmail: os.Getenv("RESEND_DEVELOPMENT_SEND_TO_EMAIL"),
 		},
 		AccessTokenTTL:  time.Duration(accessTokenExpirationMinutes) * time.Minute,
 		RefreshTokenTTL: time.Duration(refreshTokenExpirationMinutes) * time.Minute,

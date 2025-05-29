@@ -4,6 +4,7 @@ import (
 	"beerbux/internal/api/config"
 	"beerbux/internal/auth/command"
 	"beerbux/internal/auth/db"
+	"beerbux/pkg/email"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ func BuildRoutes(
 	cfg *config.Config,
 	logger *slog.Logger,
 	database *sql.DB,
+	emailSender email.Sender,
 	mux *http.ServeMux,
 ) {
 	options := cfg.GetAuthOptions()
@@ -30,6 +32,6 @@ func BuildRoutes(
 	mux.Handle("POST /auth/refresh", NewRefreshHandler(refreshCommand, logger))
 	mux.Handle("POST /auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
 	mux.Handle("POST /auth/password/initialize-reset", NewInitializePasswordUpdateHandler(
-		initializePasswordResetCommand, cfg.Environment.IsDevelopment(), logger))
+		initializePasswordResetCommand, emailSender, logger))
 	mux.Handle("POST /auth/password/reset", NewUpdatePasswordHandler(resetPasswordCommand, logger))
 }

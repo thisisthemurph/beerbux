@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const OTPTimeToLiveMinutes = 30
+const OTPTimeToLiveMinutes int = 30
 
 var ErrPasswordResetNotInitialized = errors.New("password reset not initialized")
 var ErrOTPExpired = errors.New("OTP has expired")

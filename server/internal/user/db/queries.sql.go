@@ -11,17 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const getUserIDByUsername = `-- name: GetUserIDByUsername :one
-select id from users where username = $1 limit 1
-`
-
-func (q *Queries) GetUserIDByUsername(ctx context.Context, username string) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getUserIDByUsername, username)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
 const updateUser = `-- name: UpdateUser :one
 update users
 set name = $2, username = $3

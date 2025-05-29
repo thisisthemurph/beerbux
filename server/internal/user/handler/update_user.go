@@ -2,10 +2,10 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/useraccess"
 	"beerbux/internal/user/command"
 	"beerbux/pkg/send"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,15 +14,18 @@ import (
 
 type UpdateUserHandler struct {
 	updateUserCommand *command.UpdateUserCommand
+	userReader        useraccess.UserReader
 	logger            *slog.Logger
 }
 
 func NewUpdateUserHandler(
 	updateUserCommand *command.UpdateUserCommand,
+	userReader useraccess.UserReader,
 	logger *slog.Logger,
 ) *UpdateUserHandler {
 	return &UpdateUserHandler{
 		updateUserCommand: updateUserCommand,
+		userReader:        userReader,
 		logger:            logger,
 	}
 }
@@ -45,14 +48,21 @@ func (h *UpdateUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := strings.ToLower(req.Username)
-	response, err := h.updateUserCommand.Execute(r.Context(), c.Subject, req.Name, username)
-	if err != nil {
-		if errors.Is(err, command.ErrUsernameExists) {
-			msg := fmt.Sprintf("The username %s is already taken", username)
-			send.BadRequest(w, msg)
+	newUsername := strings.ToLower(req.Username)
+	if strings.ToLower(c.Username) != newUsername {
+		usernameTaken, err := h.userReader.UserWithUsernameExists(r.Context(), newUsername)
+		if err != nil {
+			send.InternalServerError(w, "Error checking if the username is already taken")
 			return
 		}
+		if usernameTaken {
+			send.BadRequest(w, fmt.Sprintf("Username %s is already taken", newUsername))
+			return
+		}
+	}
+
+	response, err := h.updateUserCommand.Execute(r.Context(), c.Subject, req.Name, newUsername)
+	if err != nil {
 		send.InternalServerError(w, "There has been an issue updating your details")
 		return
 	}

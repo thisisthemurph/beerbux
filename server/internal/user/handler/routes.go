@@ -22,6 +22,6 @@ func BuildRoutes(
 	updateUserCommand := command.NewUpdateUserCommand(queries)
 
 	mux.Handle("GET /user", NewGetCurrentUserHandler(userReaderService, logger))
-	mux.Handle("PUT /user", NewUpdateUserHandler(updateUserCommand, logger))
+	mux.Handle("PUT /user", NewUpdateUserHandler(updateUserCommand, userReaderService, logger))
 	mux.Handle("GET /user/{userId}/balance", NewGetCurrentUserBalanceHandler(userReaderService, logger))
 }

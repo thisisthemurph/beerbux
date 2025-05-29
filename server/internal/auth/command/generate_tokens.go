@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"regexp"
 	"strings"
 	"time"
@@ -17,41 +16,37 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-type LoginCommand struct {
+type GenerateTokensCommand struct {
 	queries *db.Queries
 	options config.AuthOptions
 }
 
-func NewLoginCommand(queries *db.Queries, options config.AuthOptions) *LoginCommand {
-	return &LoginCommand{
+func NewGenerateTokensCommand(queries *db.Queries, options config.AuthOptions) *GenerateTokensCommand {
+	return &GenerateTokensCommand{
 		queries: queries,
 		options: options,
 	}
 }
 
-type LoggedInUserDetails struct {
+type AuthenticatedUserDetails struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
 	Email    string    `json:"email"`
 	Name     string    `json:"name"`
 }
 
-type LoginResponse struct {
-	AccessToken  string              `json:"accessToken"`
-	RefreshToken string              `json:"refreshToken"`
-	User         LoggedInUserDetails `json:"user"`
+type TokensResponse struct {
+	AccessToken  string                   `json:"accessToken"`
+	RefreshToken string                   `json:"refreshToken"`
+	User         AuthenticatedUserDetails `json:"user"`
 }
 
-func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password string) (*LoginResponse, error) {
+func (c *GenerateTokensCommand) Execute(ctx context.Context, usernameOrEmail string) (*TokensResponse, error) {
 	user, err := c.getUserByUsernameOrEmail(ctx, usernameOrEmail)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
-		return nil, ErrUserNotFound
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
 		return nil, ErrUserNotFound
 	}
 
@@ -75,10 +70,10 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
-	return &LoginResponse{
+	return &TokensResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User: LoggedInUserDetails{
+		User: AuthenticatedUserDetails{
 			ID:       user.ID,
 			Username: user.Username,
 			Email:    user.Email,
@@ -87,7 +82,7 @@ func (c *LoginCommand) Execute(ctx context.Context, usernameOrEmail, password st
 	}, nil
 }
 
-func (c *LoginCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
+func (c *GenerateTokensCommand) getUserByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (db.User, error) {
 	if isEmail(usernameOrEmail) {
 		return c.queries.GetUserByEmail(ctx, usernameOrEmail)
 	}

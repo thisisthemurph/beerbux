@@ -61,7 +61,7 @@ where u.id = updated.id;
 update users
 set update_email = $2,
     email_update_otp = $3,
-    email_last_updated_at = now()
+    email_update_requested_at = now()
 where id = $1;
 
 -- name: UpdateEmail :exec
@@ -76,4 +76,5 @@ set email = updated.update_email,
     email_update_otp = null,
     email_update_requested_at = null,
     email_last_updated_at = now()
+from updated
 where u.id = updated.id;

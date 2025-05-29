@@ -22,7 +22,7 @@ func BuildRoutes(
 	options := cfg.GetAuthOptions()
 
 	queries := db.New(database)
-	loginCommand := command.NewLoginCommand(queries, options)
+	generateTokensCommand := command.NewGenerateTokensCommand(queries, options)
 	signupCommand := command.NewSignupCommand(queries, options)
 	refreshCommand := command.NewRefreshTokenCommand(queries, options)
 	invalidateRefreshTokenCommand := command.NewInvalidateRefreshTokenCommand(queries)
@@ -30,11 +30,12 @@ func BuildRoutes(
 	resetPasswordCommand := command.NewResetPasswordCommand(queries)
 	initializeUpdateEmailCommand := command.NewInitializeUpdateEmailCommand(queries)
 	updateEmailCommand := command.NewUpdateEmailCommand(queries)
+	comparePasswordCommand := command.NewComparePasswordCommand(queries)
 
 	userAccessQueries := useraccessQueries.New(database)
 	userReaderService := useraccess.NewUserReaderService(userAccessQueries)
 
-	mux.Handle("POST /auth/login", NewLoginHandler(loginCommand, logger))
+	mux.Handle("POST /auth/login", NewLoginHandler(generateTokensCommand, comparePasswordCommand, logger))
 	mux.Handle("POST /auth/signup", NewSignupHandler(signupCommand, logger))
 	mux.Handle("POST /auth/refresh", NewRefreshHandler(refreshCommand, logger))
 	mux.Handle("POST /auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
@@ -43,5 +44,5 @@ func BuildRoutes(
 	mux.Handle("POST /auth/password/reset", NewUpdatePasswordHandler(resetPasswordCommand, logger))
 	mux.Handle("POST /auth/email/initialize-update", NewInitializeEmailUpdateHandler(
 		initializeUpdateEmailCommand, userReaderService, emailSender, logger))
-	mux.Handle("POST /auth/email", NewUpdateEmailHandler(updateEmailCommand, logger))
+	mux.Handle("POST /auth/email", NewUpdateEmailHandler(updateEmailCommand, generateTokensCommand, logger))
 }

@@ -50,7 +50,7 @@ func (h *UpdatePasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 func (h *UpdatePasswordHandler) handleResetPasswordError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, command.ErrUserNotFound):
-		send.Unauthorized(w, "User not found")
+		send.NotFound(w, "User not found")
 	case errors.Is(err, command.ErrIncorrectOTP):
 		send.BadRequest(w, "The provided OTP is incorrect")
 	case errors.Is(err, command.ErrOTPExpired):

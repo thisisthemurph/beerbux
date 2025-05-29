@@ -9,18 +9,22 @@ const formSchema = z.object({
 	email: z.string().email("Invalid email address").nonempty("Email is required"),
 });
 
-export type UserSettingsFormValues = z.infer<typeof formSchema>;
+export type UpdateEmailFormValues = z.infer<typeof formSchema>;
 
-export function UpdateEmailForm() {
-	const form = useForm<UserSettingsFormValues>({
+type UpdateEmailFormProps = {
+	onSubmit: (email: string) => void;
+};
+
+export function UpdateEmailForm({ onSubmit }: UpdateEmailFormProps) {
+	const form = useForm<UpdateEmailFormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			email: "",
 		},
 	});
 
-	function handleSubmit(values: UserSettingsFormValues) {
-		console.log(values);
+	function handleSubmit(values: UpdateEmailFormValues) {
+		onSubmit(values.email);
 	}
 
 	return (

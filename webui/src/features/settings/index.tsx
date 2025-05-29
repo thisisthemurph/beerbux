@@ -2,8 +2,9 @@ import useAuthClient from "@/api/auth-client.ts";
 import useUserClient from "@/api/user-client.ts";
 import { PageHeading } from "@/components/page-heading.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { OTPForm } from "@/features/settings/otp-form.tsx";
 import { UpdateEmailForm } from "@/features/settings/update-email-form.tsx";
-import { UpdatePasswordForm, UpdatePasswordOTPForm } from "@/features/settings/update-password-form.tsx";
+import { UpdatePasswordForm } from "@/features/settings/update-password-form.tsx";
 import { UserSettingsForm } from "@/features/settings/user-settings-form.tsx";
 import type { UserSettingsFormValues } from "@/features/settings/user-settings-form.tsx";
 import { tryCatch } from "@/lib/try-catch.ts";
@@ -15,8 +16,9 @@ export default function SettingsPage() {
 	const user = useUserStore((state) => state.user);
 	const setUser = useUserStore((state) => state.setUser);
 	const [showPasswordOTP, setShowPasswordOTP] = useState(false);
+	const [showEmailOTP, setShowEmailOTP] = useState(false);
 	const { updateUser } = useUserClient();
-	const { initializePasswordReset, resetPassword } = useAuthClient();
+	const { initializePasswordReset, resetPassword, initializeEmailUpdate, updateEmail } = useAuthClient();
 
 	async function handleUpdateUser(values: UserSettingsFormValues) {
 		if (!user) return;
@@ -37,7 +39,7 @@ export default function SettingsPage() {
 		});
 	}
 
-	async function handleInitializePasswordReset(password: string) {
+	async function handleInitializePasswordUpdate(password: string) {
 		const { err } = await tryCatch(initializePasswordReset(password));
 		if (err) {
 			toast.error("Failed to initialize password reset", {
@@ -50,7 +52,7 @@ export default function SettingsPage() {
 		toast.success("Password reset requested. Please check your email for the OTP.");
 	}
 
-	async function handlePasswordReset(otp: string) {
+	async function handleUpdatePassword(otp: string) {
 		const { err } = await tryCatch(resetPassword(otp));
 		if (err) {
 			toast.error("Failed to reset password", {
@@ -60,6 +62,31 @@ export default function SettingsPage() {
 		}
 		setShowPasswordOTP(false);
 		toast.success("Password reset successfully. You can now log in with your new password.");
+	}
+
+	async function handleInitializeEmailUpdate(newEmail: string) {
+		const { err } = await tryCatch(initializeEmailUpdate(newEmail));
+		if (err) {
+			toast.error("Failed to start the email update process", {
+				description: err.message,
+			});
+			return;
+		}
+
+		setShowEmailOTP(true);
+		toast.success("Email update requested. Please check your email for the OTP.");
+	}
+
+	async function handleUpdateEmail(otp: string) {
+		const { err } = await tryCatch(updateEmail(otp));
+		if (err) {
+			toast.error("Could not update your email address", {
+				description: err.message,
+			});
+			return;
+		}
+		setShowEmailOTP(false);
+		toast.success("Email updated successfully.");
 	}
 
 	if (!user) {
@@ -87,7 +114,14 @@ export default function SettingsPage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<UpdateEmailForm />
+						{showEmailOTP ? (
+							<OTPForm
+								onCancel={() => setShowEmailOTP(false)}
+								onOtpCompleted={(otp) => handleUpdateEmail(otp)}
+							/>
+						) : (
+							<UpdateEmailForm onSubmit={(newEmail) => handleInitializeEmailUpdate(newEmail)} />
+						)}
 					</CardContent>
 				</Card>
 				<Card>
@@ -101,12 +135,12 @@ export default function SettingsPage() {
 					</CardHeader>
 					<CardContent>
 						{showPasswordOTP ? (
-							<UpdatePasswordOTPForm
+							<OTPForm
 								onCancel={() => setShowPasswordOTP(false)}
-								onOtpCompleted={(otp) => handlePasswordReset(otp)}
+								onOtpCompleted={(otp) => handleUpdatePassword(otp)}
 							/>
 						) : (
-							<UpdatePasswordForm onSubmit={({ password }) => handleInitializePasswordReset(password)} />
+							<UpdatePasswordForm onSubmit={(newPassword) => handleInitializePasswordUpdate(newPassword)} />
 						)}
 					</CardContent>
 				</Card>

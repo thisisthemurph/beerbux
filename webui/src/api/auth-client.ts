@@ -40,7 +40,29 @@ function useAuthClient() {
 		});
 	};
 
-	return { login, signup, getCurrentUser, initializePasswordReset, resetPassword };
+	const initializeEmailUpdate = async (newEmail: string): Promise<void> => {
+		return apiFetch<void>("/auth/email/initialize-update", {
+			method: "POST",
+			body: JSON.stringify({ newEmail }),
+		});
+	};
+
+	const updateEmail = async (otp: string): Promise<void> => {
+		return apiFetch<void>("/auth/email", {
+			method: "POST",
+			body: JSON.stringify({ otp }),
+		});
+	};
+
+	return {
+		login,
+		signup,
+		getCurrentUser,
+		initializePasswordReset,
+		resetPassword,
+		initializeEmailUpdate,
+		updateEmail,
+	};
 }
 
 export default useAuthClient;

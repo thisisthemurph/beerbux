@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const EmailResetOTPLength = 6
+const EmailUpdateOTPLength = 6
 
 type InitializeUpdateEmailCommand struct {
 	queries *db.Queries
@@ -26,7 +26,7 @@ type InitializeUpdateEmailCommandResponse struct {
 }
 
 func (c *InitializeUpdateEmailCommand) Execute(ctx context.Context, userID uuid.UUID, email string) (*InitializeUpdateEmailCommandResponse, error) {
-	OTP, err := otp.Generate(EmailResetOTPLength)
+	OTP, err := otp.Generate(EmailUpdateOTPLength)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate one-time password: %w", err)
 	}

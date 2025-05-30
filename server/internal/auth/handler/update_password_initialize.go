@@ -12,18 +12,18 @@ import (
 )
 
 type InitializePasswordUpdateHandler struct {
-	initializePasswordUpdateCommand *command.InitializePasswordResetCommand
+	initializeUpdatePasswordCommand *command.InitializeUpdatePasswordCommand
 	emailSender                     email.Sender
 	logger                          *slog.Logger
 }
 
-func NewInitializePasswordUpdateHandler(
-	initializePasswordResetCommand *command.InitializePasswordResetCommand,
+func NewInitializeUpdatePasswordHandler(
+	initializeUpdatePasswordCommand *command.InitializeUpdatePasswordCommand,
 	emailSender email.Sender,
 	logger *slog.Logger,
 ) *InitializePasswordUpdateHandler {
 	return &InitializePasswordUpdateHandler{
-		initializePasswordUpdateCommand: initializePasswordResetCommand,
+		initializeUpdatePasswordCommand: initializeUpdatePasswordCommand,
 		emailSender:                     emailSender,
 		logger:                          logger,
 	}
@@ -46,27 +46,27 @@ func (h *InitializePasswordUpdateHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	result, err := h.initializePasswordUpdateCommand.Execute(r.Context(), c.Subject, req.NewPassword)
+	result, err := h.initializeUpdatePasswordCommand.Execute(r.Context(), c.Subject, req.NewPassword)
 	if err != nil {
 		send.InternalServerError(w, "There has been an issue updating your password")
 		return
 	}
 
-	h.sendPasswordResetEmail(c, result.OTP)
+	h.sendUpdatePasswordEmail(c, result.OTP)
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *InitializePasswordUpdateHandler) sendPasswordResetEmail(c claims.JWTClaims, otp string) {
-	html, err := email.GeneratePasswordResetEmail(email.PasswordResetEmailData{
+func (h *InitializePasswordUpdateHandler) sendUpdatePasswordEmail(c claims.JWTClaims, otp string) {
+	html, err := email.GenerateUpdatePasswordEmail(email.UpdatePasswordEmailData{
 		Username:          c.Username,
 		OTP:               otp,
 		ExpirationMinutes: strconv.FormatInt(int64(command.OTPTimeToLiveMinutes), 10),
 	})
 	if err != nil {
-		h.logger.Error("failed to generate password reset email template", "error", err)
+		h.logger.Error("failed to generate update password email template", "error", err)
 		return
 	}
-	if _, err := h.emailSender.Send(c.Email, "Password reset request", html); err != nil {
+	if _, err := h.emailSender.Send(c.Email, "Password update request", html); err != nil {
 		h.logger.Error("failed to send email", "error", err)
 	}
 }

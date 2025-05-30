@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 )
 
-type PasswordResetEmailData struct {
+type UpdatePasswordEmailData struct {
 	Username          string
 	OTP               string
 	ExpirationMinutes string
 }
 
-func GeneratePasswordResetEmail(data PasswordResetEmailData) (string, error) {
-	tmpl, err := parseTemplate("password_reset_email.html")
+func GenerateUpdatePasswordEmail(data UpdatePasswordEmailData) (string, error) {
+	tmpl, err := parseTemplate("update_password_email.html")
 	if err != nil {
 		return "", err
 	}

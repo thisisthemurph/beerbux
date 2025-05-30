@@ -10,29 +10,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const PasswordResetOTPLength = 6
+const PasswordUpdateOTPLength = 6
 
-type InitializePasswordResetCommand struct {
+type InitializeUpdatePasswordCommand struct {
 	queries *db.Queries
 }
 
-func NewInitializePasswordResetCommand(queries *db.Queries) *InitializePasswordResetCommand {
-	return &InitializePasswordResetCommand{
+func NewInitializeUpdatePasswordCommand(queries *db.Queries) *InitializeUpdatePasswordCommand {
+	return &InitializeUpdatePasswordCommand{
 		queries: queries,
 	}
 }
 
-type InitializePasswordResetResponse struct {
+type InitializeUpdatePasswordResponse struct {
 	OTP string
 }
 
-func (c *InitializePasswordResetCommand) Execute(ctx context.Context, userID uuid.UUID, password string) (*InitializePasswordResetResponse, error) {
+func (c *InitializeUpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, password string) (*InitializeUpdatePasswordResponse, error) {
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate password: %w", err)
 	}
 
-	OTP, err := otp.Generate(PasswordResetOTPLength)
+	OTP, err := otp.Generate(PasswordUpdateOTPLength)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate one-time password: %w", err)
 	}
@@ -49,10 +49,10 @@ func (c *InitializePasswordResetCommand) Execute(ctx context.Context, userID uui
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize password reset: %w", err)
+		return nil, fmt.Errorf("failed to initialize password update: %w", err)
 	}
 
-	return &InitializePasswordResetResponse{
+	return &InitializeUpdatePasswordResponse{
 		OTP: OTP,
 	}, nil
 }

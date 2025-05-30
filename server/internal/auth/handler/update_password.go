@@ -15,9 +15,9 @@ type UpdatePasswordHandler struct {
 	logger                *slog.Logger
 }
 
-func NewUpdatePasswordHandler(passwordResetCommand *command.UpdatePasswordCommand, logger *slog.Logger) *UpdatePasswordHandler {
+func NewUpdatePasswordHandler(updatePasswordCommand *command.UpdatePasswordCommand, logger *slog.Logger) *UpdatePasswordHandler {
 	return &UpdatePasswordHandler{
-		updatePasswordCommand: passwordResetCommand,
+		updatePasswordCommand: updatePasswordCommand,
 		logger:                logger,
 	}
 }
@@ -40,22 +40,22 @@ func (h *UpdatePasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := h.updatePasswordCommand.Execute(r.Context(), c.Subject, req.OTP); err != nil {
-		h.handleResetPasswordError(w, err)
+		h.handleUpdatePasswordError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *UpdatePasswordHandler) handleResetPasswordError(w http.ResponseWriter, err error) {
+func (h *UpdatePasswordHandler) handleUpdatePasswordError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, command.ErrUserNotFound):
 		send.NotFound(w, "User not found")
 	case errors.Is(err, command.ErrIncorrectOTP):
 		send.BadRequest(w, "The provided OTP is incorrect")
 	case errors.Is(err, command.ErrOTPExpired):
-		send.BadRequest(w, "Your OTP has expired, please reset your password again")
+		send.BadRequest(w, "Your OTP has expired, please start the process again")
 	default:
-		send.InternalServerError(w, "There was an issue resetting your password")
+		send.InternalServerError(w, "There was an issue updating your password")
 	}
 }

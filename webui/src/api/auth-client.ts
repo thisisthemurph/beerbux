@@ -27,15 +27,15 @@ function useAuthClient() {
 	};
 
 	const initializePasswordReset = async (newPassword: string): Promise<void> => {
-		return apiFetch<void>("/auth/password/initialize-reset", {
+		return apiFetch<void>("/auth/password/initialize-update", {
 			method: "POST",
 			body: JSON.stringify({ newPassword }),
 		});
 	};
 
 	const resetPassword = async (otp: string): Promise<void> => {
-		return apiFetch<void>("/auth/password/reset", {
-			method: "POST",
+		return apiFetch<void>("/auth/password", {
+			method: "PUT",
 			body: JSON.stringify({ otp }),
 		});
 	};
@@ -49,7 +49,7 @@ function useAuthClient() {
 
 	const updateEmail = async (otp: string): Promise<void> => {
 		return apiFetch<void>("/auth/email", {
-			method: "POST",
+			method: "PUT",
 			body: JSON.stringify({ otp }),
 		});
 	};

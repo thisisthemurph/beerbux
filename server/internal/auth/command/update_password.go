@@ -20,7 +20,7 @@ type UpdatePasswordCommand struct {
 	queries *db.Queries
 }
 
-func NewResetPasswordCommand(queries *db.Queries) *UpdatePasswordCommand {
+func NewUpdatePasswordCommand(queries *db.Queries) *UpdatePasswordCommand {
 	return &UpdatePasswordCommand{
 		queries: queries,
 	}
@@ -32,7 +32,7 @@ func (c *UpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, O
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrUserNotFound
 		}
-		return fmt.Errorf("failed to get user for password reset: %w", err)
+		return fmt.Errorf("failed to get user for password update: %w", err)
 	}
 
 	if !user.PasswordUpdateRequestedAt.Valid || !user.PasswordUpdateOtp.Valid {
@@ -50,7 +50,7 @@ func (c *UpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, O
 	}
 
 	if err := c.queries.UpdatePassword(ctx, userID); err != nil {
-		return fmt.Errorf("failed to reset password: %w", err)
+		return fmt.Errorf("failed to update password: %w", err)
 	}
 
 	return nil

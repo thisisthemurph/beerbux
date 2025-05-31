@@ -1,3 +1,4 @@
+import useFriendsClient from "@/api/friends-client.ts";
 import useSessionClient from "@/api/session-client.ts";
 import type { User } from "@/api/types/user.ts";
 import useUserClient from "@/api/user-client.ts";
@@ -15,6 +16,7 @@ import { SquareChevronRight } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { FriendListing } from "./friend-listing";
 
 type AuthenticatedViewProps = {
 	user: User;
@@ -23,6 +25,7 @@ type AuthenticatedViewProps = {
 export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 	const { getSessions, getBalance } = useUserClient();
 	const { createSession } = useSessionClient();
+	const { getFriends } = useFriendsClient();
 	const [createSessionOpen, setCreateSessionOpen] = useState(false);
 	const navigate = useNavigate();
 
@@ -35,6 +38,12 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 		queryKey: ["balance", user.id],
 		queryFn: () => getBalance(user.id),
 		placeholderData: { credit: 0, debit: 0, net: 0 },
+	});
+
+	const { data: friends } = useQuery({
+		queryKey: ["friends"],
+		queryFn: () => getFriends(),
+		placeholderData: [],
 	});
 
 	async function handleCreateSession({ name }: { name: string }) {
@@ -82,6 +91,8 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
 			<Suspense fallback={<SessionListing.Skeleton />}>
 				<SessionListing sessions={sessions}>{sessions && <AllSessionsLink />}</SessionListing>
 			</Suspense>
+
+			<FriendListing friends={friends ?? []} />
 
 			<CreateSessionDrawer
 				open={createSessionOpen}

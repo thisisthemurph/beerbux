@@ -35,7 +35,7 @@ func (c *UpdatePasswordCommand) Execute(ctx context.Context, userID uuid.UUID, O
 		return fmt.Errorf("failed to get user for password update: %w", err)
 	}
 
-	if !user.PasswordUpdateRequestedAt.Valid || !user.PasswordUpdateOtp.Valid {
+	if !user.PasswordUpdateRequestedAt.Valid || !user.PasswordUpdateOtp.Valid || !user.UpdateHashedPassword.Valid {
 		return ErrProcessNotInitialized
 	}
 

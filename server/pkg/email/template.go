@@ -7,6 +7,26 @@ import (
 	"path/filepath"
 )
 
+type ResetPasswordEmailData struct {
+	Username          string
+	OTP               string
+	ExpirationMinutes string
+}
+
+func GenerateResetPasswordEmail(data ResetPasswordEmailData) (string, error) {
+	tmpl, err := parseTemplate("reset_password_email.html")
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 type UpdatePasswordEmailData struct {
 	Username          string
 	OTP               string

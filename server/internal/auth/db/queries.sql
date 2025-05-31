@@ -57,6 +57,29 @@ set
 from updated
 where u.id = updated.id;
 
+-- name: InitializePasswordReset :exec
+update users
+set update_hashed_password = null,
+    password_update_otp = $2,
+    password_update_requested_at = now()
+where id = $1;
+
+-- name: ResetPassword :exec
+with updated as (
+    select id, update_hashed_password
+    from users updated_users
+    where updated_users.id = $1 and updated_users.password_update_requested_at is not null
+)
+update users u
+set
+    hashed_password = $2,
+    update_hashed_password = null,
+    password_update_otp = null,
+    password_update_requested_at = null,
+    password_last_updated_at = now()
+from updated
+where u.id = updated.id;
+
 -- name: InitialiseUpdateEmail :exec
 update users
 set update_email = $2,

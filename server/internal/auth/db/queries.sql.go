@@ -202,6 +202,24 @@ func (q *Queries) InitialiseUpdateEmail(ctx context.Context, arg InitialiseUpdat
 	return err
 }
 
+const initializePasswordReset = `-- name: InitializePasswordReset :exec
+update users
+set update_hashed_password = null,
+    password_update_otp = $2,
+    password_update_requested_at = now()
+where id = $1
+`
+
+type InitializePasswordResetParams struct {
+	ID                uuid.UUID
+	PasswordUpdateOtp sql.NullString
+}
+
+func (q *Queries) InitializePasswordReset(ctx context.Context, arg InitializePasswordResetParams) error {
+	_, err := q.db.ExecContext(ctx, initializePasswordReset, arg.ID, arg.PasswordUpdateOtp)
+	return err
+}
+
 const initializePasswordUpdate = `-- name: InitializePasswordUpdate :exec
 update users
 set update_hashed_password = $2,
@@ -245,6 +263,33 @@ type RegisterRefreshTokenParams struct {
 
 func (q *Queries) RegisterRefreshToken(ctx context.Context, arg RegisterRefreshTokenParams) error {
 	_, err := q.db.ExecContext(ctx, registerRefreshToken, arg.UserID, arg.HashedToken, arg.ExpiresAt)
+	return err
+}
+
+const resetPassword = `-- name: ResetPassword :exec
+with updated as (
+    select id, update_hashed_password
+    from users updated_users
+    where updated_users.id = $1 and updated_users.password_update_requested_at is not null
+)
+update users u
+set
+    hashed_password = $2,
+    update_hashed_password = null,
+    password_update_otp = null,
+    password_update_requested_at = null,
+    password_last_updated_at = now()
+from updated
+where u.id = updated.id
+`
+
+type ResetPasswordParams struct {
+	ID             uuid.UUID
+	HashedPassword string
+}
+
+func (q *Queries) ResetPassword(ctx context.Context, arg ResetPasswordParams) error {
+	_, err := q.db.ExecContext(ctx, resetPassword, arg.ID, arg.HashedPassword)
 	return err
 }
 

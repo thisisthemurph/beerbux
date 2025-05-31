@@ -30,6 +30,7 @@ type UserAccount struct {
 type UserResponse struct {
 	ID        uuid.UUID   `json:"id"`
 	Username  string      `json:"username"`
+	Email     string      `json:"email"`
 	Name      string      `json:"name"`
 	CreatedAt time.Time   `json:"createdAt"`
 	UpdatedAt time.Time   `json:"updatedAt"`
@@ -48,6 +49,7 @@ func (q *UserReaderService) GetUserByID(ctx context.Context, userID uuid.UUID) (
 	return &UserResponse{
 		ID:        usr.ID,
 		Username:  usr.Username,
+		Email:     usr.Email,
 		Name:      usr.Name,
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
@@ -70,6 +72,7 @@ func (q *UserReaderService) GetUserByUsername(ctx context.Context, username stri
 	return &UserResponse{
 		ID:        usr.ID,
 		Username:  usr.Username,
+		Email:     usr.Email,
 		Name:      usr.Name,
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
@@ -92,6 +95,7 @@ func (q *UserReaderService) GetUserByEmail(ctx context.Context, email string) (*
 	return &UserResponse{
 		ID:        usr.ID,
 		Username:  usr.Username,
+		Email:     usr.Email,
 		Name:      usr.Name,
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,

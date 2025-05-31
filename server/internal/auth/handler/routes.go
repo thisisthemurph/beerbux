@@ -31,6 +31,8 @@ func BuildRoutes(
 	initializeUpdateEmailCommand := command.NewInitializeUpdateEmailCommand(queries)
 	updateEmailCommand := command.NewUpdateEmailCommand(queries)
 	comparePasswordCommand := command.NewComparePasswordCommand(queries)
+	initializePasswordResetCommand := command.NewInitializePasswordResetCommand(queries)
+	resetPasswordCommand := command.NewResetPasswordCommand(queries)
 
 	userAccessQueries := useraccessQueries.New(database)
 	userReaderService := useraccess.NewUserReaderService(userAccessQueries)
@@ -39,10 +41,10 @@ func BuildRoutes(
 	mux.Handle("POST /auth/signup", NewSignupHandler(signupCommand, logger))
 	mux.Handle("POST /auth/refresh", NewRefreshHandler(refreshCommand, logger))
 	mux.Handle("POST /auth/logout", NewLogoutHandler(invalidateRefreshTokenCommand, logger))
-	mux.Handle("POST /auth/password/initialize-update", NewInitializeUpdatePasswordHandler(
-		initializeUpdatePasswordCommand, emailSender, logger))
+	mux.Handle("POST /auth/password/initialize-update", NewInitializeUpdatePasswordHandler(initializeUpdatePasswordCommand, emailSender, logger))
 	mux.Handle("PUT /auth/password", NewUpdatePasswordHandler(updatePasswordCommand, logger))
-	mux.Handle("POST /auth/email/initialize-update", NewInitializeEmailUpdateHandler(
-		initializeUpdateEmailCommand, userReaderService, emailSender, logger))
+	mux.Handle("POST /auth/password/initialize-reset", NewInitializePasswordResetHandler(initializePasswordResetCommand, userReaderService, emailSender, logger))
+	mux.Handle("PUT /auth/password/reset", NewResetPasswordHandler(resetPasswordCommand, logger))
+	mux.Handle("POST /auth/email/initialize-update", NewInitializeEmailUpdateHandler(initializeUpdateEmailCommand, userReaderService, emailSender, logger))
 	mux.Handle("PUT /auth/email", NewUpdateEmailHandler(updateEmailCommand, generateTokensCommand, logger))
 }

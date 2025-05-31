@@ -1,0 +1,2 @@
+### Get Friends
+GET {{base_url}}/api/friends

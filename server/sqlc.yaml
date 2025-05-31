@@ -43,3 +43,11 @@ sql:
             go_type: "float64"
           - column: "ledger.amount"
             go_type: "float64"
+
+  - engine: "postgresql"
+    queries: "internal/friends/db/queries.sql"
+    schema: "migrations"
+    gen:
+      go:
+        package: "db"
+        out: "internal/friends/db"

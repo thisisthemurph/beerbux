@@ -23,17 +23,13 @@ with joint_sessions as (
 )
 select exists(select 1 from joint_sessions) as members_are_friends;
 
--- name: GetJointSessions :many
--- GetJointSessions returns details of the sessions for which both provided users are members.
+-- name: GetJointSessionIDs :many
+-- GetJointSessionIDs returns the set of session IDs that both users are members of.
 -- If a user is a deleted member of a session, this session will not be returned.
-with joint_sessions as (
-    select sm.session_id
-    from session_members sm
-    where sm.is_deleted = false
-        and (sm.member_id = sqlc.arg(member_id)::uuid
-             or sm.member_id = sqlc.arg(other_member_id)::uuid)
-    group by sm.session_id
-    having count(distinct sm.member_id) = 2)
-select s.*
-from sessions s
-join joint_sessions js on s.id = js.session_id;
+select sm.session_id
+from session_members sm
+where sm.is_deleted = false
+    and (sm.member_id = sqlc.arg(member_id)::uuid
+        or sm.member_id = sqlc.arg(other_member_id)::uuid)
+group by sm.session_id
+having count(distinct sm.member_id) = 2;

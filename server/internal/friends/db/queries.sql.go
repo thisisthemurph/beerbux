@@ -59,47 +59,36 @@ func (q *Queries) GetFriends(ctx context.Context, memberID uuid.UUID) ([]GetFrie
 	return items, nil
 }
 
-const getJointSessions = `-- name: GetJointSessions :many
-with joint_sessions as (
-    select sm.session_id
-    from session_members sm
-    where sm.is_deleted = false
-        and (sm.member_id = $1::uuid
-             or sm.member_id = $2::uuid)
-    group by sm.session_id
-    having count(distinct sm.member_id) = 2)
-select s.id, s.name, s.is_active, s.creator_id, s.created_at, s.updated_at
-from sessions s
-join joint_sessions js on s.id = js.session_id
+const getJointSessionIDs = `-- name: GetJointSessionIDs :many
+select sm.session_id
+from session_members sm
+where sm.is_deleted = false
+    and (sm.member_id = $1::uuid
+        or sm.member_id = $2::uuid)
+group by sm.session_id
+having count(distinct sm.member_id) = 2
 `
 
-type GetJointSessionsParams struct {
+type GetJointSessionIDsParams struct {
 	MemberID      uuid.UUID
 	OtherMemberID uuid.UUID
 }
 
-// GetJointSessions returns details of the sessions for which both provided users are members.
+// GetJointSessionIDs returns the set of session IDs that both users are members of.
 // If a user is a deleted member of a session, this session will not be returned.
-func (q *Queries) GetJointSessions(ctx context.Context, arg GetJointSessionsParams) ([]Session, error) {
-	rows, err := q.db.QueryContext(ctx, getJointSessions, arg.MemberID, arg.OtherMemberID)
+func (q *Queries) GetJointSessionIDs(ctx context.Context, arg GetJointSessionIDsParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getJointSessionIDs, arg.MemberID, arg.OtherMemberID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Session
+	var items []uuid.UUID
 	for rows.Next() {
-		var i Session
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.IsActive,
-			&i.CreatorID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
+		var session_id uuid.UUID
+		if err := rows.Scan(&session_id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, session_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

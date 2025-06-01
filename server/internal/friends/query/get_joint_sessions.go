@@ -6,18 +6,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type GetJointSessionsQuery struct {
+type GetJointSessionIDsQuery struct {
 	queries *db.Queries
 }
 
-func NewGetJointSessionsQuery(queries *db.Queries) *GetJointSessionsQuery {
-	return &GetJointSessionsQuery{
+func NewGetJointSessionIDsQuery(queries *db.Queries) *GetJointSessionIDsQuery {
+	return &GetJointSessionIDsQuery{
 		queries: queries,
 	}
 }
 
-func (q *GetJointSessionsQuery) Execute(ctx context.Context, memberID, otherMemberID uuid.UUID) ([]db.Session, error) {
-	return q.queries.GetJointSessions(ctx, db.GetJointSessionsParams{
+func (q *GetJointSessionIDsQuery) Execute(ctx context.Context, memberID, otherMemberID uuid.UUID) ([]uuid.UUID, error) {
+	return q.queries.GetJointSessionIDs(ctx, db.GetJointSessionIDsParams{
 		MemberID:      memberID,
 		OtherMemberID: otherMemberID,
 	})

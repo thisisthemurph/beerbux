@@ -2,12 +2,11 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
-	"beerbux/internal/friends/db"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/internal/friends/query"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"github.com/google/uuid"
-	"github.com/thisisthemurph/fn"
 	"log/slog"
 	"net/http"
 	"time"
@@ -15,18 +14,21 @@ import (
 
 type GetJointSessionsHandler struct {
 	membersAreFriendsQuery *query.MembersAreFriendsQuery
-	getJointSessionsQuery  *query.GetJointSessionsQuery
+	getJointSessionsQuery  *query.GetJointSessionIDsQuery
+	sessionReader          sessionaccess.SessionReader
 	logger                 *slog.Logger
 }
 
 func NewGetJointSessionsHandler(
 	membersAreFriendsQuery *query.MembersAreFriendsQuery,
-	getJointSessionsQuery *query.GetJointSessionsQuery,
+	getJointSessionsQuery *query.GetJointSessionIDsQuery,
+	sessionReader sessionaccess.SessionReader,
 	logger *slog.Logger,
 ) *GetJointSessionsHandler {
 	return &GetJointSessionsHandler{
 		membersAreFriendsQuery: membersAreFriendsQuery,
 		getJointSessionsQuery:  getJointSessionsQuery,
+		sessionReader:          sessionReader,
 		logger:                 logger,
 	}
 }
@@ -35,7 +37,7 @@ type SessionResultItem struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	IsActive  bool      `json:"isActive"`
-	CreatorID uuid.UUID `json:"creatorID"`
+	CreatorID uuid.UUID `json:"creatorId"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -63,23 +65,22 @@ func (h *GetJointSessionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ss, err := h.getJointSessionsQuery.Execute(r.Context(), c.Subject, friendID)
+	jointSessionIDs, err := h.getJointSessionsQuery.Execute(r.Context(), c.Subject, friendID)
 	if err != nil {
 		h.logger.Error("failed to fetch sessions", "error", err)
 		send.InternalServerError(w, "There has been an issue fetching your shared sessions")
 		return
 	}
 
-	results := fn.Map(ss, func(s db.Session) SessionResultItem {
-		return SessionResultItem{
-			ID:        s.ID,
-			Name:      s.Name,
-			IsActive:  s.IsActive,
-			CreatorID: s.CreatorID,
-			CreatedAt: s.CreatedAt,
-			UpdatedAt: s.UpdatedAt,
+	ss := make([]*sessionaccess.SessionResponse, 0, len(jointSessionIDs))
+	for _, sessionID := range jointSessionIDs {
+		s, err := h.sessionReader.GetSessionByID(r.Context(), sessionID)
+		if err != nil {
+			h.logger.Error("failed to fetch session", "error", err)
+			continue
 		}
-	})
+		ss = append(ss, s)
+	}
 
-	send.JSON(w, results, http.StatusOK)
+	send.JSON(w, ss, http.StatusOK)
 }

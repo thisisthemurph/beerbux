@@ -44,10 +44,10 @@ function FriendListingItem({ friend }: { friend: Friend }) {
 				</div>
 				<Badge
 					variant="secondary"
-					className="text-lg text-muted-foreground font-semibold group-hover:bg-card transition-colors"
-					title={`${friend.sharedSessionCount} shared ${pluralize(friend.sharedSessionCount, "session", "sessions")}`}
+					className="text-xs text-muted-foreground font-semibold group-hover:bg-card transition-colors"
+					title={`${friend.sharedSessionCount} shared ${pluralize(friend.sharedSessionCount, "session", "sessions")} with @${friend.username}`}
 				>
-					{friend.sharedSessionCount}
+					{friend.sharedSessionCount} {pluralize(friend.sharedSessionCount, "session", "sessions")}
 				</Badge>
 			</div>
 		</Link>

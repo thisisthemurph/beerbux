@@ -13,9 +13,10 @@ type SessionListingProps = {
 	sessions: Session[];
 	children?: ReactNode;
 	parentPath?: string;
+	noSessionsMessage?: ReactNode;
 };
 
-function SessionListing({ title, sessions, children, parentPath }: SessionListingProps) {
+function SessionListing({ title, sessions, children, parentPath, noSessionsMessage }: SessionListingProps) {
 	return (
 		<Card>
 			<CardHeader>
@@ -26,7 +27,7 @@ function SessionListing({ title, sessions, children, parentPath }: SessionListin
 			</CardHeader>
 			<CardContent className="px-0">
 				<section className="flex flex-col">
-					{sessions.length === 0 && <NoSessionsIndicator />}
+					{sessions.length === 0 && <NoSessionsMessage message={noSessionsMessage} />}
 					{sessions.map((session) => {
 						const url = withBackLinkOverride(`/session/${session.id}`, parentPath);
 
@@ -73,11 +74,17 @@ function InactiveIcon() {
 	);
 }
 
-function NoSessionsIndicator() {
+function NoSessionsMessage({ message }: { message?: ReactNode }) {
 	return (
 		<p className="text-center py-8 font-semibold text-lg tracking-wide">
-			You don't have any sessions yet.
-			<br /> Create one to get started!
+			{!message ? (
+				<span>
+					You don't have any sessions yet.
+					<br /> Create one to get started!
+				</span>
+			) : (
+				message
+			)}
 		</p>
 	);
 }

@@ -1,8 +1,15 @@
+import { cn } from "@/lib/utils.ts";
 import type { ReactNode } from "react";
 
-export function PageHeading({ title, children }: { title: string; children?: ReactNode }) {
+type PageHeadingProps = {
+	title: string;
+	children?: ReactNode;
+	className?: string;
+};
+
+export function PageHeading({ title, children, className }: PageHeadingProps) {
 	return (
-		<div className="flex justify-between items-center mb-8">
+		<div className={cn("flex justify-between items-center mb-8", className)}>
 			<h1 className="mb-0">{title}</h1>
 			{children}
 		</div>

@@ -29,6 +29,8 @@ type GetFriendsRow struct {
 	SharedSessionCount int64
 }
 
+// GetFriends returns the members that the provided member has sessions in common with.
+// The results include any sessions in which either of the members are deleted.
 func (q *Queries) GetFriends(ctx context.Context, memberID uuid.UUID) ([]GetFriendsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFriends, memberID)
 	if err != nil {
@@ -55,4 +57,81 @@ func (q *Queries) GetFriends(ctx context.Context, memberID uuid.UUID) ([]GetFrie
 		return nil, err
 	}
 	return items, nil
+}
+
+const getJointSessions = `-- name: GetJointSessions :many
+with joint_sessions as (
+    select sm.session_id
+    from session_members sm
+    where sm.is_deleted = false
+        and (sm.member_id = $1::uuid
+             or sm.member_id = $2::uuid)
+    group by sm.session_id
+    having count(distinct sm.member_id) = 2)
+select s.id, s.name, s.is_active, s.creator_id, s.created_at, s.updated_at
+from sessions s
+join joint_sessions js on s.id = js.session_id
+`
+
+type GetJointSessionsParams struct {
+	MemberID      uuid.UUID
+	OtherMemberID uuid.UUID
+}
+
+// GetJointSessions returns details of the sessions for which both provided users are members.
+// If a user is a deleted member of a session, this session will not be returned.
+func (q *Queries) GetJointSessions(ctx context.Context, arg GetJointSessionsParams) ([]Session, error) {
+	rows, err := q.db.QueryContext(ctx, getJointSessions, arg.MemberID, arg.OtherMemberID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsActive,
+			&i.CreatorID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const membersAreFriends = `-- name: MembersAreFriends :one
+with joint_sessions as (
+    select sm.session_id
+    from session_members sm
+    where sm.member_id = $1::uuid
+       or sm.member_id = $2::uuid
+    group by sm.session_id
+    having count(distinct sm.member_id) = 2
+)
+select exists(select 1 from joint_sessions) as members_are_friends
+`
+
+type MembersAreFriendsParams struct {
+	MemberID      uuid.UUID
+	OtherMemberID uuid.UUID
+}
+
+// MembersAreFriends returns a boolean indicating if the provided members have any sessions in common.
+// This includes any sessions in which either of the members have been deleted from the session.
+func (q *Queries) MembersAreFriends(ctx context.Context, arg MembersAreFriendsParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, membersAreFriends, arg.MemberID, arg.OtherMemberID)
+	var members_are_friends bool
+	err := row.Scan(&members_are_friends)
+	return members_are_friends, err
 }

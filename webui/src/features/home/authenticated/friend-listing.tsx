@@ -57,8 +57,7 @@ function FriendListingItem({ friend }: { friend: Friend }) {
 function NoFriendsMessage() {
 	return (
 		<p className="text-center py-8 font-semibold text-lg tracking-wide">
-			You don't have any friends.
-			<br /> Create a session and add friends to make some!
+			You don't have any friends. <br /> Create a session and add friends to make some!
 		</p>
 	);
 }

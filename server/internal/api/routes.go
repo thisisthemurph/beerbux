@@ -6,6 +6,7 @@ import (
 	"beerbux/internal/auth/command"
 	authQueries "beerbux/internal/auth/db"
 	authHandler "beerbux/internal/auth/handler"
+	friendsHandler "beerbux/internal/friends/handler"
 	sessionHandler "beerbux/internal/session/handler"
 	"beerbux/internal/sse"
 	streamHandler "beerbux/internal/streamer/handler"
@@ -37,6 +38,7 @@ func (app *App) NewServer(streamServer *sse.Server) (*Server, error) {
 	authHandler.BuildRoutes(app.Config, app.Logger, app.DB, emailSender, apiMux)
 	sessionHandler.BuildRoutes(app.Logger, app.DB, apiMux, app.MessageReceiver())
 	userHandler.BuildRoutes(app.Logger, app.DB, apiMux)
+	friendsHandler.BuildRoutes(app.Logger, app.DB, apiMux)
 	apiMux.Handle("/events/session", streamHandler.NewSessionTransactionCreatedHandler(app.Logger, streamServer))
 
 	// Construct middleware for API routes

@@ -31,12 +31,16 @@ values
     ('mike', 'mike@example.com', 'Mike', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
     ('julian', 'julian@example.com', 'Julian', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
     ('andrew.longname', 'andy@example.com', 'Andrew Longname', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.'),
-    ('connor', 'connor@example.com', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.');
+    ('connor', 'connor@example.com', 'CHC', '$2a$10$C7tUFbV.x7ZUzhjZLeDSBOhjSuXZhgoPP4OsnjjH33eR1nlgFou5.')
+;
 
 insert into sessions (name, creator_id)
 values
     ('Ale House Boys', get_user_id('mike')),
-    ('Christmas Session', get_user_id('julian'));
+    ('Empty Session', get_user_id('mike')),
+    ('2 member session', get_user_id('connor')),
+    ('Christmas Session', get_user_id('julian'))
+;
 
 insert into session_members (session_id, member_id, is_admin)
 values
@@ -44,9 +48,13 @@ values
     (get_session_id('Ale House Boys'), get_user_id('julian'), false),
     (get_session_id('Ale House Boys'), get_user_id('andrew.longname'), false),
     (get_session_id('Ale House Boys'), get_user_id('connor'), false),
+    (get_session_id('Empty Session'), get_user_id('mike'), true),
     (get_session_id('Christmas Session'), get_user_id('julian'), true),
     (get_session_id('Christmas Session'), get_user_id('mike'), true),
-    (get_session_id('Christmas Session'), get_user_id('connor'), false);
+    (get_session_id('Christmas Session'), get_user_id('connor'), false),
+    (get_session_id('2 member session'), get_user_id('connor'), true),
+    (get_session_id('2 member session'), get_user_id('mike'), false)
+;
 
 drop function if exists get_user_id;
 drop function if exists get_session_id;

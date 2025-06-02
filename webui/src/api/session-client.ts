@@ -1,6 +1,6 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { Session } from "@/api/types/session.ts";
 import type { SessionHistory } from "@/api/types/session-history.ts";
+import type { SessionWithTransactions } from "@/api/types/session.ts";
 
 type SessionCreatedResponse = {
 	id: string;
@@ -9,7 +9,7 @@ type SessionCreatedResponse = {
 
 function useSessionClient() {
 	const getSession = async (sessionId: string) => {
-		return apiFetch<Session>(`/session/${sessionId}`);
+		return apiFetch<SessionWithTransactions>(`/session/${sessionId}`);
 	};
 
 	const getSessionHistory = async (sessionId: string) => {

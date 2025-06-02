@@ -2,6 +2,8 @@ package handler
 
 import (
 	"beerbux/internal/common/history"
+	"beerbux/internal/common/sessionaccess"
+	sessionaccessQueries "beerbux/internal/common/sessionaccess/db"
 	"beerbux/internal/common/useraccess"
 	useraccessQueries "beerbux/internal/common/useraccess/db"
 	"beerbux/internal/session/command"
@@ -15,11 +17,10 @@ import (
 
 func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux, msgChan chan<- *sse.Message) {
 	queries := db.New(database)
-	uaQueries := useraccessQueries.New(database)
 	sessionHistoryService := history.NewSessionHistoryService(queries, logger)
-	userReaderService := useraccess.NewUserReaderService(uaQueries)
+	userReaderService := useraccess.NewUserReaderService(useraccessQueries.New(database))
+	sessionReaderService := sessionaccess.NewSessionService(sessionaccessQueries.New(database))
 
-	getSessionQuery := query.NewGetSessionQuery(queries)
 	listSessionsByUserIDQuery := query.NewListSessionsByUserIDQuery(queries)
 	createSessionCommand := command.NewCreateSessionCommand(database, queries, userReaderService)
 	addSessionMemberCommand := command.NewAddSessionMemberCommand(database, queries, sessionHistoryService)
@@ -30,15 +31,15 @@ func BuildRoutes(logger *slog.Logger, database *sql.DB, mux *http.ServeMux, msgC
 
 	mux.Handle("GET /user/sessions", NewListCurrentUserSessionsHandler(listSessionsByUserIDQuery, logger))
 
-	mux.Handle("GET /session/{sessionId}", NewGetSessionHandler(getSessionQuery, logger))
+	mux.Handle("GET /session/{sessionId}", NewGetSessionHandler(sessionReaderService, logger))
 	mux.Handle("POST /session", NewCreateSessionHandler(createSessionCommand, logger))
-	mux.Handle("POST /session/{sessionId}/member", NewAddSessionMemberHandler(getSessionQuery, userReaderService, addSessionMemberCommand, logger))
-	mux.Handle("POST /session/{sessionId}/member/{memberId}/admin", NewUpdateSessionMemberAdminHandler(getSessionQuery, updateSessionMemberAdminStateCommand, logger))
-	mux.Handle("DELETE /session/{sessionId}/member/{memberId}", NewRemoveSessionMemberHandler(getSessionQuery, removeSessionMemberCommand, logger))
+	mux.Handle("POST /session/{sessionId}/member", NewAddSessionMemberHandler(userReaderService, sessionReaderService, addSessionMemberCommand, logger))
+	mux.Handle("POST /session/{sessionId}/member/{memberId}/admin", NewUpdateSessionMemberAdminHandler(sessionReaderService, updateSessionMemberAdminStateCommand, logger))
+	mux.Handle("DELETE /session/{sessionId}/member/{memberId}", NewRemoveSessionMemberHandler(sessionReaderService, removeSessionMemberCommand, logger))
 	mux.Handle("DELETE /session/{sessionId}/leave", NewLeaveSessionHandler(removeSessionMemberCommand, logger))
-	mux.Handle("PUT /session/{sessionId}/state/{command}", NewUpdateSessionActiveStateHandler(getSessionQuery, updateSessionActiveStateCommand, logger))
+	mux.Handle("PUT /session/{sessionId}/state/{command}", NewUpdateSessionActiveStateHandler(sessionReaderService, updateSessionActiveStateCommand, logger))
 
-	mux.Handle("GET /session/{sessionId}/history", NewGetSessionHistoryHandler(sessionHistoryService, getSessionQuery, logger))
+	mux.Handle("GET /session/{sessionId}/history", NewGetSessionHistoryHandler(sessionReaderService, sessionHistoryService, logger))
 
-	mux.Handle("POST /session/{sessionId}/transaction", NewCreateTransactionHandler(getSessionQuery, createTransactionCommand, logger, msgChan))
+	mux.Handle("POST /session/{sessionId}/transaction", NewCreateTransactionHandler(sessionReaderService, createTransactionCommand, logger, msgChan))
 }

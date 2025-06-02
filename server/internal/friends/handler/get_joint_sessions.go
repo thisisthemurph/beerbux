@@ -72,9 +72,9 @@ func (h *GetJointSessionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ss := make([]*sessionaccess.SessionResponse, 0, len(jointSessionIDs))
+	ss := make([]*sessionaccess.Session, 0, len(jointSessionIDs))
 	for _, sessionID := range jointSessionIDs {
-		s, err := h.sessionReader.GetSessionByID(r.Context(), sessionID)
+		s, err := h.sessionReader.GetSessionDetails(r.Context(), sessionID)
 		if err != nil {
 			h.logger.Error("failed to fetch session", "error", err)
 			continue

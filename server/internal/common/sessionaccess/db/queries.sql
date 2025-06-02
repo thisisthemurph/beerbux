@@ -19,7 +19,14 @@ join session_transaction_lines tl on t.id = tl.transaction_id
 where t.session_id = $1;
 
 -- name: ListSessionMembers :many
-select u.id, u.username, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
+select u.id, u.username, u.email, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
 from users u
 join session_members sm on u.id = sm.member_id
 where sm.session_id = $1;
+
+-- name: GetSessionMember :one
+select u.id, u.username, u.email, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
+from users u
+join session_members sm on u.id = sm.member_id
+where sm.session_id = $1 and sm.member_id = $2
+limit 1;

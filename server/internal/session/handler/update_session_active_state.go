@@ -2,31 +2,29 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/internal/session/command"
-	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"log/slog"
 	"net/http"
 )
 
 type UpdateSessionActiveStateHandler struct {
-	getSessionQuery                 *query.GetSessionQuery
+	sessionReader                   sessionaccess.SessionReader
 	updateSessionActiveStateCommand *command.UpdateSessionActiveStateCommand
 	logger                          *slog.Logger
 }
 
 func NewUpdateSessionActiveStateHandler(
-	getSessionQuery *query.GetSessionQuery,
+	sr sessionaccess.SessionReader,
 	updateSessionActiveStateCommand *command.UpdateSessionActiveStateCommand,
 	logger *slog.Logger,
 ) *UpdateSessionActiveStateHandler {
 	return &UpdateSessionActiveStateHandler{
-		getSessionQuery:                 getSessionQuery,
+		sessionReader:                   sr,
 		updateSessionActiveStateCommand: updateSessionActiveStateCommand,
 		logger:                          logger,
 	}
@@ -51,22 +49,15 @@ func (h *UpdateSessionActiveStateHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	s, err := h.getSessionQuery.Execute(r.Context(), params.SessionID)
-	if err != nil {
-		if errors.Is(err, sessionErr.ErrSessionNotFound) {
-			send.NotFound(w, "The session could not be found")
-			return
-		}
-		send.InternalServerError(w, "There was an issue finding the session")
-		return
-	}
-
-	if !s.IsMember(c.Subject) {
+	currentMember, err := h.sessionReader.GetSessionMember(r.Context(), params.SessionID, c.Subject)
+	if errors.Is(err, sessionaccess.ErrMemberNotFound) {
 		send.Unauthorized(w, "You are not a member of this session")
 		return
-	}
-	if !s.IsAdminMember(c.Subject) {
-		send.Unauthorized(w, fmt.Sprintf("You must be an admin to %s this session", params.Command))
+	} else if err != nil {
+		send.InternalServerError(w, "There has been an issue determining if you are a member of the session.")
+		return
+	} else if !currentMember.IsAdmin {
+		send.Unauthorized(w, "You must be an admin to add a member to a session")
 		return
 	}
 

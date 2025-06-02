@@ -1,5 +1,5 @@
 import type { SessionHistory } from "@/api/types/session-history.ts";
-import type { Session, SessionMember, SessionTransaction } from "@/api/types/session.ts";
+import type { SessionMember, SessionTransaction, SessionWithTransactions } from "@/api/types/session.ts";
 import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
 import type { User } from "@/api/types/user.ts";
 import { PageError } from "@/components/page-error.tsx";
@@ -21,7 +21,7 @@ import { Beer, SquarePlus } from "lucide-react";
 import { useState } from "react";
 
 type SessionDetailContentProps = {
-	session: Session;
+	session: SessionWithTransactions;
 	history: SessionHistory | undefined;
 	user: User;
 	onMemberAdminStateUpdate: (sessionId: string, memberId: string, newAdminState: boolean) => void;

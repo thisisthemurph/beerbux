@@ -1,11 +1,14 @@
-export type Session = {
+export interface Session {
 	id: string;
 	name: string;
-	total: number;
 	isActive: boolean;
 	members: SessionMember[];
+}
+
+export interface SessionWithTransactions extends Session {
 	transactions: SessionTransaction[];
-};
+	total: number;
+}
 
 export type SessionMember = {
 	id: string;
@@ -14,10 +17,12 @@ export type SessionMember = {
 	isCreator: boolean;
 	isAdmin: boolean;
 	isDeleted: boolean;
-	transactionSummary: {
-		credit: number;
-		debit: number;
-	};
+	transactionSummary: MemberTransactionSummary;
+};
+
+type MemberTransactionSummary = {
+	credit: number;
+	debit: number;
 };
 
 export type SessionTransaction = {

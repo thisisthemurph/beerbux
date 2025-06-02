@@ -3,25 +3,23 @@ package handler
 import (
 	"beerbux/internal/common/claims"
 	"beerbux/internal/common/history"
-	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
-	"errors"
 	"log/slog"
 	"net/http"
 )
 
 type GetSessionHistoryHandler struct {
+	sessionReader        sessionaccess.SessionReader
 	sessionHistoryReader history.SessionHistoryReader
-	getSessionQuery      *query.GetSessionQuery
 	logger               *slog.Logger
 }
 
-func NewGetSessionHistoryHandler(sessionHistoryReader history.SessionHistoryReader, getSessionQuery *query.GetSessionQuery, logger *slog.Logger) *GetSessionHistoryHandler {
+func NewGetSessionHistoryHandler(sr sessionaccess.SessionReader, sessionHistoryReader history.SessionHistoryReader, logger *slog.Logger) *GetSessionHistoryHandler {
 	return &GetSessionHistoryHandler{
+		sessionReader:        sr,
 		sessionHistoryReader: sessionHistoryReader,
-		getSessionQuery:      getSessionQuery,
 		logger:               logger,
 	}
 }
@@ -39,17 +37,12 @@ func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	s, err := h.getSessionQuery.Execute(r.Context(), sessionID)
+	isMember, err := h.sessionReader.UserIsMemberOfSession(r.Context(), sessionID, c.Subject)
 	if err != nil {
-		if errors.Is(err, sessionErr.ErrSessionNotFound) {
-			send.NotFound(w, "The session could not be found")
-			return
-		}
-		send.InternalServerError(w, "There was an issue finding the session")
+		send.InternalServerError(w, "There has been an error fetching the session history")
 		return
 	}
-
-	if !s.IsMember(c.Subject) {
+	if !isMember {
 		send.Unauthorized(w, "You are not a member of this session")
 		return
 	}

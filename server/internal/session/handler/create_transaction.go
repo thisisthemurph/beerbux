@@ -2,34 +2,32 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/internal/session/command"
-	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
 	"beerbux/internal/sse"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"encoding/json"
-	"errors"
 	"github.com/google/uuid"
 	"log/slog"
 	"net/http"
 )
 
 type CreateTransactionHandler struct {
-	getSessionQuery          *query.GetSessionQuery
+	sessionReader            sessionaccess.SessionReader
 	createTransactionCommand *command.CreateTransactionCommand
 	logger                   *slog.Logger
 	msgChan                  chan<- *sse.Message
 }
 
 func NewCreateTransactionHandler(
-	getSessionQuery *query.GetSessionQuery,
+	sessionReader sessionaccess.SessionReader,
 	createTransactionCommand *command.CreateTransactionCommand,
 	logger *slog.Logger,
 	msgChan chan<- *sse.Message,
 ) *CreateTransactionHandler {
 	return &CreateTransactionHandler{
-		getSessionQuery:          getSessionQuery,
+		sessionReader:            sessionReader,
 		createTransactionCommand: createTransactionCommand,
 		logger:                   logger,
 		msgChan:                  msgChan,
@@ -56,16 +54,12 @@ func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	session, err := h.getSessionQuery.Execute(r.Context(), sessionID)
+	isMember, err := h.sessionReader.UserIsMemberOfSession(r.Context(), sessionID, c.Subject)
 	if err != nil {
-		if errors.Is(err, sessionErr.ErrSessionNotFound) {
-			send.NotFound(w, "The session could not be found")
-			return
-		}
 		send.InternalServerError(w, "There was an issue finding the session")
 		return
 	}
-	if !session.IsMember(c.Subject) {
+	if !isMember {
 		send.Unauthorized(w, "You are not a member of the session")
 		return
 	}

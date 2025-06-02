@@ -2,31 +2,30 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/internal/session/command"
 	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/thisisthemurph/fn"
 	"log/slog"
 	"net/http"
 )
 
 type RemoveSessionMemberHandler struct {
-	getSessionQuery            *query.GetSessionQuery
+	sessionReader              sessionaccess.SessionReader
 	removeSessionMemberCommand *command.RemoveSessionMemberCommand
 	logger                     *slog.Logger
 }
 
 func NewRemoveSessionMemberHandler(
-	getSessionQuery *query.GetSessionQuery,
+	sr sessionaccess.SessionReader,
 	removeSessionMemberCommand *command.RemoveSessionMemberCommand,
 	logger *slog.Logger,
 ) *RemoveSessionMemberHandler {
 	return &RemoveSessionMemberHandler{
-		getSessionQuery:            getSessionQuery,
+		sessionReader:              sr,
 		removeSessionMemberCommand: removeSessionMemberCommand,
 		logger:                     logger,
 	}
@@ -45,21 +44,13 @@ func (h *RemoveSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	s, err := h.getSessionQuery.Execute(r.Context(), params.SessionID)
+	currentMember, err := h.sessionReader.GetSessionMember(r.Context(), params.SessionID, c.Subject)
 	if err != nil {
-		if errors.Is(err, sessionErr.ErrSessionNotFound) {
-			send.NotFound(w, "The session could not be found")
+		if errors.Is(err, sessionaccess.ErrMemberNotFound) {
+			send.Unauthorized(w, "You are not a member of this session")
 			return
 		}
 		send.InternalServerError(w, "There was an issue finding your session")
-		return
-	}
-
-	currentMember, exists := fn.First(s.Members, func(member query.SessionMember) bool {
-		return member.ID == c.Subject
-	})
-	if !exists {
-		send.Unauthorized(w, "You are not a member of this session")
 		return
 	}
 	if !currentMember.IsAdmin {

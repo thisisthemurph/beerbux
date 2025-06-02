@@ -2,8 +2,8 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/sessionaccess"
 	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
 	"beerbux/pkg/send"
 	"errors"
 	"github.com/google/uuid"
@@ -13,28 +13,28 @@ import (
 )
 
 type GetSessionHandler struct {
-	getSessionQuery *query.GetSessionQuery
-	logger          *slog.Logger
+	sessionReader sessionaccess.SessionReader
+	logger        *slog.Logger
 }
 
-func NewGetSessionHandler(getSessionQuery *query.GetSessionQuery, logger *slog.Logger) *GetSessionHandler {
+func NewGetSessionHandler(sr sessionaccess.SessionReader, logger *slog.Logger) *GetSessionHandler {
 	return &GetSessionHandler{
-		getSessionQuery: getSessionQuery,
-		logger:          logger,
+		sessionReader: sr,
+		logger:        logger,
 	}
 }
 
 type GetSessionResponse struct {
-	ID           uuid.UUID                  `json:"id"`
-	Name         string                     `json:"name"`
-	Total        float64                    `json:"total"`
-	IsActive     bool                       `json:"isActive"`
-	Members      []GetSessionResponseMember `json:"members"`
-	Transactions []query.SessionTransaction `json:"transactions"`
+	ID           uuid.UUID                          `json:"id"`
+	Name         string                             `json:"name"`
+	Total        float64                            `json:"total"`
+	IsActive     bool                               `json:"isActive"`
+	Members      []GetSessionResponseMember         `json:"members"`
+	Transactions []sessionaccess.SessionTransaction `json:"transactions"`
 }
 
 type GetSessionResponseMember struct {
-	query.SessionMember
+	sessionaccess.SessionMember
 	TransactionSummary TransactionSummary `json:"transactionSummary"`
 }
 
@@ -56,7 +56,7 @@ func (h *GetSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := h.getSessionQuery.Execute(r.Context(), sessionID)
+	s, err := h.sessionReader.GetSessionByID(r.Context(), sessionID)
 	if err != nil {
 		if errors.Is(err, sessionErr.ErrSessionNotFound) {
 			send.NotFound(w, "Session not found")
@@ -76,8 +76,8 @@ func (h *GetSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	send.JSON(w, h.buildResponse(s), http.StatusOK)
 }
 
-func (h *GetSessionHandler) buildResponse(s *query.SessionResponse) GetSessionResponse {
-	members := fn.Map(s.Members, func(m query.SessionMember) GetSessionResponseMember {
+func (h *GetSessionHandler) buildResponse(s *sessionaccess.SessionWithTransactions) GetSessionResponse {
+	members := fn.Map(s.Members, func(m sessionaccess.SessionMember) GetSessionResponseMember {
 		return GetSessionResponseMember{
 			SessionMember:      m,
 			TransactionSummary: h.calculateTransactionSummaryForMember(s.Transactions, m.ID),
@@ -94,7 +94,7 @@ func (h *GetSessionHandler) buildResponse(s *query.SessionResponse) GetSessionRe
 	}
 }
 
-func (h *GetSessionHandler) calculateTransactionSummaryForMember(transactions []query.SessionTransaction, memberID uuid.UUID) TransactionSummary {
+func (h *GetSessionHandler) calculateTransactionSummaryForMember(transactions []sessionaccess.SessionTransaction, memberID uuid.UUID) TransactionSummary {
 	summary := TransactionSummary{}
 	for _, t := range transactions {
 		// This member created the transaction.
@@ -115,7 +115,7 @@ func (h *GetSessionHandler) calculateTransactionSummaryForMember(transactions []
 	return summary
 }
 
-func (h *GetSessionHandler) validateUserAgainstSessionMembers(userID uuid.UUID, members []query.SessionMember) error {
+func (h *GetSessionHandler) validateUserAgainstSessionMembers(userID uuid.UUID, members []sessionaccess.SessionMember) error {
 	userIsMember := false
 	for _, m := range members {
 		if m.ID == userID {

@@ -2,9 +2,9 @@ package handler
 
 import (
 	"beerbux/internal/common/claims"
+	"beerbux/internal/common/sessionaccess"
 	"beerbux/internal/session/command"
 	sessionErr "beerbux/internal/session/errors"
-	"beerbux/internal/session/query"
 	"beerbux/pkg/send"
 	"beerbux/pkg/url"
 	"encoding/json"
@@ -15,18 +15,18 @@ import (
 )
 
 type UpdateSessionMemberAdminHandler struct {
-	getSessionQuery               *query.GetSessionQuery
+	sessionReader                 sessionaccess.SessionReader
 	updateMemberAdminStateCommand *command.UpdateSessionMemberAdminStateCommand
 	logger                        *slog.Logger
 }
 
 func NewUpdateSessionMemberAdminHandler(
-	getSessionQuery *query.GetSessionQuery,
+	sr sessionaccess.SessionReader,
 	updateMemberAdminStateCommand *command.UpdateSessionMemberAdminStateCommand,
 	logger *slog.Logger,
 ) *UpdateSessionMemberAdminHandler {
 	return &UpdateSessionMemberAdminHandler{
-		getSessionQuery:               getSessionQuery,
+		sessionReader:                 sr,
 		updateMemberAdminStateCommand: updateMemberAdminStateCommand,
 		logger:                        logger,
 	}
@@ -61,7 +61,7 @@ func (h *UpdateSessionMemberAdminHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	session, err := h.getSessionQuery.Execute(r.Context(), params.SessionID)
+	session, err := h.sessionReader.GetSessionDetails(r.Context(), params.SessionID)
 	if err != nil {
 		if errors.Is(err, sessionErr.ErrSessionNotFound) {
 			send.NotFound(w, "The session could not be found")
@@ -71,15 +71,15 @@ func (h *UpdateSessionMemberAdminHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
-	if !session.IsMember(c.Subject) {
+	if !session.HasMember(c.Subject) {
 		send.Unauthorized(w, "You are not a member of this session")
 		return
 	}
-	if !session.IsAdminMember(c.Subject) {
+	if !session.HasAdminMember(c.Subject) {
 		send.Unauthorized(w, "You must be an admin to add a member to the session")
 		return
 	}
-	if !session.IsMember(params.MemberID) {
+	if !session.HasMember(params.MemberID) {
 		send.BadRequest(w, "Member to update not found")
 		return
 	}

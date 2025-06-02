@@ -44,6 +44,46 @@ func (q *Queries) GetSessionByID(ctx context.Context, sessionID uuid.UUID) (GetS
 	return i, err
 }
 
+const getSessionMember = `-- name: GetSessionMember :one
+select u.id, u.username, u.email, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
+from users u
+join session_members sm on u.id = sm.member_id
+where sm.session_id = $1 and sm.member_id = $2
+limit 1
+`
+
+type GetSessionMemberParams struct {
+	SessionID uuid.UUID
+	MemberID  uuid.UUID
+}
+
+type GetSessionMemberRow struct {
+	ID        uuid.UUID
+	Username  string
+	Email     string
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	IsAdmin   bool
+	IsDeleted bool
+}
+
+func (q *Queries) GetSessionMember(ctx context.Context, arg GetSessionMemberParams) (GetSessionMemberRow, error) {
+	row := q.db.QueryRowContext(ctx, getSessionMember, arg.SessionID, arg.MemberID)
+	var i GetSessionMemberRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsAdmin,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
 const getSessionTransactionLines = `-- name: GetSessionTransactionLines :many
 select
     t.id as transaction_id,
@@ -97,7 +137,7 @@ func (q *Queries) GetSessionTransactionLines(ctx context.Context, sessionID uuid
 }
 
 const listSessionMembers = `-- name: ListSessionMembers :many
-select u.id, u.username, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
+select u.id, u.username, u.email, u.name, u.created_at, u.updated_at, sm.is_admin, sm.is_deleted
 from users u
 join session_members sm on u.id = sm.member_id
 where sm.session_id = $1
@@ -106,6 +146,7 @@ where sm.session_id = $1
 type ListSessionMembersRow struct {
 	ID        uuid.UUID
 	Username  string
+	Email     string
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -125,6 +166,7 @@ func (q *Queries) ListSessionMembers(ctx context.Context, sessionID uuid.UUID) (
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
+			&i.Email,
 			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,

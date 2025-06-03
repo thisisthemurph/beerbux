@@ -28,6 +28,15 @@ type ResetPasswordRequest struct {
 	OTP         string `json:"otp"`
 }
 
+// NewResetPasswordHandler godoc
+// @Summary Reset Password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body ResetPasswordRequest true "Password reset request"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/password/reset [put]
 func (h *ResetPasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

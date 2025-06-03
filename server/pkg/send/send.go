@@ -8,6 +8,11 @@ import (
 	oz "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+// ErrorResponse represents a simple JSON error response.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 // JSON sends the given JSON payload with the given status code.
 //
 // If there is an error sending the payload, a generic Error is returned.
@@ -39,6 +44,10 @@ func InternalServerError(w http.ResponseWriter, err string) {
 
 func Unauthorized(w http.ResponseWriter, err string) {
 	Error(w, err, http.StatusUnauthorized)
+}
+
+type ValidationErrorModel struct {
+	Errors map[string]string `json:"errors"`
 }
 
 // ValidationError sends a JSON payload detailing ozzo-validation validation errors.

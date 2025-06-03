@@ -26,6 +26,17 @@ type UpdatePasswordRequest struct {
 	OTP string `json:"otp"`
 }
 
+// UpdatePasswordHandler godoc
+// @Summary Update password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body UpdatePasswordRequest true "PTP request"
+// @Success 200
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/password [put]
 func (h *UpdatePasswordHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

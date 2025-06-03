@@ -40,6 +40,17 @@ type AddMemberToSessionRequest struct {
 	Username string `json:"username"`
 }
 
+// AddSessionMemberHandler godoc
+// @Summary Add Member
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 201 "Created"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/member [post]
 func (h *AddSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

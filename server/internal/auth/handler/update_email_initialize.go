@@ -37,6 +37,16 @@ type InitializeEmailUpdateRequest struct {
 	NewEmail string `json:"newEmail"`
 }
 
+// InitializeEmailUpdateHandler godoc
+// @Summary Update email init
+// @Tags auth
+// @Accept json
+// @Param login body InitializeEmailUpdateRequest true "New email address"
+// @Success 200
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/email/initialize-email [post]
 func (h *InitializeEmailUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

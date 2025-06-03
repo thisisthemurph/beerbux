@@ -20,6 +20,15 @@ func NewGetFriendsHandler(getFriendsQuery *query.GetFriendsQuery, logger *slog.L
 	}
 }
 
+// GetFriendsHandler godoc
+// @Summary Get Friends
+// @Tags friends
+// @Accept json
+// @Produce json
+// @Success 200 {array} query.Friend
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /friends [get]
 func (h *GetFriendsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

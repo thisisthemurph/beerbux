@@ -1,0 +1,394 @@
+basePath: /api
+definitions:
+  handler.InitializeEmailUpdateRequest:
+    properties:
+      newEmail:
+        type: string
+    type: object
+  handler.InitializePasswordResetRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handler.InitializePasswordUpdateRequest:
+    properties:
+      newPassword:
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.LoginResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+      newPassword:
+        type: string
+      otp:
+        type: string
+    type: object
+  handler.SignupRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+      verificationPassword:
+        type: string
+    type: object
+  handler.UpdateEmailRequest:
+    properties:
+      otp:
+        type: string
+    type: object
+  handler.UpdatePasswordRequest:
+    properties:
+      otp:
+        type: string
+    type: object
+  query.Friend:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      sharedSessionCount:
+        type: integer
+      username:
+        type: string
+    type: object
+  send.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  send.ValidationErrorModel:
+    properties:
+      errors:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  sessionaccess.Session:
+    properties:
+      id:
+        type: string
+      isActive:
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/sessionaccess.SessionMember'
+        type: array
+      name:
+        type: string
+    type: object
+  sessionaccess.SessionMember:
+    properties:
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      isDeleted:
+        type: boolean
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:42069
+info:
+  contact: {}
+  description: API for the Beerbux application.
+  title: Beerbux API
+  version: "1.0"
+paths:
+  /auth/email:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: OTP
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Update email address
+      tags:
+      - auth
+  /auth/email/initialize-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: New email address
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.InitializeEmailUpdateRequest'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Update email init
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Initialize the update password process
+      parameters:
+      - description: New password request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.InitializePasswordUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Update password init
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Handles user logout and deletes the auth cookies
+      responses:
+        "204":
+          description: No Content
+      summary: Logout
+      tags:
+      - auth
+  /auth/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: PTP request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Update password
+      tags:
+      - auth
+  /auth/password/initialize-reset:
+    post:
+      consumes:
+      - application/json
+      description: Initializes the password reset process.
+      parameters:
+      - description: User details
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.InitializePasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Password reset init
+      tags:
+      - auth
+  /auth/password/reset:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Password reset request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Reset Password
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: Sets a new access token cookie based on the available refresh token.
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: Refresh
+      tags:
+      - auth
+  /friend/{friendId}/sessions:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Friend ID
+        in: path
+        name: friendId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/sessionaccess.Session'
+            type: array
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Joint Sessions
+      tags:
+      - friends
+  /friends:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/query.Friend'
+            type: array
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Friends
+      tags:
+      - friends
+  /session/{sessionId}/member:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Add Member
+      tags:
+      - session
+swagger: "2.0"

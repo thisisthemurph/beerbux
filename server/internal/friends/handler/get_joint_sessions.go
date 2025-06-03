@@ -42,6 +42,16 @@ type SessionResultItem struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// GetJointSessionsHandler godoc
+// @Summary Get Joint Sessions
+// @Tags friends
+// @Accept json
+// @Produce json
+// @Param friendId path string true "Friend ID"
+// @Success 200 {array} sessionaccess.Session
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /friend/{friendId}/sessions [get]
 func (h *GetJointSessionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

@@ -21,6 +21,14 @@ func NewRefreshHandler(refreshTokenCommand *command.RefreshTokenCommand, logger 
 	}
 }
 
+// RefreshHandler godoc
+// @Summary Refresh
+// @Description Sets a new access token cookie based on the available refresh token.
+// @Tags auth
+// @Success 204 "No Content"
+// @Failure 401 "Unauthorized"
+// @Failure 500 "Internal Server Error"
+// @Router /auth/refresh [post]
 func (h *RefreshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

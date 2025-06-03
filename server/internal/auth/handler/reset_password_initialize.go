@@ -37,6 +37,17 @@ type InitializePasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
+// InitializePasswordResetHandler godoc
+// @Summary Password reset init
+// @Description Initializes the password reset process.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body InitializePasswordResetRequest true "User details"
+// @Success 200
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/password/initialize-reset [post]
 func (h *InitializePasswordResetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req InitializePasswordResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

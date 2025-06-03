@@ -41,6 +41,18 @@ type LoginResponse struct {
 	Username string    `json:"username"`
 }
 
+// LoginHandler godoc
+// @Summary Login
+// @Description Handles user login and returns a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body LoginRequest true "Login credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 {object} send.ErrorResponse "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/login [post]
 func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

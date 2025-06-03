@@ -21,6 +21,12 @@ func NewLogoutHandler(invalidateRefreshTokenCommand *command.InvalidateRefreshTo
 	}
 }
 
+// LogoutHandler godoc
+// @Summary Logout
+// @Description Handles user logout and deletes the auth cookies
+// @Tags auth
+// @Success 204
+// @Router /auth/logout [post]
 func (h *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

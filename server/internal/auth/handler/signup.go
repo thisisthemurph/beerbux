@@ -34,6 +34,16 @@ type SignupRequest struct {
 	VerificationPassword string `json:"verificationPassword"`
 }
 
+// SignupHandler godoc
+// @Summary Signup
+// @Tags auth
+// @Accept json
+// @Param login body SignupRequest true "Login credentials"
+// @Success 201
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 400 {object} send.ValidationErrorModel "Bad Request (validation error)"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/login [post]
 func (h *SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req SignupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

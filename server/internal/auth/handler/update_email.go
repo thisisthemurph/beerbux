@@ -33,6 +33,18 @@ type UpdateEmailRequest struct {
 	OTP string `json:"otp"`
 }
 
+// UpdateEmailHandler godoc
+// @Summary Update email address
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body UpdateEmailRequest true "OTP"
+// @Success 200
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 404 {object} send.ErrorResponse "Not found"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /auth/email [put]
 func (h *UpdateEmailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

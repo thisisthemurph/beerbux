@@ -1,20 +1,20 @@
 package main
 
 import (
+	"beerbux/cmd/api/docs"
 	"beerbux/internal/api"
 	"beerbux/internal/api/config"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
-	_ "beerbux/cmd/api/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // @title Beerbux API
 // @version 1.0
 // @description API for the Beerbux application.
-// @host localhost:42069
 // @BasePath /api
 func main() {
 	cfg, err := config.Load()
@@ -33,6 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	docs.SwaggerInfo.Host = fmt.Sprintf("localhost%s", app.Config.Address)
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	if err := app.Start(); err != nil {

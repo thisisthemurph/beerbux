@@ -267,7 +267,6 @@ definitions:
       userId:
         type: string
     type: object
-host: localhost:42069
 info:
   contact: {}
   description: API for the Beerbux application.

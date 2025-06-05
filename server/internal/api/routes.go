@@ -12,6 +12,7 @@ import (
 	streamHandler "beerbux/internal/streamer/handler"
 	userHandler "beerbux/internal/user/handler"
 	"beerbux/pkg/email"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 )
 
@@ -62,6 +63,12 @@ func (app *App) NewServer(streamServer *sse.Server) (*Server, error) {
 		apiHandler = recoverMiddleware.Recover(
 			authMiddleware.WithJWT(apiMux),
 		)
+	}
+
+	// In development, we would like the swagger documentation to be available.
+	if app.Config.Environment.IsDevelopment() {
+		app.Logger.Info("Hosting swagger documentation")
+		rootMux.Handle("/swagger/", httpSwagger.WrapHandler)
 	}
 
 	// In development, we want to run React webapp separate from the API.

@@ -1,5 +1,80 @@
 basePath: /api
 definitions:
+  handler.AddMemberToSessionRequest:
+    properties:
+      username:
+        type: string
+    type: object
+  handler.CreateSessionRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  handler.CreateSessionResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  handler.CurrentUserSessionMember:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.CurrentUserSessionResponse:
+    properties:
+      id:
+        type: string
+      isActive:
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/handler.CurrentUserSessionMember'
+        type: array
+      name:
+        type: string
+      total:
+        type: number
+    type: object
+  handler.GetSessionResponse:
+    properties:
+      id:
+        type: string
+      isActive:
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/handler.GetSessionResponseMember'
+        type: array
+      name:
+        type: string
+      total:
+        type: number
+      transactions:
+        items:
+          $ref: '#/definitions/sessionaccess.SessionTransaction'
+        type: array
+    type: object
+  handler.GetSessionResponseMember:
+    properties:
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      isDeleted:
+        type: boolean
+      name:
+        type: string
+      transactionSummary:
+        $ref: '#/definitions/handler.TransactionSummary'
+      username:
+        type: string
+    type: object
   handler.InitializeEmailUpdateRequest:
     properties:
       newEmail:
@@ -53,6 +128,13 @@ definitions:
       verificationPassword:
         type: string
     type: object
+  handler.TransactionSummary:
+    properties:
+      credit:
+        type: number
+      debit:
+        type: number
+    type: object
   handler.UpdateEmailRequest:
     properties:
       otp:
@@ -61,6 +143,32 @@ definitions:
   handler.UpdatePasswordRequest:
     properties:
       otp:
+        type: string
+    type: object
+  handler.UpdateSessionMemberAdminRequest:
+    properties:
+      newAdminState:
+        type: boolean
+    type: object
+  history.SessionHistoryEvent:
+    properties:
+      createdAt:
+        type: string
+      eventData: {}
+      eventType:
+        type: string
+      id:
+        type: integer
+      memberId:
+        type: string
+    type: object
+  history.SessionHistoryResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/history.SessionHistoryEvent'
+        type: array
+      sessionId:
         type: string
     type: object
   query.Friend:
@@ -110,6 +218,28 @@ definitions:
       name:
         type: string
       username:
+        type: string
+    type: object
+  sessionaccess.SessionTransaction:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      lines:
+        items:
+          $ref: '#/definitions/sessionaccess.SessionTransactionLine'
+        type: array
+      total:
+        type: number
+      userId:
+        type: string
+    type: object
+  sessionaccess.SessionTransactionLine:
+    properties:
+      amount:
+        type: number
+      userId:
         type: string
     type: object
 host: localhost:42069
@@ -363,6 +493,125 @@ paths:
       summary: Get Friends
       tags:
       - friends
+  /session:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session to create
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.CreateSessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Create Session
+      tags:
+      - session
+  /session/{sessionId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetSessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Session
+      tags:
+      - session
+  /session/{sessionId}/history:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/history.SessionHistoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Session History
+      tags:
+      - session
+  /session/{sessionId}/leave:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Leave Session
+      tags:
+      - session
   /session/{sessionId}/member:
     post:
       consumes:
@@ -373,6 +622,12 @@ paths:
         name: sessionId
         required: true
         type: string
+      - description: Member to add
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddMemberToSessionRequest'
       produces:
       - application/json
       responses:
@@ -389,6 +644,169 @@ paths:
           schema:
             $ref: '#/definitions/send.ErrorResponse'
       summary: Add Member
+      tags:
+      - session
+  /session/{sessionId}/member/{memberId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Member ID
+        in: path
+        name: memberId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Remove Member from Session
+      tags:
+      - session
+  /session/{sessionId}/member/{memberId}/admin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Member ID
+        in: path
+        name: memberId
+        required: true
+        type: string
+      - description: New state
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSessionMemberAdminRequest'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Promote Member to Admin
+      tags:
+      - session
+  /session/{sessionId}/state/{command}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: 'Command: activate or deactivate'
+        in: path
+        name: command
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Promote Member to Admin
+      tags:
+      - session
+  /session/{sessionId}/transaction:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Transaction to create
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: number
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Create Transaction
+      tags:
+      - session
+  /user/session:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.CurrentUserSessionResponse'
+            type: array
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: List Current User Sessions
       tags:
       - session
 swagger: "2.0"

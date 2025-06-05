@@ -36,6 +36,17 @@ type UpdateSessionActiveStateURLParams struct {
 	NewIsActiveState bool
 }
 
+// UpdateSessionActiveStateHandler godoc
+// @Summary Promote Member to Admin
+// @Tags session
+// @Accept json
+// @Param sessionId path string true "Session ID"
+// @Param command path string true "Command: activate or deactivate"
+// @Success 200 "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 {object} send.ErrorResponse "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/state/{command} [post]
 func (h *UpdateSessionActiveStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

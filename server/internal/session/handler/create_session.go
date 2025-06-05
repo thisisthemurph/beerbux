@@ -32,6 +32,17 @@ type CreateSessionResponse struct {
 	Name string    `json:"name"`
 }
 
+// CreateSessionHandler godoc
+// @Summary Create Session
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param request body CreateSessionRequest true "Session to create"
+// @Success 201 {object} CreateSessionResponse "Created"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session [post]
 func (h *CreateSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

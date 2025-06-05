@@ -36,6 +36,15 @@ type CurrentUserSessionMember struct {
 	Username string    `json:"username"`
 }
 
+// LeaveSessionHandler godoc
+// @Summary List Current User Sessions
+// @Tags session
+// @Accept json
+// @Produce json
+// @Success 200 {array} CurrentUserSessionResponse "OK"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /user/session [get]
 func (h *ListCurrentUserSessionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

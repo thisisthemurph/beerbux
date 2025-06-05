@@ -36,6 +36,18 @@ type UpdateSessionMemberAdminRequest struct {
 	NewAdminState bool `json:"newAdminState"`
 }
 
+// UpdateSessionMemberAdminHandler godoc
+// @Summary Promote Member to Admin
+// @Tags session
+// @Accept json
+// @Param sessionId path string true "Session ID"
+// @Param memberId path string true "Member ID"
+// @Param request body UpdateSessionMemberAdminRequest true "New state"
+// @Success 200 "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 {object} send.ErrorResponse "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/member/{memberId}/admin [post]
 func (h *UpdateSessionMemberAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

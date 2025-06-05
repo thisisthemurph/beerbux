@@ -24,6 +24,17 @@ func NewLeaveSessionHandler(removeSessionMemberCommand *command.RemoveSessionMem
 	}
 }
 
+// LeaveSessionHandler godoc
+// @Summary Leave Session
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/leave [post]
 func (h *LeaveSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

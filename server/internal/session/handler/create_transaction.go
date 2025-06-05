@@ -41,6 +41,18 @@ type TransactionCreatedMessage struct {
 	Total         float64   `json:"total"`
 }
 
+// CreateTransactionHandler godoc
+// @Summary Create Transaction
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @param request body map[uuid.UUID]float64 true "Transaction to create"
+// @Success 201 "Created"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/transaction [post]
 func (h *CreateTransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

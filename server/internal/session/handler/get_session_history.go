@@ -24,6 +24,17 @@ func NewGetSessionHistoryHandler(sr sessionaccess.SessionReader, sessionHistoryR
 	}
 }
 
+// GetSessionHistoryHandler godoc
+// @Summary Get Session History
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} history.SessionHistoryResponse "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/history [get]
 func (h *GetSessionHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

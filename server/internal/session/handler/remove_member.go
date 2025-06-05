@@ -31,6 +31,17 @@ func NewRemoveSessionMemberHandler(
 	}
 }
 
+// RemoveSessionMemberHandler godoc
+// @Summary Remove Member from Session
+// @Tags session
+// @Accept json
+// @Param sessionId path string true "Session ID"
+// @Param memberId path string true "Member ID"
+// @Success 200 "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 {object} send.ErrorResponse "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId}/member/{memberId} [delete]
 func (h *RemoveSessionMemberHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

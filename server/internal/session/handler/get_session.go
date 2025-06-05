@@ -43,6 +43,17 @@ type TransactionSummary struct {
 	Debit  float64 `json:"debit"`
 }
 
+// GetSessionHandler godoc
+// @Summary Get Session
+// @Tags session
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "Session ID"
+// @Success 200 {object} GetSessionResponse "OK"
+// @Failure 400 {object} send.ErrorResponse "Bad Request"
+// @Failure 401 "Unauthorized"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /session/{sessionId} [get]
 func (h *GetSessionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

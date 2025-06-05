@@ -46,6 +46,7 @@ type AddMemberToSessionRequest struct {
 // @Accept json
 // @Produce json
 // @Param sessionId path string true "Session ID"
+// @Param request body AddMemberToSessionRequest true "Member to add"
 // @Success 201 "Created"
 // @Failure 400 {object} send.ErrorResponse "Bad Request"
 // @Failure 401 "Unauthorized"

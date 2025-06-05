@@ -28,6 +28,16 @@ type GetCurrentUserResponse struct {
 	Username string    `json:"username"`
 }
 
+// GetCurrentUserHandler godoc
+// @Summary Get Current User
+// @Tags user
+// @Accept json
+// @Produce json
+// @Success 200 {object} GetCurrentUserResponse "OK"
+// @Failure 401 "Unauthorized"
+// @Failure 404 {object} send.ErrorResponse "Not Found"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /user [get]
 func (h *GetCurrentUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

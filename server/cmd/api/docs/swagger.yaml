@@ -5,6 +5,15 @@ definitions:
       username:
         type: string
     type: object
+  handler.BalanceResponse:
+    properties:
+      credit:
+        type: number
+      debit:
+        type: number
+      net:
+        type: number
+    type: object
   handler.CreateSessionRequest:
     properties:
       name:
@@ -40,6 +49,15 @@ definitions:
         type: string
       total:
         type: number
+    type: object
+  handler.GetCurrentUserResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
     type: object
   handler.GetSessionResponse:
     properties:
@@ -149,6 +167,13 @@ definitions:
     properties:
       newAdminState:
         type: boolean
+    type: object
+  handler.UpdateUserRequest:
+    properties:
+      name:
+        type: string
+      username:
+        type: string
     type: object
   history.SessionHistoryEvent:
     properties:
@@ -787,6 +812,90 @@ paths:
       summary: Create Transaction
       tags:
       - session
+  /user:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetCurrentUserResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Current User
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: New user details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetCurrentUserResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Update Current User
+      tags:
+      - user
+  /user/{userId}/balance:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.BalanceResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/send.ErrorResponse'
+      summary: Get Current User Balance
+      tags:
+      - user
   /user/session:
     get:
       consumes:

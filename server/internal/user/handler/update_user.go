@@ -35,6 +35,17 @@ type UpdateUserRequest struct {
 	Username string `json:"username"`
 }
 
+// UpdateUserHandler godoc
+// @Summary Update Current User
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param request body UpdateUserRequest true "New user details"
+// @Success 200 {object} GetCurrentUserResponse "OK"
+// @Failure 401 "Unauthorized"
+// @Failure 404 {object} send.ErrorResponse "Not Found"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /user [put]
 func (h *UpdateUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

@@ -27,6 +27,17 @@ type BalanceResponse struct {
 	Net    float64 `json:"net"`
 }
 
+// GetCurrentUserHandler godoc
+// @Summary Get Current User Balance
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param userId path string true "User ID"
+// @Success 200 {object} BalanceResponse "OK"
+// @Failure 401 "Unauthorized"
+// @Failure 404 {object} send.ErrorResponse "Not Found"
+// @Failure 500 {object} send.ErrorResponse "Internal Server Error"
+// @Router /user/{userId}/balance [get]
 func (h *GetUserBalanceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := claims.GetClaims(r)
 	if !c.Authenticated() {

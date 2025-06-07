@@ -110,7 +110,7 @@ export function CreateTransactionForm({
 						)}
 					/>
 				))}
-				<Button type="submit">Create transaction</Button>
+				<Button type="submit">Buy a round</Button>
 			</form>
 		</Form>
 	);

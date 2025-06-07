@@ -15,7 +15,7 @@ function FriendListing({ friends }: FriendListingProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle>Your drinking buddies</CardTitle>
-				<CardDescription>A list of your from your shared sessions.</CardDescription>
+				<CardDescription>A list of your friends from shared sessions.</CardDescription>
 			</CardHeader>
 			<CardContent className="px-0">
 				<section className="flex flex-col">

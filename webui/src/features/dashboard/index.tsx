@@ -1,28 +1,26 @@
 import useFriendsClient from "@/api/friends-client.ts";
 import useSessionClient from "@/api/session-client.ts";
-import type { User } from "@/api/types/user.ts";
 import useUserClient from "@/api/user-client.ts";
 import {
 	PrimaryActionCard,
 	PrimaryActionCardButtonItem,
 	PrimaryActionCardContent,
-} from "@/components/primary-action-card";
+} from "@/components/primary-action-card.tsx";
 import { SessionListing } from "@/components/session-listing.tsx";
-import { CreateSessionDrawer } from "@/features/home/authenticated/create-session/create-session-drawer.tsx";
-import { UserCard } from "@/features/home/authenticated/user-card.tsx";
+import { CreateSessionDrawer } from "@/features/dashboard/create-session/create-session-drawer.tsx";
+import { UserCard } from "@/features/dashboard/user-card.tsx";
 import { tryCatch } from "@/lib/try-catch.ts";
+import { useUserStore } from "@/stores/user-store.tsx";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { SquareChevronRight } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { FriendListing } from "./friend-listing";
+import { FriendListing } from "./friend-listing.tsx";
 
-type AuthenticatedViewProps = {
-	user: User;
-};
-
-export function AuthenticatedView({ user }: AuthenticatedViewProps) {
+export default function DashboardPage() {
+	// biome-ignore lint/style/noNonNullAssertion: there is a auth guard in the app routes.
+	const user = useUserStore((state) => state.user)!;
 	const { getSessions, getBalance } = useUserClient();
 	const { createSession } = useSessionClient();
 	const { getFriends } = useFriendsClient();

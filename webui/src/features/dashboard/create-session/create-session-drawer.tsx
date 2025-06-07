@@ -8,7 +8,7 @@ import {
 import {
 	CreateSessionForm,
 	type CreateSessionFormValues,
-} from "@/features/home/authenticated/create-session/create-session-form.tsx";
+} from "@/features/dashboard/create-session/create-session-form.tsx";
 
 interface DrawerToggleProps {
 	open: boolean;

@@ -1,9 +1,9 @@
-import type { Friend } from "@/api/types/friend";
-import { getAvatarText } from "@/components/avatar";
+import type { Friend } from "@/api/types/friend.ts";
+import { getAvatarText } from "@/components/avatar.tsx";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { pluralize } from "@/lib/strings";
+import { pluralize } from "@/lib/strings.ts";
 import { Link } from "react-router";
 
 type FriendListingProps = {

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge.tsx";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card.tsx";
 import { useInformationDialog } from "@/hooks/use-information-dialog.tsx";
 import { MinusCircle, PlusCircle } from "lucide-react";
 

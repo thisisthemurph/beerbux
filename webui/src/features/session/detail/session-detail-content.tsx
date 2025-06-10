@@ -1,7 +1,7 @@
 import type { SessionHistory } from "@/api/types/session-history.ts";
 import type { SessionMember, SessionTransaction, SessionWithTransactions } from "@/api/types/session.ts";
 import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
-import type { User } from "@/api/types/user.ts";
+import type { UserAuthDetails } from "@/api/types/user.ts";
 import { PageError } from "@/components/page-error.tsx";
 import { PageHeading } from "@/components/page-heading.tsx";
 import {
@@ -23,7 +23,7 @@ import { useState } from "react";
 type SessionDetailContentProps = {
 	session: SessionWithTransactions;
 	history: SessionHistory | undefined;
-	user: User;
+	user: UserAuthDetails;
 	onMemberAdminStateUpdate: (sessionId: string, memberId: string, newAdminState: boolean) => void;
 	handleNewTransaction: (transaction: TransactionMemberAmounts) => Promise<void>;
 	handleAddMember: (username: string) => Promise<void>;

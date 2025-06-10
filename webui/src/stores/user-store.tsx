@@ -1,9 +1,9 @@
-import type { User } from "@/api/types/user.ts";
+import type { UserAuthDetails } from "@/api/types/user.ts";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 type LoggedInUserStoreState = {
-	user: User;
+	user: UserAuthDetails;
 	isLoggedIn: true;
 	isLoading: boolean;
 };
@@ -18,7 +18,7 @@ type UserStoreState = LoggedInUserStoreState | LoggedOutUserStoreState;
 
 type UserStoreActions = {
 	setIsLoading: (isLoading: boolean) => void;
-	setUser: (user: User) => void;
+	setUser: (user: UserAuthDetails) => void;
 	logout: () => void;
 };
 
@@ -31,7 +31,7 @@ export const useUserStore = create<UserStore>()(
 			isLoading: false,
 			isLoggedIn: false,
 			setIsLoading: (isLoading) => set({ isLoading }),
-			setUser: (user: User) => set({ user, isLoggedIn: true, isLoading: false }),
+			setUser: (user: UserAuthDetails) => set({ user, isLoggedIn: true, isLoading: false }),
 			logout: () => set({ user: null, isLoggedIn: false, isLoading: false }),
 		}),
 		{

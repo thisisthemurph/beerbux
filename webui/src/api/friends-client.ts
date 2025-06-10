@@ -7,6 +7,10 @@ function useFriendsClient() {
 		return apiFetch<Friend[]>("/friends");
 	};
 
+	const getFriend = async (friendId: string) => {
+		return apiFetch<Friend>(`/friend/${friendId}`);
+	};
+
 	const getJointSessions = async (memberId: string) => {
 		return apiFetch<Session[]>(`/friend/${memberId}/sessions`);
 	};

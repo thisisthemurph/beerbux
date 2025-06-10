@@ -88,6 +88,17 @@ type User struct {
 	UpdatedAt                 time.Time
 }
 
+type UserCreditScore struct {
+	UserID                uuid.UUID
+	BeersGiven            int64
+	BeersReceived         int64
+	BalanceRatio          string
+	AvgReciprocationRatio string
+	RecentGiving          string
+	CreditScore           int32
+	StatusLabel           string
+}
+
 type UserTotal struct {
 	UserID uuid.UUID
 	Credit string

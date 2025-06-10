@@ -1,5 +1,8 @@
 ### Get Friends
 GET {{base_url}}/api/friends
 
+### Get Friend By ID
+GET {{base_url}}/api/friend/116bf296-7b02-425a-b8db-3cd1c31d3b7d
+
 ### Get joint sessions with friend by ID
-GET {{base_url}}/api/friend/61c905cb-29c2-4d86-96b7-99eecfa64398/sessions
+GET {{base_url}}/api/friend/116bf296-7b02-425a-b8db-3cd1c31d3b7d/sessions

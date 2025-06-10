@@ -7,15 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 
 export default function FriendDetailPage() {
-	const { getFriends, getJointSessions } = useFriendsClient();
+	const { getFriend, getJointSessions } = useFriendsClient();
 	const { friendId } = useParams() as { friendId: string };
 	useBackNavigation("/");
 
-	// This query will already be cached, so we can determine the selected friend without needing to refetch.
-	const { data: friends, isPending: friendsIsPending } = useQuery({
-		queryKey: ["friends"],
-		queryFn: () => getFriends(),
-		placeholderData: [],
+	const { data: friend, isPending: friendsIsPending } = useQuery({
+		queryKey: ["friend", friendId],
+		queryFn: () => getFriend(friendId),
 	});
 
 	const { data: sessions, isPending: sessionsIsPending } = useQuery({
@@ -28,7 +26,6 @@ export default function FriendDetailPage() {
 		return <p>Loading...</p>;
 	}
 
-	const friend = (friends ?? []).find((f) => f.id === friendId);
 	if (!friend) {
 		return <PageError message="The specified friend could not be found" />;
 	}

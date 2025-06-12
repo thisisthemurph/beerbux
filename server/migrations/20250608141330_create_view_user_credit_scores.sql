@@ -61,14 +61,27 @@ combined AS (
             2) * 100 AS credit_score
     FROM ledger_summary l
     LEFT JOIN average_reciprocation r ON l.user_id = r.user_id
+),
+scores AS (
+    SELECT *,
+       MIN(credit_score) OVER () AS min_credit_score,
+       MAX(credit_score) OVER () AS max_credit_score
+    FROM combined
 )
-SELECT *,
+SELECT
+    user_id,
+    beers_given,
+    beers_received,
+    balance_ratio,
+    avg_reciprocation_ratio,
+    recent_giving,
+    ROUND((credit_score - min_credit_score) / NULLIF((max_credit_score - min_credit_score), 0) * 100, 2) AS credit_score,
     CASE
-        WHEN credit_score >= 150 THEN 'Round Champion'
-        WHEN credit_score >= 100 THEN 'Balanced Brewer'
+        WHEN (credit_score - min_credit_score) / NULLIF((max_credit_score - min_credit_score), 0) * 100 >= 80 THEN 'Round Champion'
+        WHEN (credit_score - min_credit_score) / NULLIF((max_credit_score - min_credit_score), 0) * 100 >= 50 THEN 'Balanced Brewer'
         ELSE 'Round Dodger'
     END AS status_label
-FROM combined;
+FROM scores;
 -- +goose StatementEnd
 
 -- +goose Down

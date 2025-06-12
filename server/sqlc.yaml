@@ -1,4 +1,5 @@
 version: "2"
+
 sql:
   - engine: "postgresql"
     queries: "internal/common/useraccess/db/queries.sql"
@@ -8,12 +9,14 @@ sql:
         package: "db"
         out: "internal/common/useraccess/db"
         overrides:
+          # user_totals table columns
           - column: "user_totals.credit"
             go_type: "float64"
           - column: "user_totals.debit"
             go_type: "float64"
           - column: "ledger.amount"
             go_type: "float64"
+          # user_credit_score view columns
           - column: "user_credit_score.beers_given"
             go_type: "float64"
           - column: "user_credit_score.beers_received"
@@ -35,6 +38,27 @@ sql:
         package: "db"
         out: "internal/common/sessionaccess/db"
         overrides:
+          # user_totals table columns
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
+          # user_credit_score view columns
+          - column: "user_credit_score.beers_given"
+            go_type: "float64"
+          - column: "user_credit_score.beers_received"
+            go_type: "float64"
+          - column: "user_credit_score.balance_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.avg_reciprocation_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.recent_giving"
+            go_type: "float64"
+          - column: "user_credit_score.credit_score"
+            go_type: "float64"
+          # OTHERS
           - column: "session_transaction_lines.amount"
             go_type: "float64"
           - column: "ledger.amount"
@@ -47,6 +71,27 @@ sql:
       go:
         package: "db"
         out: "internal/auth/db"
+        overrides:
+          # user_totals table columns
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
+          # user_credit_score view columns
+          - column: "user_credit_score.beers_given"
+            go_type: "float64"
+          - column: "user_credit_score.beers_received"
+            go_type: "float64"
+          - column: "user_credit_score.balance_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.avg_reciprocation_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.recent_giving"
+            go_type: "float64"
+          - column: "user_credit_score.credit_score"
+            go_type: "float64"
 
   - engine: "postgresql"
     queries: "internal/user/db/queries.sql"
@@ -55,6 +100,27 @@ sql:
       go:
         package: "db"
         out: "internal/user/db"
+        overrides:
+          # user_totals table columns
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
+          # user_credit_score view columns
+          - column: "user_credit_score.beers_given"
+            go_type: "float64"
+          - column: "user_credit_score.beers_received"
+            go_type: "float64"
+          - column: "user_credit_score.balance_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.avg_reciprocation_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.recent_giving"
+            go_type: "float64"
+          - column: "user_credit_score.credit_score"
+            go_type: "float64"
 
   - engine: "postgresql"
     queries: "internal/session/db/queries.sql"
@@ -64,6 +130,27 @@ sql:
         package: "db"
         out: "internal/session/db"
         overrides:
+          # user_totals table columns
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
+          # user_credit_score view columns
+          - column: "user_credit_score.beers_given"
+            go_type: "float64"
+          - column: "user_credit_score.beers_received"
+            go_type: "float64"
+          - column: "user_credit_score.balance_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.avg_reciprocation_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.recent_giving"
+            go_type: "float64"
+          - column: "user_credit_score.credit_score"
+            go_type: "float64"
+          # OTHER
           - column: "session_transaction_lines.amount"
             go_type: "float64"
           - column: "ledger.amount"
@@ -76,3 +163,24 @@ sql:
       go:
         package: "db"
         out: "internal/friends/db"
+        overrides:
+          # user_totals table columns
+          - column: "user_totals.credit"
+            go_type: "float64"
+          - column: "user_totals.debit"
+            go_type: "float64"
+          - column: "ledger.amount"
+            go_type: "float64"
+          # user_credit_score view columns
+          - column: "user_credit_score.beers_given"
+            go_type: "float64"
+          - column: "user_credit_score.beers_received"
+            go_type: "float64"
+          - column: "user_credit_score.balance_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.avg_reciprocation_ratio"
+            go_type: "float64"
+          - column: "user_credit_score.recent_giving"
+            go_type: "float64"
+          - column: "user_credit_score.credit_score"
+            go_type: "float64"

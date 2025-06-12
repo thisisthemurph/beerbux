@@ -16,7 +16,7 @@ type Ledger struct {
 	ID            uuid.UUID
 	TransactionID uuid.UUID
 	UserID        uuid.UUID
-	Amount        string
+	Amount        float64
 	CreatedAt     time.Time
 }
 
@@ -90,17 +90,17 @@ type User struct {
 
 type UserCreditScore struct {
 	UserID                uuid.UUID
-	BeersGiven            int64
-	BeersReceived         int64
-	BalanceRatio          string
-	AvgReciprocationRatio string
-	RecentGiving          string
-	CreditScore           int32
+	BeersGiven            float64
+	BeersReceived         float64
+	BalanceRatio          float64
+	AvgReciprocationRatio float64
+	RecentGiving          float64
+	CreditScore           float64
 	StatusLabel           string
 }
 
 type UserTotal struct {
 	UserID uuid.UUID
-	Credit string
-	Debit  string
+	Credit float64
+	Debit  float64
 }

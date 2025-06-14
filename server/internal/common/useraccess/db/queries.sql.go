@@ -15,23 +15,26 @@ import (
 const getByUsername = `-- name: GetByUsername :one
 select
     u.id, u.username, u.email, u.name, u.created_at, u.updated_at,
-    coalesce(t.debit, 0) as debit,
-    coalesce(t.credit, 0) as credit
+    coalesce(ut.debit, 0) as debit,
+    coalesce(ut.credit, 0) as credit,
+    coalesce(ucs.credit_score, 0) as credit_score
 from users u
-left join user_totals t on u.id = t.user_id
+left join user_totals ut on u.id = ut.user_id
+left join user_credit_score ucs on u.id = ucs.user_id
 where u.username = $1
 limit 1
 `
 
 type GetByUsernameRow struct {
-	ID        uuid.UUID
-	Username  string
-	Email     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Debit     float64
-	Credit    float64
+	ID          uuid.UUID
+	Username    string
+	Email       string
+	Name        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Debit       float64
+	Credit      float64
+	CreditScore float64
 }
 
 func (q *Queries) GetByUsername(ctx context.Context, username string) (GetByUsernameRow, error) {
@@ -46,6 +49,7 @@ func (q *Queries) GetByUsername(ctx context.Context, username string) (GetByUser
 		&i.UpdatedAt,
 		&i.Debit,
 		&i.Credit,
+		&i.CreditScore,
 	)
 	return i, err
 }
@@ -53,23 +57,26 @@ func (q *Queries) GetByUsername(ctx context.Context, username string) (GetByUser
 const getUserByEmail = `-- name: GetUserByEmail :one
 select
     u.id, u.username, u.email, u.name, u.created_at, u.updated_at,
-    coalesce(t.debit, 0) as debit,
-    coalesce(t.credit, 0) as credit
+    coalesce(ut.debit, 0) as debit,
+    coalesce(ut.credit, 0) as credit,
+    coalesce(ucs.credit_score, 0) as credit_score
 from users u
-left join user_totals t on u.id = t.user_id
+left join user_totals ut on u.id = ut.user_id
+left join user_credit_score ucs on u.id = ucs.user_id
 where u.email = $1
 limit 1
 `
 
 type GetUserByEmailRow struct {
-	ID        uuid.UUID
-	Username  string
-	Email     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Debit     float64
-	Credit    float64
+	ID          uuid.UUID
+	Username    string
+	Email       string
+	Name        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Debit       float64
+	Credit      float64
+	CreditScore float64
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
@@ -84,6 +91,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.UpdatedAt,
 		&i.Debit,
 		&i.Credit,
+		&i.CreditScore,
 	)
 	return i, err
 }
@@ -91,23 +99,26 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 const getUserByID = `-- name: GetUserByID :one
 select
     u.id, u.username, u.email, u.name, u.created_at, u.updated_at,
-    coalesce(t.debit, 0) as debit,
-    coalesce(t.credit, 0) as credit
+    coalesce(ut.debit, 0) as debit,
+    coalesce(ut.credit, 0) as credit,
+    coalesce(ucs.credit_score, 0) as credit_score
 from users u
-left join user_totals t on u.id = t.user_id
+left join user_totals ut on u.id = ut.user_id
+left join user_credit_score ucs on u.id = ucs.user_id
 where u.id = $1
 limit 1
 `
 
 type GetUserByIDRow struct {
-	ID        uuid.UUID
-	Username  string
-	Email     string
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Debit     float64
-	Credit    float64
+	ID          uuid.UUID
+	Username    string
+	Email       string
+	Name        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Debit       float64
+	Credit      float64
+	CreditScore float64
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
@@ -122,6 +133,27 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.UpdatedAt,
 		&i.Debit,
 		&i.Credit,
+		&i.CreditScore,
+	)
+	return i, err
+}
+
+const getUserCreditScore = `-- name: GetUserCreditScore :one
+select user_id, beers_given, beers_received, balance_ratio, avg_reciprocation_ratio, recent_giving, credit_score, status_label from user_credit_score where user_id = $1 limit 1
+`
+
+func (q *Queries) GetUserCreditScore(ctx context.Context, userID uuid.UUID) (UserCreditScore, error) {
+	row := q.db.QueryRowContext(ctx, getUserCreditScore, userID)
+	var i UserCreditScore
+	err := row.Scan(
+		&i.UserID,
+		&i.BeersGiven,
+		&i.BeersReceived,
+		&i.BalanceRatio,
+		&i.AvgReciprocationRatio,
+		&i.RecentGiving,
+		&i.CreditScore,
+		&i.StatusLabel,
 	)
 	return i, err
 }

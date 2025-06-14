@@ -88,8 +88,19 @@ type User struct {
 	UpdatedAt                 time.Time
 }
 
+type UserCreditScore struct {
+	UserID                uuid.UUID
+	BeersGiven            float64
+	BeersReceived         float64
+	BalanceRatio          float64
+	AvgReciprocationRatio float64
+	RecentGiving          float64
+	CreditScore           float64
+	StatusLabel           string
+}
+
 type UserTotal struct {
 	UserID uuid.UUID
-	Credit string
-	Debit  string
+	Credit float64
+	Debit  float64
 }

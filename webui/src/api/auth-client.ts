@@ -1,9 +1,9 @@
 import { apiFetch } from "@/api/api-fetch.ts";
-import type { User } from "./types/user.ts";
+import type { UserAuthDetails } from "./types/user.ts";
 
 function useAuthClient() {
-	const login = async (username: string, password: string): Promise<User> => {
-		return apiFetch<User>("/auth/login", {
+	const login = async (username: string, password: string): Promise<UserAuthDetails> => {
+		return apiFetch<UserAuthDetails>("/auth/login", {
 			method: "POST",
 			body: JSON.stringify({ username, password }),
 		});
@@ -22,8 +22,8 @@ function useAuthClient() {
 		});
 	};
 
-	const getCurrentUser = async (): Promise<User> => {
-		return apiFetch<User>("/user");
+	const getCurrentUser = async (): Promise<UserAuthDetails> => {
+		return apiFetch<UserAuthDetails>("/user");
 	};
 
 	const initializePasswordReset = async (newPassword: string): Promise<void> => {

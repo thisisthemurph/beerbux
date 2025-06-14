@@ -12,6 +12,14 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
+type UserReader interface {
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
+	GetUserByUsername(ctx context.Context, username string) (*UserResponse, error)
+	GetUserByEmail(ctx context.Context, username string) (*UserResponse, error)
+	UserWithUsernameExists(ctx context.Context, username string) (bool, error)
+	UserWithEmailExists(ctx context.Context, username string) (bool, error)
+}
+
 type UserReaderService struct {
 	Queries *db.Queries
 }
@@ -23,8 +31,9 @@ func NewUserReaderService(queries *db.Queries) *UserReaderService {
 }
 
 type UserAccount struct {
-	Debit  float64 `json:"debit"`
-	Credit float64 `json:"credit"`
+	Debit       float64 `json:"debit"`
+	Credit      float64 `json:"credit"`
+	CreditScore float64 `json:"creditScore"`
 }
 
 type UserResponse struct {
@@ -54,8 +63,9 @@ func (q *UserReaderService) GetUserByID(ctx context.Context, userID uuid.UUID) (
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
 		Account: UserAccount{
-			Debit:  usr.Debit,
-			Credit: usr.Credit,
+			Debit:       usr.Debit,
+			Credit:      usr.Credit,
+			CreditScore: usr.CreditScore,
 		},
 	}, nil
 }
@@ -77,8 +87,9 @@ func (q *UserReaderService) GetUserByUsername(ctx context.Context, username stri
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
 		Account: UserAccount{
-			Debit:  usr.Debit,
-			Credit: usr.Credit,
+			Debit:       usr.Debit,
+			Credit:      usr.Credit,
+			CreditScore: usr.CreditScore,
 		},
 	}, nil
 }
@@ -100,8 +111,9 @@ func (q *UserReaderService) GetUserByEmail(ctx context.Context, email string) (*
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
 		Account: UserAccount{
-			Debit:  usr.Debit,
-			Credit: usr.Credit,
+			Debit:       usr.Debit,
+			Credit:      usr.Credit,
+			CreditScore: usr.CreditScore,
 		},
 	}, nil
 }

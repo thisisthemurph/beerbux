@@ -1,21 +1,23 @@
 import useFriendsClient from "@/api/friends-client";
+import { CreditScoreStatusBadge } from "@/components/credit-score/credit-score-status-badge.tsx";
+import { CreditScore } from "@/components/credit-score/credit-score.tsx";
+import { getCreditScoreStatus } from "@/components/credit-score/functions.ts";
 import { PageError } from "@/components/page-error.tsx";
 import { PageHeading } from "@/components/page-heading.tsx";
 import { SessionListing } from "@/components/session-listing.tsx";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { useBackNavigation } from "@/hooks/use-back-navigation.ts";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 
 export default function FriendDetailPage() {
-	const { getFriends, getJointSessions } = useFriendsClient();
+	const { getFriend, getJointSessions } = useFriendsClient();
 	const { friendId } = useParams() as { friendId: string };
 	useBackNavigation("/");
 
-	// This query will already be cached, so we can determine the selected friend without needing to refetch.
-	const { data: friends, isPending: friendsIsPending } = useQuery({
-		queryKey: ["friends"],
-		queryFn: () => getFriends(),
-		placeholderData: [],
+	const { data: friend, isPending: friendsIsPending } = useQuery({
+		queryKey: ["friend", friendId],
+		queryFn: () => getFriend(friendId),
 	});
 
 	const { data: sessions, isPending: sessionsIsPending } = useQuery({
@@ -28,19 +30,28 @@ export default function FriendDetailPage() {
 		return <p>Loading...</p>;
 	}
 
-	const friend = (friends ?? []).find((f) => f.id === friendId);
 	if (!friend) {
 		return <PageError message="The specified friend could not be found" />;
 	}
 
 	return (
 		<>
-			<PageHeading title={friend.name} className="flex-col items-start">
-				<p className="text-muted-foreground tracking-wider font-mono">@{friend.username}</p>
+			<PageHeading title={friend.name}>
+				<CreditScoreStatusBadge status={getCreditScoreStatus(friend.account.creditScore)} />
 			</PageHeading>
-			{sessionsIsPending && <p>Loading shared sessions...</p>}
+
+			<Card>
+				<CardHeader>
+					<CardTitle>Credit score</CardTitle>
+					<CardDescription className="sr-only">Credit score indicator</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<CreditScore value={friend.account.creditScore} />
+				</CardContent>
+			</Card>
+
 			<SessionListing
-				title={`Your sessions with ${friend.username}`}
+				title="Shared sessions"
 				sessions={sessions ?? []}
 				noSessionsMessage={`You do not have any sessions with @${friend.username}`}
 				parentPath={`/friend/${friendId}`}

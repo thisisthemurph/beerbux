@@ -1,7 +1,7 @@
 import useSessionClient from "@/api/session-client.ts";
 import useTransactionClient from "@/api/transaction-client.ts";
 import type { TransactionMemberAmounts } from "@/api/types/transaction.ts";
-import type { User } from "@/api/types/user.ts";
+import type { UserAuthDetails } from "@/api/types/user.ts";
 import { PageError } from "@/components/page-error.tsx";
 import { SessionDetailContent } from "@/features/session/detail/session-detail-content.tsx";
 import { SessionDetailSkeleton } from "@/features/session/detail/skeleton.tsx";
@@ -20,7 +20,7 @@ import {
 const SSE_BASE_URL = import.meta.env.VITE_SSE_BASE_URL;
 
 export default function SessionDetailPage() {
-	const user = useUserStore((state) => state.user) as User;
+	const user = useUserStore((state) => state.user) as UserAuthDetails;
 	const { sessionId } = useParams() as { sessionId: string };
 	const queryClient = useQueryClient();
 	const {

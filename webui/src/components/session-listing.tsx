@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { withBackLinkOverride } from "@/hooks/use-back-navigation.ts";
-import { ShieldOff } from "lucide-react";
+import { Beer, ShieldOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
@@ -64,7 +64,10 @@ function SessionListingItem({ session, url }: { session: Session | SessionWithTr
 					{!session.isActive && <InactiveIcon />}
 				</div>
 				{"total" in session && (
-					<p className="text-xl text-muted-foreground font-semibold tracking-wide">${session.total}</p>
+					<p className="flex items-center gap-1 text-xl text-muted-foreground font-semibold tracking-wide">
+						{session.total}
+						<Beer className="size-4 translate-y-1" />
+					</p>
 				)}
 			</div>
 		</Link>

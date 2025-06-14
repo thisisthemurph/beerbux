@@ -6,6 +6,7 @@ import { useInformationDialog } from "@/hooks/use-information-dialog.tsx";
 import { useUserAvatarDataBySession } from "@/hooks/user-avatar-data.ts";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store.tsx";
+import { Beer } from "lucide-react";
 import { MemberDropdownMenu } from "./member-dropdown-menu";
 
 type MemberDetailsCardProps = {
@@ -85,12 +86,13 @@ function Balance({ credit, debit }: { credit: number; debit: number }) {
 	return (
 		<p
 			className={cn(
-				"font-semibold text-muted-foreground text-lg flex items-center",
+				"flex items-end gap-1 font-semibold text-muted-foreground",
 				value > 0 && "text-green-600",
 				value < 0 && "text-red-600",
 			)}
 		>
-			${value < 0 ? value * -1 : value}
+			<span className="text-2xl">{value < 0 ? value * -1 : value}</span>
+			<Beer className="size-4 -translate-y-1" />
 		</p>
 	);
 }

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { ShieldOff } from "lucide-react";
+import { Beer, ShieldOff } from "lucide-react";
 
 type OverviewCardProps = {
 	name: string;
@@ -31,9 +31,11 @@ export function OverviewCard({ name, isActive, total, average }: OverviewCardPro
 							</span>
 						</p>
 						<div className="text-right">
-							<p className="font-semibold">
-								<span className="text-2xl">$</span>
+							<p className="flex items-end gap-1 font-semibold">
 								<span className="text-4xl">{total}</span>
+								<span>
+									<Beer className="size-5 -translate-y-1" />
+								</span>
 							</p>
 							<p className="text-xs tracking-wide font-mono font-semibold">total</p>
 						</div>
@@ -42,7 +44,7 @@ export function OverviewCard({ name, isActive, total, average }: OverviewCardPro
 					<section className="flex gap-1">
 						{average > 0 && (
 							<Badge variant="secondary" className="text-sm">
-								Average ${average.toFixed(2)}
+								Average {average.toFixed(2)} <Beer />
 							</Badge>
 						)}
 					</section>

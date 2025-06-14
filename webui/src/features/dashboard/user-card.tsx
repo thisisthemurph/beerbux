@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge.tsx";
 import { Card, CardContent, CardFooter } from "@/components/ui/card.tsx";
 import { useInformationDialog } from "@/hooks/use-information-dialog.tsx";
-import { MinusCircle, PlusCircle } from "lucide-react";
+import { Beer, MinusCircle, PlusCircle } from "lucide-react";
 
 type UserCardProps = {
 	username: string;
@@ -24,10 +24,10 @@ export function UserCard({ username, credit, debit, netBalance }: UserCardProps)
 			</CardContent>
 			<CardFooter className="gap-2">
 				<Badge variant="secondary" className="text-sm" title="Total amount of beers received">
-					debit: ${debit}
+					you're owed: {debit} <Beer />
 				</Badge>
 				<Badge variant="secondary" className="text-sm" title="Total amount of beers bought">
-					credit: ${credit}
+					you owe: {credit} <Beer />
 				</Badge>
 			</CardFooter>
 		</Card>
@@ -60,9 +60,9 @@ function NetBalance({ balance }: { balance: number }) {
 		<>
 			<InformationDialog />
 			<button type="button" title="Total of all beers given and recieved" onClick={handleInformationClick}>
-				<p className="text-right">
-					<span className="text-lg">$</span>
+				<p className="flex items-end">
 					<span className="text-3xl text-right tracking-wide">{balance ?? 0}</span>
+					<Beer className="size-5 -translate-y-1" />
 				</p>
 				<p className="text-xs text-right tracking-wide font-semibold">net</p>
 			</button>
